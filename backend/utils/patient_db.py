@@ -758,7 +758,7 @@ def get_similar_cases(study_id: str) -> dict:
     with closing(get_connection()) as conn:
         # Fetch base study characteristics
         base_cursor = conn.execute("""
-            SELECT s.id as study_id, p_ref.age as patient_age, p_ref.sex as patient_sex,
+            SELECT s.id as study_id, s.patient_id, p_ref.age as patient_age, p_ref.sex as patient_sex,
                    pr.confidence, pr.is_tb
             FROM studies s
             LEFT JOIN patients p_ref ON s.patient_id = p_ref.id
@@ -773,16 +773,16 @@ def get_similar_cases(study_id: str) -> dict:
         base_sex = base["patient_sex"]
         base_conf = base["confidence"] if base["confidence"] is not None else 0.5
         
-        # Query candidates (all other studies that have predictions)
+        # Query candidates (all other studies that have predictions from different patients)
         candidates_cursor = conn.execute("""
             SELECT s.id as study_id, s.patient_id, p_ref.name as patient_name,
                    p_ref.age as patient_age, p_ref.sex as patient_sex,
-                   pr.confidence, pr.is_tb, pr.prediction, s.original_image
+                   pr.confidence, pr.is_tb, pr.prediction, s.original_image, pr.heatmap_image
             FROM studies s
             INNER JOIN predictions pr ON s.id = pr.study_id
             LEFT JOIN patients p_ref ON s.patient_id = p_ref.id
-            WHERE s.id != ?
-        """, (study_id,))
+            WHERE s.patient_id != ?
+        """, (base["patient_id"],))
         
         tb_candidates = []
         normal_candidates = []
@@ -812,7 +812,8 @@ def get_similar_cases(study_id: str) -> dict:
                 "prediction": cand["prediction"],
                 "confidence": cand["confidence"],
                 "similarity_score": round(sim_score, 1),
-                "original_image": cand["original_image"]
+                "original_image": cand["original_image"],
+                "heatmap_image": cand["heatmap_image"]
             }
             
             if cand["is_tb"]:

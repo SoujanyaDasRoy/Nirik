@@ -534,7 +534,7 @@ export default function DicomViewer({
         <div style={{
           transform: `scale(${zoom}) translate(${pan.x / zoom}px, ${pan.y / zoom}px)`,
           transition: isDragging || isWindowing ? "none" : "transform 0.1s ease",
-        }} className="relative">
+        }} className="relative w-fit mx-auto">
           
           {/* Side-by-Side Mode */}
           {viewMode === "side-by-side" ? (
@@ -588,14 +588,14 @@ export default function DicomViewer({
               />
 
               {/* Heatmap Overlay Mode */}
-              {viewMode === "heatmap" && heatmapSrc && (
+              {(viewMode === "heatmap" || viewMode === "heatmap-only") && heatmapSrc && (
                 <img
                   src={heatmapSrc}
                   alt="Heatmap Overlay"
                   className="h-full object-contain rounded select-none block absolute inset-0 w-full h-full animate-fadein"
                   style={{ 
                     filter: filterStyle,
-                    opacity: heatmapOpacity 
+                    opacity: viewMode === "heatmap-only" ? 1.0 : heatmapOpacity 
                   }}
                   draggable={false}
                 />
