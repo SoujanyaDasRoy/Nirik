@@ -720,34 +720,6 @@ export function ScreeningTab({
                       />
                     </Card>
 
-                    {/* Explainable AI Toggle for Research Mode */}
-                    {workstationMode === "research" && (
-                      <div className="flex flex-col space-y-2 p-4 border border-border bg-card rounded-xl">
-                        <div className="flex items-center gap-2">
-                          <Layers className="w-4 h-4 text-primary" />
-                          <span className="text-xs font-bold text-foreground">Explainable AI (XAI) Backpropagation Methods</span>
-                        </div>
-                        <p className="text-[11px] text-muted-foreground">
-                          Toggle different gradient-weighted class activation mapping (CAM) algorithms and saliency focus layers to visualize the model's region attribution.
-                        </p>
-                        <div className="flex flex-wrap gap-1.5 bg-muted/50 p-1 rounded-full border border-border/40 w-fit mt-1">
-                          {(["gradcam", "gradcam_plusplus", "attention", "coverage", "attribution"] as const).map((method) => (
-                            <button
-                              key={method}
-                              onClick={() => setXaiMethod(method)}
-                              className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all duration-200 cursor-pointer capitalize ${xaiMethod === method ? "bg-background text-foreground shadow-sm border border-border/10 font-bold" : "text-muted-foreground hover:text-foreground"}`}
-                            >
-                              {method === "gradcam" && "Standard Grad-CAM"}
-                              {method === "gradcam_plusplus" && "Grad-CAM++"}
-                              {method === "attention" && "Edge Attention"}
-                              {method === "coverage" && "Heatmap Coverage"}
-                              {method === "attribution" && "Grid Attribution"}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
                   {/* Redraw list of active markups drawn on top of the X-ray */}
                   {boxes.length > 0 && (
                     <div className="flex flex-wrap items-center gap-2 p-3 border border-border bg-card rounded-xl">
