@@ -52,13 +52,13 @@ export default function AboutPage() {
             </Badge>
           </div>
 
-          {/* <div className="flex items-center gap-4">
-            <Link
+          <div className="flex items-center gap-4">
+            {/* <Link
               href="/diagnose"
               className={buttonVariants({ variant: "outline", size: "sm", className: "h-9 px-4 text-xs font-semibold cursor-pointer" })}
             >
               Launch Workspace <ArrowUpRight className="w-3.5 h-3.5 ml-1" />
-            </Link>
+            </Link> */}
 
             <Separator orientation="vertical" className="h-5" />
 
@@ -73,7 +73,7 @@ export default function AboutPage() {
                 <Moon className="w-4 h-4" strokeWidth={1.5} />
               )}
             </button>
-          </div> */}
+          </div>
         </div>
       </header>
 
