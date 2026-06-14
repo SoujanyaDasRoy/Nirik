@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useTheme } from "next-themes";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   Activity,
   AlertTriangle,
@@ -29,11 +30,28 @@ import { Card, CardContent } from "@/components/ui/card";
 
 export default function AboutPage() {
   const { theme, setTheme } = useTheme();
+  const router = useRouter();
   const [mounted, setMounted] = useState(false);
   const [accepted, setAccepted] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   useEffect(() => {
     setMounted(true);
+    const checkSession = async () => {
+      try {
+        const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+        const res = await fetch(`${API_BASE}/session`, { credentials: "include" });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.authenticated) {
+            setIsLoggedIn(true);
+          }
+        }
+      } catch (err) {
+        console.error("Session check failed", err);
+      }
+    };
+    checkSession();
   }, []);
 
   return (
@@ -55,13 +73,17 @@ export default function AboutPage() {
           <div className="flex items-center gap-4">
             <button
               onClick={() => {
-                const element = document.getElementById("medical-disclaimer");
-                if (element) {
-                  const y = element.getBoundingClientRect().top + window.scrollY - 80; // 64px header + 16px padding spacing
-                  window.scrollTo({ top: y, behavior: "smooth" });
+                if (isLoggedIn) {
+                  router.push("/diagnose");
+                } else {
+                  const element = document.getElementById("medical-disclaimer");
+                  if (element) {
+                    const y = element.getBoundingClientRect().top + window.scrollY - 80; // 64px header + 16px padding spacing
+                    window.scrollTo({ top: y, behavior: "smooth" });
+                  }
                 }
               }}
-              className="h-9 px-4 text-xs font-semibold cursor-pointer rounded-xl bg-black text-white hover:bg-black/90 dark:bg-white dark:text-black dark:hover:bg-white/90 transition-all duration-200 flex items-center justify-center font-sans shadow-sm border border-transparent"
+              className="h-9 px-4 text-xs font-semibold cursor-pointer rounded-lg bg-black text-white hover:bg-black/90 dark:bg-white dark:text-black dark:hover:bg-white/90 transition-all duration-200 flex items-center justify-center font-sans shadow-sm border border-transparent"
             >
               Get Started <ArrowRight className="w-3.5 h-3.5 ml-1" />
             </button>
@@ -138,25 +160,29 @@ export default function AboutPage() {
           {/* Get Started Button */}
           <div className="flex flex-col items-center gap-3">
             <Link
-              href={accepted ? "/diagnose" : "#disclaimer-accept"}
+              href="/diagnose"
               onClick={e => {
-                if (!accepted) {
+                if (!isLoggedIn && !accepted) {
                   e.preventDefault();
                   document.getElementById("disclaimer-accept")?.focus();
-                  window.scrollTo({ top: 400, behavior: "smooth" });
+                  const element = document.getElementById("medical-disclaimer");
+                  if (element) {
+                    const y = element.getBoundingClientRect().top + window.scrollY - 80;
+                    window.scrollTo({ top: y, behavior: "smooth" });
+                  }
                 }
               }}
               className={buttonVariants({
                 variant: "default",
                 size: "lg",
-                className: `w-auto font-bold text-sm h-12 px-8 gap-2 transition-all ${!accepted ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`
+                className: `w-auto font-bold text-sm h-12 px-8 gap-2 transition-all ${(isLoggedIn || accepted) ? "cursor-pointer" : "opacity-50 cursor-not-allowed"}`
               })}
             >
               <Play className="w-4 h-4 fill-current" />
               Get Started — Launch Workstation
               <ArrowRight className="w-4 h-4" />
             </Link>
-            {!accepted && (
+            {!isLoggedIn && !accepted && (
               <p className="text-[11px] text-muted-foreground">Please accept the disclaimer above to continue.</p>
             )}
           </div>
