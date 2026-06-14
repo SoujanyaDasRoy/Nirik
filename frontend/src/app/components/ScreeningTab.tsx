@@ -23,7 +23,6 @@ import {
   Settings,
   CircleDot,
   Columns,
-  GitPullRequest
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -243,7 +242,7 @@ export function ScreeningTab({
   const [heatmapOpacity, setHeatmapOpacity] = useState(0.55);
   const [lungSegmentationActive, setLungSegmentationActive] = useState(false);
   const [workstationMode, setWorkstationMode] = useState<"clinical" | "research">("clinical");
-  const [activeRightTab, setActiveRightTab] = useState<"findings" | "review" | "history" | "report" | "collaboration">("findings");
+  const [activeRightTab, setActiveRightTab] = useState<"findings" | "review" | "report">("findings");
   const [highlightedAnatomicalZone, setHighlightedAnatomicalZone] = useState<string>("");
 
   // Annotation layers
@@ -263,7 +262,7 @@ export function ScreeningTab({
   const [reviewerName, setReviewerName] = useState("");
   const [clinicianNote, setClinicianNote] = useState("");
 
-  const [xaiMethod, setXaiMethod] = useState<"gradcam" | "gradcam_plusplus" | "attention" | "coverage" | "attribution">("gradcam_plusplus");
+  const [xaiMethod, setXaiMethod] = useState<"gradcam_plusplus">("gradcam_plusplus");
   const [similarCases, setSimilarCases] = useState<{
     tb_similar: any[];
     normal_similar: any[];
@@ -288,12 +287,22 @@ export function ScreeningTab({
     fetchModelMetadata();
   }, []);
 
+
   const syncFeedback = async (
     status: string,
     comments: string,
     reviewer: string,
     note: string
   ) => {
+    const getBackendStatus = (s: string) => {
+      if (s === "confirm") return "Confirm AI finding";
+      if (s === "reject") return "Reject AI finding";
+      if (s === "investigate") return "Request Investigation";
+      if (s === "insufficient") return "Insufficient Quality";
+      return s;
+    };
+    const backendStatus = getBackendStatus(status);
+
     handleFeedbackSaved(
       status,
       note,
@@ -314,7 +323,7 @@ export function ScreeningTab({
           credentials: "include",
           body: JSON.stringify({
             patient_id: activeResult.metadata.patient_id,
-            clinician_prediction: status,
+            clinician_prediction: backendStatus,
             reason: comments,
             annotation_b64: activeResult.annotated_image || "",
             clinician_note: note
@@ -428,7 +437,7 @@ export function ScreeningTab({
         study_date: new Date().toISOString().split("T")[0]
       },
       original_image: cand.original_image,
-      heatmap_image: cand.original_image,
+      heatmap_image: cand.heatmap_image,
       clinician_override: null,
       clinician_note: "",
       annotated_image: "",
@@ -479,7 +488,7 @@ export function ScreeningTab({
       setAuditLogs([]);
       setSimilarCases(null);
     }
-  }, [selectedIdx, activeResult?.study_id, activeResult?.heatmaps]);
+  }, [selectedIdx, activeResult?.study_id]);
 
   // Append a timeline action helper
   const addAuditLog = (actionText: string) => {
@@ -780,7 +789,7 @@ export function ScreeningTab({
                     <>
                       {/* WORKSPACE SELECTOR TABS */}
                       <div className="flex bg-muted/50 p-1 rounded-full border border-border/40 w-full">
-                        {(["findings", "review", "history", "report", "collaboration"] as const).map(tab => (
+                        {(["findings", "review", "report"] as const).map(tab => (
                           <button
                             key={tab}
                             onClick={() => {
