@@ -1,0 +1,163 @@
+# Nirikhshon: AI-Assisted Pulmonary Tuberculosis Screening Workstation
+
+Nirikhshon is an end-to-end, high-performance screening workstation designed to assist clinicians and radiologists in detecting active Pulmonary Tuberculosis (TB) from chest radiographs (both standard X-rays and DICOM files). 
+
+The application consists of:
+1. **Frontend Client (PACS Interface):** Built with Next.js and React, featuring a custom dark mode tailored for radiology reading rooms, mouse-interactive windowing controls, scale-calibrated physical rulers, bounding box annotations, and clinical report builders.
+2. **Backend API Gateway:** Built with Flask and Python, hosting a high-performance, Indian-cohort-tuned DenseNet-121 model with PyTorch/Keras, Grad-CAM heatmap generators, DICOM header parsers, and a persistent SQLite database for audit trails.
+
+---
+
+## 🛠️ System Prerequisites
+
+Ensure you have the following installed on your machine:
+* **Node.js:** v18.x, v20.x, or newer (v20+ recommended)
+* **Python:** v3.10 through v3.14 (v3.14 recommended)
+* **Git:** For repository management
+* **Docker & Docker Compose** (Optional, for containerized run)
+
+---
+
+## 📥 Local Installation & Setup
+
+Follow these steps to set up the project locally on your machine.
+
+### 1. Clone the Repository
+```bash
+git clone <your-repository-url>
+cd "Final Year Project"
+```
+
+### 2. Set Up the Python Backend
+The backend utilizes a Python virtual environment to manage its dependencies.
+
+1. **Create the Virtual Environment:**
+   Run this in the root of the project:
+   ```bash
+   python -m venv tb_env
+   ```
+2. **Activate the Virtual Environment:**
+   * **Windows (PowerShell):**
+     ```powershell
+     .\tb_env\Scripts\Activate.ps1
+     ```
+   * **Windows (Command Prompt):**
+     ```cmd
+     .\tb_env\Scripts\activate.bat
+     ```
+   * **macOS / Linux:**
+     ```bash
+     source tb_env/bin/activate
+     ```
+3. **Install the Required Python Packages:**
+   Ensure your virtual environment is active, then run:
+   ```bash
+   pip install -r requirements.txt
+   ```
+   *(Alternatively, if running packages directly inside the `backend` folder, you can run `pip install -r backend/requirements.txt`)*
+
+### 3. Set Up the Next.js Frontend
+1. Navigate to the `frontend` folder:
+   ```bash
+   cd frontend
+   ```
+2. Install the frontend dependencies:
+   ```bash
+   npm install
+   ```
+
+---
+
+## 🚀 Running the Project
+
+You can run the workstation locally using three different methods:
+
+### Method A: Quick Showcase Launcher (Windows only)
+For quick local demonstrations without Docker, you can run both the frontend and backend with a single click:
+1. Double-click the **`start_showcase.bat`** file in the root folder, or execute it from the command prompt:
+   ```cmd
+   .\start_showcase.bat
+   ```
+2. This starts two separate command prompts (one for the Flask Backend, one for the Next.js Frontend).
+
+---
+
+### Method B: Manual Startup (All Platforms)
+Open two terminal windows/tabs:
+
+#### Terminal 1: Start Python Backend
+1. Navigate to the backend directory:
+   ```bash
+   cd backend
+   ```
+2. Activate your virtual environment:
+   * **Windows:** `..\tb_env\Scripts\activate`
+   * **macOS/Linux:** `source ../tb_env/bin/activate`
+3. Run the Flask server:
+   ```bash
+   python app.py
+   ```
+   *The backend will boot up at **`http://localhost:5000`**.*
+
+#### Terminal 2: Start Next.js Frontend
+1. Navigate to the frontend directory:
+   ```bash
+   cd frontend
+   ```
+2. Start the Turbopack development server:
+   ```bash
+   npm run dev
+   ```
+   *The frontend client will run at **`http://localhost:3000`**.*
+
+---
+
+### Method C: Run via Docker Compose (Containerized)
+To deploy the entire production stack (including Redis and Celery background workers for batch concurrency):
+1. Make sure Docker Desktop is open and running.
+2. From the root directory, run:
+   ```bash
+   docker-compose up --build
+   ```
+3. Docker will build and run:
+   * **Next.js Frontend** (on `http://localhost:3000`)
+   * **Flask Backend** (on `http://localhost:5000`)
+   * **Redis Server** (on port `6379`)
+   * **Celery Workers** (for concurrent background processing)
+
+To shut down the container environment:
+```bash
+docker-compose down
+```
+
+---
+
+## 💻 Accessing the Application
+
+Open your browser and navigate to:
+* **User Interface:** [http://localhost:3000](http://localhost:3000)
+* **Backend API Base:** [http://localhost:5000](http://localhost:5000)
+
+---
+
+## 🧪 Running Tests
+
+To verify that the code compiles and matches all constraints:
+1. Navigate to the `frontend` folder:
+   ```bash
+   cd frontend
+   ```
+2. Execute the test suite:
+   ```bash
+   npm test
+   ```
+
+---
+
+## ⚠️ Responsible Use Disclaimer
+
+**Nirikhshon is an academic research prototype.**
+* It holds no regulatory clearances or clinical certifications (such as FDA, CE Mark, CDSCO, HIPAA).
+* It is **not** a diagnostic medical device. 
+* All AI predictions, bounding box recommendations, and Grad-CAM saliency heatmaps are preliminary screening aids only. 
+* Any findings generated by this workstation must be confirmed by a licensed medical professional (radiologist or physician) before initiating any patient treatment.

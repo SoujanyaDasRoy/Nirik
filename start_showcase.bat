@@ -1,6 +1,6 @@
 @echo off
 echo =======================================================
-echo    ApolloDx Final Year Project Showcase Launcher
+echo    Nirikhshon Final Year Project Showcase Launcher
 echo =======================================================
 echo.
 
