@@ -23,6 +23,7 @@ import {
   Settings,
   CircleDot,
   Columns,
+  Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -238,7 +239,7 @@ export function ScreeningTab({
   const q = activeResult ? getQualityMetrics(activeResult) : null;
 
   // ── WORKSTATION VIEWING STATES ──
-  const [viewMode, setViewMode] = useState<"original" | "heatmap" | "heatmap-only" | "side-by-side" | "split">("heatmap");
+  const [viewMode, setViewMode] = useState<"original" | "heatmap" | "heatmap-only" | "side-by-side" | "split">("original");
   const [heatmapOpacity, setHeatmapOpacity] = useState(0.55);
   const [lungSegmentationActive, setLungSegmentationActive] = useState(false);
   const [workstationMode, setWorkstationMode] = useState<"clinical" | "research">("clinical");
@@ -461,7 +462,7 @@ export function ScreeningTab({
 
   // Sync state on file selection change
   useEffect(() => {
-    setViewMode("heatmap");
+    setViewMode("original");
     setHeatmapOpacity(0.55);
     setLungSegmentationActive(false);
     setBoxes([]);
@@ -615,12 +616,13 @@ export function ScreeningTab({
   // Stepper timeline checklist status
   const getStepperStatus = () => {
     if (!activeResult) return [];
+    const isLoading = activeResult.status === "loading";
     const stepList = [
-      { text: "Image loaded in buffer", done: true },
-      { text: "AI classification complete", done: activeResult.status === "success" },
-      { text: "Grad-CAM++ heatmaps calculated", done: activeResult.status === "success" },
-      { text: "Clinical Adjudication Sign-off", done: reviewerName.trim().length > 2 },
-      { text: "Clinical Report finalized", done: dbRegistered }
+      { text: "Image loaded in buffer", done: true, loading: false },
+      { text: "AI classification complete", done: activeResult.status === "success", loading: isLoading },
+      { text: "Grad-CAM++ heatmaps calculated", done: activeResult.status === "success", loading: isLoading },
+      { text: "Clinical Adjudication Sign-off", done: reviewerName.trim().length > 2, loading: false },
+      { text: "Clinical Report finalized", done: dbRegistered, loading: false }
     ];
     return stepList;
   };
@@ -674,13 +676,13 @@ export function ScreeningTab({
                   <div className="flex bg-muted/70 p-1 rounded-full border border-border/60">
                     <button
                       onClick={() => setWorkstationMode("clinical")}
-                      className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all duration-200 cursor-pointer ${workstationMode === "clinical" ? "bg-background text-foreground shadow-sm font-bold border border-border/10" : "text-muted-foreground hover:text-foreground"}`}
+                      className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all duration-200 cursor-pointer ${workstationMode === "clinical" ? "bg-white text-black shadow-sm font-bold border border-border/10" : "text-muted-foreground hover:text-foreground"}`}
                     >
                       Clinical View
                     </button>
                     <button
                       onClick={() => setWorkstationMode("research")}
-                      className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all duration-200 cursor-pointer ${workstationMode === "research" ? "bg-background text-foreground shadow-sm font-bold border border-border/10" : "text-muted-foreground hover:text-foreground"}`}
+                      className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all duration-200 cursor-pointer ${workstationMode === "research" ? "bg-white text-black shadow-sm font-bold border border-border/10" : "text-muted-foreground hover:text-foreground"}`}
                     >
                       Research View
                     </button>
@@ -786,10 +788,18 @@ export function ScreeningTab({
                             <div className="space-y-2">
                               {getStepperStatus().map((step, idx) => (
                                 <div key={idx} className="flex items-center gap-2 text-xs font-medium">
-                                  <span className={step.done ? "text-emerald-500 font-bold" : "text-muted-foreground animate-pulse"}>
-                                    {step.done ? "✓" : "⏳"}
+                                  <span className={step.done ? "text-emerald-500 font-bold" : step.loading ? "text-primary" : "text-muted-foreground animate-pulse"}>
+                                    {step.done ? (
+                                      "✓"
+                                    ) : step.loading ? (
+                                      <Loader2 className="w-3.5 h-3.5 animate-spin text-primary" />
+                                    ) : (
+                                      "⏳"
+                                    )}
                                   </span>
-                                  <span className={step.done ? "text-foreground font-semibold" : "text-muted-foreground"}>{step.text}</span>
+                                  <span className={step.done ? "text-foreground font-semibold" : step.loading ? "text-primary font-semibold" : "text-muted-foreground"}>
+                                    {step.text} {step.loading && <span className="text-[10px] text-muted-foreground font-normal">(AI calculating...)</span>}
+                                  </span>
                                 </div>
                               ))}
                             </div>
