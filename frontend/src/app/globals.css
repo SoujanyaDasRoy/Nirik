@@ -496,3 +496,9 @@ input[type="range"]::-webkit-slider-thumb:hover {
   .my-lg { margin-top: var(--spacing-lg); margin-bottom: var(--spacing-lg); }
   .my-xl { margin-top: var(--spacing-xl); margin-bottom: var(--spacing-xl); }
 }
+
+html,
+body {
+  max-width: 100vw;
+  overflow-x: hidden;
+}

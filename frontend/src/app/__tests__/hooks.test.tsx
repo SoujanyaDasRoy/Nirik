@@ -46,6 +46,17 @@ jest.mock("next-themes", () => ({
   useTheme: () => ({ theme: "light", setTheme: jest.fn() }),
 }));
 
+// Mock next/navigation
+jest.mock("next/navigation", () => ({
+  useRouter: () => ({
+    push: jest.fn(),
+    replace: jest.fn(),
+    prefetch: jest.fn(),
+    back: jest.fn(),
+  }),
+}));
+
+
 // Mock individual dynamic components to avoid rendering complications
 jest.mock("../components/DicomViewer", () => {
   return function MockDicomViewer() {

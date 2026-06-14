@@ -21,6 +21,8 @@ import {
   CheckCircle,
   ArrowUpRight,
   Play,
+  Menu,
+  X,
 } from "lucide-react";
 
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -34,6 +36,7 @@ export default function AboutPage() {
   const [mounted, setMounted] = useState(false);
   const [accepted, setAccepted] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -57,20 +60,21 @@ export default function AboutPage() {
   return (
     <div className="min-h-screen bg-background flex flex-col font-sans transition-colors duration-200">
       {/* ── HEADER ── */}
-      <header className="h-16 border-b border-border bg-background flex items-center flex-shrink-0 sticky top-0 z-50">
-        <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 flex items-center justify-between">
+      <header className="border-b border-border bg-background sticky top-0 z-50 transition-colors duration-200">
+        <div className="h-16 w-full max-w-6xl mx-auto px-4 sm:px-6 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2 select-none">
               <Activity className="w-5 h-5 text-primary" strokeWidth={2} />
               <span className="font-bold text-sm tracking-tight text-foreground font-sans">Nirikhshon</span>
             </div>
-            <Separator orientation="vertical" className="h-10 mx-2 hidden sm:block" />
-            <Badge variant="outline" className="text-[10px] font-semibold px-3 py-4 rounded-full border-amber-500/30 text-amber-600 dark:text-amber-400 bg-amber-500/5 hidden sm:inline-flex">
+            <Separator orientation="vertical" className="h-10 mx-2 hidden md:block" />
+            <Badge variant="outline" className="text-[10px] font-semibold px-3 py-4 rounded-full border-amber-500/30 text-amber-600 dark:text-amber-400 bg-amber-500/5 hidden md:inline-flex">
               Research Prototype — Not for Clinical Use
             </Badge>
           </div>
 
-          <div className="flex items-center gap-4">
+          {/* Desktop Navigation */}
+          <div className="hidden md:flex items-center gap-4">
             <button
               onClick={() => {
                 if (isLoggedIn) {
@@ -88,8 +92,6 @@ export default function AboutPage() {
               Get Started <ArrowRight className="w-3.5 h-3.5 ml-1" />
             </button>
 
-            {/* <Separator orientation="vertical" className="h-10" /> */}
-
             <button
               onClick={() => setTheme(mounted && theme === "dark" ? "light" : "dark")}
               className="w-9 h-9 rounded-full bg-muted/40 hover:bg-muted/80 text-foreground flex items-center justify-center border border-border hover:border-primary/50 cursor-pointer transition-colors"
@@ -102,7 +104,66 @@ export default function AboutPage() {
               )}
             </button>
           </div>
+
+          {/* Mobile Menu Button */}
+          <div className="flex md:hidden items-center gap-2">
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="w-9 h-9 rounded-lg hover:bg-muted/60 text-foreground flex items-center justify-center border border-border transition-colors cursor-pointer"
+              aria-label="Toggle menu"
+            >
+              {mobileMenuOpen ? (
+                <X className="w-5 h-5" strokeWidth={1.5} />
+              ) : (
+                <Menu className="w-5 h-5" strokeWidth={1.5} />
+              )}
+            </button>
+          </div>
         </div>
+
+        {/* Mobile Menu Dropdown */}
+        {mobileMenuOpen && (
+          <div className="md:hidden border-t border-border bg-background px-4 py-4 space-y-4 shadow-md transition-all duration-200">
+            <div className="flex flex-col gap-3">
+              <Badge variant="outline" className="text-[10px] font-semibold px-3 py-3 rounded-lg border-amber-500/30 text-amber-600 dark:text-amber-400 bg-amber-500/5 justify-center">
+                ⚠️ Research Prototype — Not for Clinical Use
+              </Badge>
+              
+              <button
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  if (isLoggedIn) {
+                    router.push("/diagnose");
+                  } else {
+                    const element = document.getElementById("medical-disclaimer");
+                    if (element) {
+                      const y = element.getBoundingClientRect().top + window.scrollY - 80;
+                      window.scrollTo({ top: y, behavior: "smooth" });
+                    }
+                  }
+                }}
+                className="h-10 w-full text-xs font-semibold cursor-pointer rounded-lg bg-black text-white hover:bg-black/90 dark:bg-white dark:text-black dark:hover:bg-white/90 transition-all duration-200 flex items-center justify-center font-sans shadow-sm border border-transparent"
+              >
+                Get Started <ArrowRight className="w-3.5 h-3.5 ml-1" />
+              </button>
+
+              <button
+                onClick={() => setTheme(mounted && theme === "dark" ? "light" : "dark")}
+                className="h-10 w-full rounded-lg bg-muted/40 hover:bg-muted/80 text-foreground flex items-center justify-center gap-2 border border-border cursor-pointer transition-colors text-xs font-semibold"
+              >
+                {mounted && theme === "dark" ? (
+                  <>
+                    <Sun className="w-4 h-4" strokeWidth={1.5} /> Switch to Light Mode
+                  </>
+                ) : (
+                  <>
+                    <Moon className="w-4 h-4" strokeWidth={1.5} /> Switch to Dark Mode
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        )}
       </header>
 
       {/* ── HERO & WARNING BANNER ── */}
@@ -191,7 +252,7 @@ export default function AboutPage() {
 
       {/* ── ABOUT SECTION (for showcase) ── */}
       {/* TODO: Remove this section before public release */}
-      <div className="flex-1 w-full max-w-6xl mx-auto px-4 sm:px-6 py-12 grid grid-cols-1 lg:grid-cols-12 gap-8 overflow-y-auto">
+      <div className="flex-1 w-full max-w-6xl mx-auto px-4 sm:px-6 py-12 grid grid-cols-1 lg:grid-cols-12 gap-8">
 
         {/* Left: About the project */}
         <main className="lg:col-span-8 space-y-8">
@@ -256,7 +317,7 @@ export default function AboutPage() {
 
             <div className="space-y-4 pt-4">
               <h3 className="text-sm font-bold text-foreground">3. Validated Metrics (Unseen Test Set)</h3>
-              <div className="border border-border rounded-xl bg-card overflow-hidden">
+              <div className="border border-border rounded-xl bg-card overflow-x-auto">
                 <table className="w-full border-collapse text-left text-xs">
                   <thead>
                     <tr className="border-b border-border bg-muted/30 font-semibold text-muted-foreground">
@@ -369,12 +430,109 @@ export default function AboutPage() {
       </div>
 
       {/* ── FOOTER ── */}
-      <footer className="bg-[#101010] text-[#a1a1aa] py-10 flex-shrink-0 text-xs border-t border-stone-900">
-        <div className="w-full max-w-6xl mx-auto px-6 flex flex-col sm:flex-row justify-between items-center gap-4 font-sans">
-          <p className="text-stone-400">Nirikhshon · Final Year College Project Prototype · Not for Clinical Use</p>
-          <div className="flex gap-4 text-stone-500 font-medium">
-            <Link href="/diagnose" className="hover:text-stone-200 hover:underline">Screening Workspace</Link>
+      <footer className="bg-[#101010] text-[#a1a1aa] py-12 px-6 flex-shrink-0 text-xs border-t border-stone-900 transition-colors duration-200">
+        <div className="w-full max-w-6xl mx-auto flex flex-col gap-10">
+          
+          {/* Top sections grid */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 text-left">
+            
+            {/* Col 1: Brand Info */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 text-white font-bold select-none">
+                <Activity className="w-5 h-5 text-primary" strokeWidth={2} style={{ color: "#ffffff" }} />
+                <span className="font-bold text-sm tracking-tight font-sans">Nirikhshon</span>
+              </div>
+              <p className="text-stone-400 text-xs leading-relaxed max-w-xs">
+                Deep learning-powered screening platform designed to assist medical practitioners in identifying Pulmonary Tuberculosis from standard chest radiographs.
+              </p>
+              <div className="text-[10px] text-amber-500/80 bg-amber-500/5 border border-amber-500/10 px-3 py-2 rounded-lg leading-normal font-semibold max-w-xs">
+                ⚠️ Academic Research Prototype — Not certified for real-world clinical diagnosis.
+              </div>
+            </div>
+
+            {/* Col 2: Platform Ingress */}
+            <div className="space-y-3">
+              <h4 className="text-white font-bold text-xs uppercase tracking-wider">Screening Platform</h4>
+              <ul className="space-y-2 text-stone-400">
+                <li>
+                  <Link href="/diagnose" className="hover:text-white transition-colors flex items-center gap-1.5">
+                    Workspace Ingress <ArrowUpRight className="w-3 h-3" />
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/login" className="hover:text-white transition-colors flex items-center gap-1.5">
+                    Clinician Login <ArrowUpRight className="w-3 h-3" />
+                  </Link>
+                </li>
+                <li>
+                  <button 
+                    onClick={() => {
+                      const el = document.getElementById("medical-disclaimer");
+                      if (el) {
+                        const y = el.getBoundingClientRect().top + window.scrollY - 80;
+                        window.scrollTo({ top: y, behavior: "smooth" });
+                      }
+                    }}
+                    className="hover:text-white transition-colors text-left cursor-pointer font-sans"
+                  >
+                    Clinical Disclaimer
+                  </button>
+                </li>
+              </ul>
+            </div>
+
+            {/* Col 3: Architecture Details */}
+            <div className="space-y-3">
+              <h4 className="text-white font-bold text-xs uppercase tracking-wider">System Architecture</h4>
+              <ul className="space-y-2 text-stone-400">
+                <li>
+                  <span className="block text-[11px] font-semibold text-stone-300">Model Structure</span>
+                  <span className="text-stone-500">DenseNet-121 Student Network (~8M Params)</span>
+                </li>
+                <li>
+                  <span className="block text-[11px] font-semibold text-stone-300">Teacher Guidance</span>
+                  <span className="text-stone-500">ResNet-50 Knowledge Distillation</span>
+                </li>
+                <li>
+                  <span className="block text-[11px] font-semibold text-stone-300">Explainability</span>
+                  <span className="text-stone-500">Grad-CAM++ Saliency Mapping</span>
+                </li>
+              </ul>
+            </div>
+
+            {/* Col 4: Research & Cohort */}
+            <div className="space-y-3">
+              <h4 className="text-white font-bold text-xs uppercase tracking-wider">Research Datasets</h4>
+              <ul className="space-y-2 text-stone-400">
+                <li>
+                  <span className="block text-[11px] font-semibold text-stone-300">Primary Fine-Tuning</span>
+                  <span className="text-stone-500">NIRT Cohort (Chennai, India)</span>
+                </li>
+                <li>
+                  <span className="block text-[11px] font-semibold text-stone-300">Baseline Data</span>
+                  <span className="text-stone-500">Shenzhen & Montgomery Datasets</span>
+                </li>
+                <li>
+                  <span className="block text-[11px] font-semibold text-stone-300">Integration</span>
+                  <span className="text-stone-500">HL7 FHIR Clinical Specifications</span>
+                </li>
+              </ul>
+            </div>
+
           </div>
+
+          <Separator className="bg-stone-800" />
+
+          {/* Bottom Copyright and Meta */}
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-stone-500 font-sans text-xs">
+            <p className="text-center md:text-left">
+              &copy; {new Date().getFullYear()} Nirikhshon. Academic Final Year Project Prototype.
+            </p>
+            <div className="flex gap-4">
+              <span className="text-stone-600">Built with React, Next.js, and Flask</span>
+            </div>
+          </div>
+
         </div>
       </footer>
     </div>
