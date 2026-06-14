@@ -784,19 +784,6 @@ export function ScreeningTab({
                       {activeRightTab === "findings" && (
                         <div className="space-y-6 animate-fadein">
 
-                          {/* STUDY METADATA SUMMARY */}
-                          <div className="grid grid-cols-2 gap-4 p-4 border border-border bg-card rounded-xl text-xs font-medium">
-                            <div className="space-y-1">
-                              <p className="text-muted-foreground">Patient ID: <span className="font-mono font-bold text-foreground">{activeResult.metadata?.patient_id || "N/A"}</span></p>
-                              <p className="text-muted-foreground">Modality: <span className="font-bold text-foreground">{activeResult.metadata?.modality || "N/A"}</span></p>
-                              <p className="text-muted-foreground">Study Date: <span className="font-bold text-foreground">{activeResult.metadata?.study_date || "N/A"}</span></p>
-                            </div>
-                            <div className="space-y-1">
-                              <p className="text-muted-foreground">Model: <span className="font-bold text-foreground">DenseNet-121</span></p>
-                              <p className="text-muted-foreground">Inference Speed: <span className="font-mono font-bold text-foreground">324 ms</span></p>
-                              <p className="text-muted-foreground">Resolution: <span className="font-mono font-bold text-foreground">0.250 mm/px</span></p>
-                            </div>
-                          </div>
 
                           {/* WORKFLOW STATUS STEPPER */}
                           <div className="p-4 border border-border bg-card rounded-xl space-y-3">
