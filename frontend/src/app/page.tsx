@@ -83,8 +83,8 @@ export default function AboutPage() {
 
           {/* Title */}
           <div className="space-y-3 max-w-2xl">
-            <Badge variant="outline" className="px-3 py-1 text-[11px] font-semibold text-primary bg-primary/5 border-primary/20 uppercase tracking-wider rounded-full">
-              Final Year Academic Project · 2024–2025
+            <Badge variant="outline" className="px-4 py-4 text-[12px] font-semibold text-primary bg-primary/10 border-primary/20 uppercase tracking-wider rounded-full">
+              Final Year Academic Project · 2025–2026
             </Badge>
             <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl lg:text-6xl leading-tight font-sans">
               Nirikhshon
