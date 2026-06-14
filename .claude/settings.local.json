@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dir C:\\\\Users\\\\sdroy\\\\OneDrive\\\\Desktop\\\\Documents\\\\Final Year Project\\\\frontend\\\\src\\\\app\\\\components *)",
+      "Bash(dir C:\\\\Users\\\\sdroy\\\\OneDrive\\\\Desktop\\\\Documents\\\\Final Year Project\\\\frontend\\\\src\\\\app\\\\hooks *)",
+      "Bash(dir C:\\\\Users\\\\sdroy\\\\OneDrive\\\\Desktop\\\\Documents\\\\Final Year Project\\\\frontend\\\\src\\\\app\\\\__tests__ *)"
+    ]
+  }
+}
