@@ -423,8 +423,8 @@ export default function DicomViewer({
   // URLs, and raw base64 strings all render correctly. Without the blob: check,
   // a blob URL becomes "data:image/png;base64,blob:http://..." and silently
   // fails to load, leaving the diagnostic viewport blank.
-  const toImageSrc = (raw: string | undefined): string => {
-    if (!raw) return "";
+  const toImageSrc = (raw: string | undefined): string | null => {
+    if (!raw) return null;
     if (raw.startsWith("data:") || raw.startsWith("blob:") || raw.startsWith("http")) {
       return raw;
     }
@@ -468,24 +468,7 @@ export default function DicomViewer({
                 </Button>
               ))}
             </div>
-            {/* Heatmap Transparency Overlay Slider */}
-            {setHeatmapOpacity && (viewMode === "heatmap" || viewMode === "heatmap-only" || viewMode === "split") && (
-              <div className="flex items-center gap-2 text-xs text-muted-foreground ml-2">
-                <span className="font-bold uppercase tracking-wider text-[10px] text-muted-foreground">Opacity:</span>
-                <input
-                  type="range"
-                  min="0"
-                  max="100"
-                  value={Math.round(heatmapOpacity * 100)}
-                  onChange={e => {
-                    const val = parseInt(e.target.value) / 100;
-                    setHeatmapOpacity(val);
-                  }}
-                  className="w-24 h-1.5 bg-muted rounded-lg appearance-none cursor-pointer accent-primary outline-none focus:ring-1 focus:ring-primary"
-                />
-                <span className="font-mono text-xs w-8 text-right font-bold text-foreground">{Math.round(heatmapOpacity * 100)}%</span>
-              </div>
-            )}
+            {/* Heatmap Transparency Overlay Slider removed per user request */}
           </div>
 
           {/* Reset All */}

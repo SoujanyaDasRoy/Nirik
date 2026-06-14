@@ -1,12 +1,42 @@
 import io
 import urllib.request
 import urllib.parse
+import http.cookiejar
 from PIL import Image
 import json
 
 def test_predict():
     print("Testing /predict endpoint...")
     
+    # Setup cookie jar to maintain authenticated session
+    cookie_jar = http.cookiejar.CookieJar()
+    opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(cookie_jar))
+    urllib.request.install_opener(opener)
+    
+    # 0. Authenticate first
+    print("Authenticating reviewer user...")
+    login_url = "http://127.0.0.1:5000/login"
+    login_data = json.dumps({
+        "username": "reviewer",
+        "password": "password123"
+    }).encode("utf-8")
+    
+    login_req = urllib.request.Request(
+        login_url,
+        data=login_data,
+        headers={"Content-Type": "application/json"}
+    )
+    
+    try:
+        with urllib.request.urlopen(login_req) as login_resp:
+            login_result = json.loads(login_resp.read().decode("utf-8"))
+            print("Login success:", login_result.get("success"), "Role:", login_result.get("role"))
+    except Exception as e:
+        print("✗ Authentication failed:", e)
+        if hasattr(e, 'read'):
+            print("Response details:", e.read().decode('utf-8'))
+        raise e
+
     # 1. Create dummy image bytes
     img = Image.new("RGB", (400, 300), color=(100, 100, 100))
     img_byte_arr = io.BytesIO()
@@ -64,3 +94,4 @@ def test_predict():
 
 if __name__ == "__main__":
     test_predict()
+
