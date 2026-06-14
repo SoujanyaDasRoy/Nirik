@@ -773,11 +773,9 @@ export function ScreeningTab({
                                 : "text-muted-foreground hover:text-foreground"
                               }`}
                           >
-                            {tab === "findings" && "🔎 Findings"}
-                            {tab === "review" && "📝 Review"}
-                            {tab === "history" && "📈 History"}
-                            {tab === "report" && "📋 Report"}
-                            {tab === "collaboration" && "💬 Collab"}
+                            {tab === "findings" && "Findings"}
+                            {tab === "review" && "Review"}
+                            {tab === "report" && "Report"}
                           </button>
                         ))}
                       </div>
