@@ -195,22 +195,22 @@ export default function WorkspacePage() {
   const isAdmin = sessionUser?.role === "admin";
 
   return (
-    <div className="min-h-screen bg-background flex font-sans overflow-hidden" style={{ height: "100vh" }}>
+    <div className="min-h-screen bg-background flex flex-col md:flex-row font-sans overflow-hidden" style={{ height: "100vh" }}>
 
       {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      {/* LEFT SIDEBAR  */}
+      {/* LEFT SIDEBAR / BOTTOM MOBILE NAV BAR */}
       {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <aside className="w-16 flex-shrink-0 border-r border-border bg-card flex flex-col items-center py-4 gap-1 z-40">
+      <aside className="fixed bottom-0 left-0 right-0 h-14 w-full border-t border-r-0 md:relative md:bottom-auto md:left-auto md:right-auto md:h-full md:w-16 flex flex-row md:flex-col items-center justify-around md:justify-start py-0 md:py-4 gap-1 bg-card border-border z-40">
         {/* Logo */}
         <div
           onClick={() => window.location.href = "/"}
-          className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary cursor-pointer mb-4 hover:bg-primary/20 transition-colors"
+          className="w-10 h-10 rounded-xl bg-primary/10 items-center justify-center text-primary cursor-pointer mb-4 hover:bg-primary/20 transition-colors hidden md:flex"
           title="Nirikhshon Home"
         >
           <Activity className="w-5 h-5" strokeWidth={1.5} />
         </div>
 
-        <Separator className="w-8 mb-2" />
+        <Separator className="w-8 mb-2 hidden md:block" />
 
         {/* Nav icons */}
         {navItems.map(item => {
@@ -233,7 +233,7 @@ export default function WorkspacePage() {
               >
                 {item.icon}
                 {/* Active indicator dot */}
-                {isActive && <span className="absolute -right-0.5 top-1/2 -translate-y-1/2 w-1 h-4 rounded-full bg-primary" />}
+                {isActive && <span className="absolute -right-0.5 top-1/2 -translate-y-1/2 w-1 h-4 rounded-full bg-primary hidden md:block" />}
               </button>
 
               {/* Tooltip */}
@@ -254,8 +254,8 @@ export default function WorkspacePage() {
           );
         })}
 
-        <div className="mt-auto flex flex-col gap-1">
-          <Separator className="w-8 mb-2" />
+        <div className="mt-0 md:mt-auto flex flex-row md:flex-col gap-1 items-center">
+          <Separator className="w-8 mb-2 hidden md:block" />
           {/* Theme toggle */}
           <div className="relative group">
             <button
@@ -287,7 +287,7 @@ export default function WorkspacePage() {
       {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       {/* MAIN AREA */}
       {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden pb-14 md:pb-0">
 
         {/* ── TOP BAR ─────────────────────────────────────────────── */}
         <header className="h-14 border-b border-border bg-background flex items-center px-6 gap-3 flex-shrink-0 z-30">
