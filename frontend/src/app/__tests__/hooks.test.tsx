@@ -9,7 +9,7 @@ import Home from "../page";
 
 // Mock URL methods for Node/JSDOM environment
 if (typeof window !== "undefined") {
-  window.URL.createObjectURL = jest.fn((file) => `blob:http://localhost:3000/${file?.name || "mock-blob"}`);
+  window.URL.createObjectURL = jest.fn((file) => `blob:http://localhost:3000/${(file as any)?.name || "mock-blob"}`);
   window.URL.revokeObjectURL = jest.fn();
 }
 

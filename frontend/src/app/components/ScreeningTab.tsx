@@ -1188,7 +1188,7 @@ export function ScreeningTab({
                                         className="group relative cursor-pointer border border-border bg-muted/20 hover:bg-muted/40 rounded-lg overflow-hidden transition-all text-center p-1.5 flex flex-col items-center"
                                       >
                                         <img
-                                          src={cand.original_image || null}
+                                          src={cand.original_image || undefined}
                                           alt="TB Case"
                                           className="w-16 h-16 object-cover rounded-md border border-border mb-1 group-hover:scale-105 transition-transform"
                                         />
@@ -1210,7 +1210,7 @@ export function ScreeningTab({
                                         className="group relative cursor-pointer border border-border bg-muted/20 hover:bg-muted/40 rounded-lg overflow-hidden transition-all text-center p-1.5 flex flex-col items-center"
                                       >
                                         <img
-                                          src={cand.original_image || null}
+                                          src={cand.original_image || undefined}
                                           alt="Normal Case"
                                           className="w-16 h-16 object-cover rounded-md border border-border mb-1 group-hover:scale-105 transition-transform"
                                         />

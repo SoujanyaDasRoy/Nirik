@@ -423,8 +423,8 @@ export default function DicomViewer({
   // URLs, and raw base64 strings all render correctly. Without the blob: check,
   // a blob URL becomes "data:image/png;base64,blob:http://..." and silently
   // fails to load, leaving the diagnostic viewport blank.
-  const toImageSrc = (raw: string | undefined): string | null => {
-    if (!raw) return null;
+  const toImageSrc = (raw: string | undefined): string | undefined => {
+    if (!raw) return undefined;
     if (raw.startsWith("data:") || raw.startsWith("blob:") || raw.startsWith("http")) {
       return raw;
     }
