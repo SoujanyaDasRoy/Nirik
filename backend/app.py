@@ -35,9 +35,14 @@ socketio = SocketIO(app, cors_allowed_origins="*", logger=True, engineio_logger=
 
 # ── Configuration ──────────────────────────────────────────
 
-ALLOWED_ORIGIN = os.environ.get("ALLOWED_ORIGIN", "http://localhost:3000")
+import re
+ALLOWED_ORIGINS_ENV = os.environ.get("ALLOWED_ORIGIN", "http://localhost:3000,http://127.0.0.1:3000")
+ALLOWED_ORIGINS = [o.strip() for o in ALLOWED_ORIGINS_ENV.split(",")]
+# Support any vercel.app subdomain dynamically for preview/production urls
+ALLOWED_ORIGINS.append(re.compile(r"^https://.*\.vercel\.app$"))
+
 CORS(app, resources={r"/*": {
-    "origins": ALLOWED_ORIGIN,
+    "origins": ALLOWED_ORIGINS,
     "expose_headers": ["X-CSRF-Token"],
     "allow_headers": ["Content-Type", "X-CSRF-Token"]
 }}, supports_credentials=True)

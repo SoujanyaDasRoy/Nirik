@@ -1,0 +1,33 @@
+# Dependencies & Environments
+node_modules/
+tb_env/
+venv/
+.env
+.env.*
+.venv/
+env/
+ENV/
+
+# Python Caches & Build Files
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.tox/
+
+# Next.js Build Outputs & Cache
+frontend/.next/
+frontend/out/
+frontend/build/
+frontend/*.tsbuildinfo
+frontend/next-env.d.ts
+
+# OS Files
+.DS_Store
+Thumbs.db
+
+# Vercel Cache
+.vercel/
