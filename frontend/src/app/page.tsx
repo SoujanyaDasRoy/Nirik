@@ -58,14 +58,14 @@ export default function AboutPage() {
     <div className="min-h-screen bg-background flex flex-col font-sans transition-colors duration-200">
       {/* ── HEADER ── */}
       <header className="h-16 border-b border-border bg-background flex items-center flex-shrink-0 sticky top-0 z-50">
-        <div className="w-full max-w-6xl mx-auto px-6 flex items-center justify-between">
+        <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2 select-none">
               <Activity className="w-5 h-5 text-primary" strokeWidth={2} />
               <span className="font-bold text-sm tracking-tight text-foreground font-sans">Nirikhshon</span>
             </div>
-            <Separator orientation="vertical" className="h-10 mx-2" />
-            <Badge variant="outline" className="text-[10px] font-semibold px-3 py-4 rounded-full border-amber-500/30 text-amber-600 dark:text-amber-400 bg-amber-500/5">
+            <Separator orientation="vertical" className="h-10 mx-2 hidden sm:block" />
+            <Badge variant="outline" className="text-[10px] font-semibold px-3 py-4 rounded-full border-amber-500/30 text-amber-600 dark:text-amber-400 bg-amber-500/5 hidden sm:inline-flex">
               Research Prototype — Not for Clinical Use
             </Badge>
           </div>
@@ -106,8 +106,8 @@ export default function AboutPage() {
       </header>
 
       {/* ── HERO & WARNING BANNER ── */}
-      <section className="border-b border-border bg-background py-20 flex-shrink-0">
-        <div className="w-full max-w-4xl mx-auto px-6 flex flex-col items-center text-center gap-8">
+      <section className="border-b border-border bg-background py-16 sm:py-20 flex-shrink-0">
+        <div className="w-full max-w-4xl mx-auto px-4 sm:px-6 flex flex-col items-center text-center gap-8">
 
           {/* Title */}
           <div className="space-y-3 max-w-2xl">
@@ -191,7 +191,7 @@ export default function AboutPage() {
 
       {/* ── ABOUT SECTION (for showcase) ── */}
       {/* TODO: Remove this section before public release */}
-      <div className="flex-1 w-full max-w-6xl mx-auto px-6 py-12 grid grid-cols-1 lg:grid-cols-12 gap-8 overflow-y-auto">
+      <div className="flex-1 w-full max-w-6xl mx-auto px-4 sm:px-6 py-12 grid grid-cols-1 lg:grid-cols-12 gap-8 overflow-y-auto">
 
         {/* Left: About the project */}
         <main className="lg:col-span-8 space-y-8">
