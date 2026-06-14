@@ -491,6 +491,12 @@ export function ScreeningTab({
     }
   }, [selectedIdx, activeResult?.study_id]);
 
+  useEffect(() => {
+    if (activeResult && activeResult.status === "pending" && selectedIdx !== null) {
+      analyzeFile(selectedIdx);
+    }
+  }, [selectedIdx, activeResult?.status, analyzeFile]);
+
   // Append a timeline action helper
   const addAuditLog = (actionText: string) => {
     const d = new Date();
@@ -616,7 +622,7 @@ export function ScreeningTab({
   // Stepper timeline checklist status
   const getStepperStatus = () => {
     if (!activeResult) return [];
-    const isLoading = activeResult.status === "loading";
+    const isLoading = activeResult.status === "loading" || activeResult.status === "pending";
     const stepList = [
       { text: "Image loaded in buffer", done: true, loading: false },
       { text: "AI classification complete", done: activeResult.status === "success", loading: isLoading },
@@ -646,20 +652,6 @@ export function ScreeningTab({
         /* ── ENTERPRISE THREE-PANEL RAD WORKSPACE ── */
         <div className="w-full">
           {activeResult ? (
-            activeResult.status === "pending" ? (
-              <div className="w-full max-w-xl mx-auto py-16 flex flex-col items-center justify-center text-center space-y-6 animate-fadein">
-                <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center text-muted-foreground">
-                  <Activity className="w-6 h-6" />
-                </div>
-                <h3 className="text-lg font-bold text-foreground">Awaiting Model Evaluation</h3>
-                <p className="text-xs text-muted-foreground max-w-md">
-                  Study file: <strong className="text-foreground">{activeResult.filename}</strong> is queued. Trigger inference to populate explainability metrics.
-                </p>
-                <Button onClick={() => selectedIdx !== null && analyzeFile(selectedIdx)} className="gap-2 font-semibold text-xs h-10 px-5 cursor-pointer">
-                  <Play className="w-3.5 h-3.5 fill-current" /> Run AI Diagnostic Analysis
-                </Button>
-              </div>
-            ) : (
               /* ── 3-PANEL PACS WORKSPACE (SUCCESSFUL INFERENCE STATE) ── */
               <div className="flex flex-col space-y-6 w-full">
                 {/* Workstation Header & Switcher */}
@@ -861,23 +853,55 @@ export function ScreeningTab({
                             <CardContent className="p-5 space-y-4">
                               <div className="flex justify-between items-center">
                                 <p className="text-xs font-bold uppercase tracking-wider text-foreground">AI Diagnostics Output</p>
-                                <Badge variant="outline" className={`${predictionService.getDiagnosis(activeResult.prediction || "Normal", activeResult.confidence || 0).riskLevel === "High" ? "badge-tb" : "badge-normal"} rounded-full font-bold uppercase`}>
-                                  {predictionService.getDiagnosis(activeResult.prediction || "Normal", activeResult.confidence || 0).riskLevel} RISK
-                                </Badge>
+                                {activeResult.status === "loading" || activeResult.status === "pending" ? (
+                                  <Badge variant="outline" className="badge-normal rounded-full font-bold uppercase animate-pulse bg-muted/30 border-muted/50 text-muted-foreground">
+                                    Risk Calculating
+                                  </Badge>
+                                ) : activeResult.status === "error" ? (
+                                  <Badge variant="destructive" className="rounded-full font-bold uppercase">
+                                    Analysis Error
+                                  </Badge>
+                                ) : (
+                                  <Badge variant="outline" className={`${predictionService.getDiagnosis(activeResult.prediction || "Normal", activeResult.confidence || 0).riskLevel === "High" ? "badge-tb" : "badge-normal"} rounded-full font-bold uppercase`}>
+                                    {predictionService.getDiagnosis(activeResult.prediction || "Normal", activeResult.confidence || 0).riskLevel} RISK
+                                  </Badge>
+                                )}
                               </div>
                               <Separator />
                               <div className="space-y-3">
                                 <div className="flex justify-between items-center">
                                   <span className="text-xs text-muted-foreground">Primary Condition:</span>
-                                  <h3 className={`text-sm font-bold ${activeResult.is_tb ? "text-amber-600 dark:text-amber-500" : "text-emerald-600 dark:text-emerald-500"}`}>
-                                    {predictionService.getDiagnosis(activeResult.prediction || "Normal", activeResult.confidence || 0).condition}
-                                  </h3>
+                                  {activeResult.status === "loading" || activeResult.status === "pending" ? (
+                                    <h3 className="text-sm font-bold text-muted-foreground animate-pulse">
+                                      Calculating...
+                                    </h3>
+                                  ) : activeResult.status === "error" ? (
+                                    <h3 className="text-sm font-bold text-destructive">
+                                      {activeResult.errorMsg || "Analysis failed"}
+                                    </h3>
+                                  ) : (
+                                    <h3 className={`text-sm font-bold ${activeResult.is_tb ? "text-amber-600 dark:text-amber-500" : "text-emerald-600 dark:text-emerald-500"}`}>
+                                      {predictionService.getDiagnosis(activeResult.prediction || "Normal", activeResult.confidence || 0).condition}
+                                    </h3>
+                                  )}
                                 </div>
                                 <div className="flex justify-between items-center">
                                   <span className="text-xs text-muted-foreground">Model Confidence:</span>
-                                  <span className="text-xs font-bold font-mono text-foreground">{((activeResult.confidence || 0) * 100).toFixed(1)}%</span>
+                                  {activeResult.status === "loading" || activeResult.status === "pending" ? (
+                                    <span className="text-xs font-bold font-mono text-muted-foreground animate-pulse">Calculating...</span>
+                                  ) : activeResult.status === "error" ? (
+                                    <span className="text-xs font-bold font-mono text-destructive">0.0%</span>
+                                  ) : (
+                                    <span className="text-xs font-bold font-mono text-foreground">{((activeResult.confidence || 0) * 100).toFixed(1)}%</span>
+                                  )}
                                 </div>
-                                <Progress value={(activeResult.confidence || 0) * 100} className={`h-1.5 ${activeResult.is_tb ? "bg-amber-100 dark:bg-amber-950" : "bg-emerald-100 dark:bg-emerald-950"}`} />
+                                {activeResult.status === "loading" || activeResult.status === "pending" ? (
+                                  <Progress value={null} className="h-1.5 bg-muted/40 animate-pulse" />
+                                ) : activeResult.status === "error" ? (
+                                  <Progress value={0} className="h-1.5 bg-destructive/20" />
+                                ) : (
+                                  <Progress value={(activeResult.confidence || 0) * 100} className={`h-1.5 ${activeResult.is_tb ? "bg-amber-100 dark:bg-amber-950" : "bg-emerald-100 dark:bg-emerald-950"}`} />
+                                )}
                               </div>
                             </CardContent>
                           </Card>
@@ -987,8 +1011,16 @@ export function ScreeningTab({
                                 <div>
                                   <span className="text-muted-foreground text-[10px] uppercase font-bold">Diagnostic Inference:</span>
                                   <p className="text-xs font-semibold">
-                                    {predictionService.getDiagnosis(activeResult.prediction || "Normal", activeResult.confidence || 0).condition}
-                                    <span className="text-muted-foreground text-[11px] font-normal ml-1">({((activeResult.confidence || 0) * 100).toFixed(1)}% confidence)</span>
+                                    {activeResult.status === "loading" || activeResult.status === "pending" ? (
+                                      <span className="text-muted-foreground animate-pulse">Calculating...</span>
+                                    ) : activeResult.status === "error" ? (
+                                      <span className="text-destructive">Analysis failed</span>
+                                    ) : (
+                                      <>
+                                        {predictionService.getDiagnosis(activeResult.prediction || "Normal", activeResult.confidence || 0).condition}
+                                        <span className="text-muted-foreground text-[11px] font-normal ml-1">({((activeResult.confidence || 0) * 100).toFixed(1)}% confidence)</span>
+                                      </>
+                                    )}
                                   </p>
                                 </div>
 
@@ -1024,7 +1056,7 @@ export function ScreeningTab({
                               <Button
                                 size="sm"
                                 onClick={handlePdfExport}
-                                disabled={isExporting}
+                                disabled={isExporting || activeResult.status !== "success"}
                                 className="flex-1 text-xs font-semibold h-9 gap-1.5 cursor-pointer"
                               >
                                 <FileText className="w-3.5 h-3.5" /> Export PDF
@@ -1033,6 +1065,7 @@ export function ScreeningTab({
                                 size="sm"
                                 variant="outline"
                                 onClick={handleJsonSR}
+                                disabled={activeResult.status !== "success"}
                                 className="flex-1 text-xs font-semibold h-9 gap-1.5 cursor-pointer"
                               >
                                 <Download className="w-3.5 h-3.5" /> DICOM SR
@@ -1041,7 +1074,7 @@ export function ScreeningTab({
                                 size="sm"
                                 variant={dbRegistered ? "secondary" : "outline"}
                                 onClick={handleRegisterDb}
-                                disabled={dbRegistered}
+                                disabled={dbRegistered || activeResult.status !== "success"}
                                 className={`flex-1 text-xs font-semibold h-9 gap-1.5 cursor-pointer ${dbRegistered ? "text-emerald-500 border-emerald-500/20 bg-emerald-500/5" : ""
                                   }`}
                               >
@@ -1245,7 +1278,6 @@ export function ScreeningTab({
                 </div>
               </div>
             </div>
-          )
           ) : (
             <div className="w-full max-w-xl mx-auto py-16 flex flex-col items-center justify-center text-center space-y-6 animate-fadein">
               <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center text-muted-foreground">

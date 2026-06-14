@@ -31,6 +31,14 @@ logging.basicConfig(level=logging.INFO)
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET", "Nirikshon-clinical-key-9281")
+
+# Configure cross-site cookies for Vercel -> Hugging Face production deployments
+if os.environ.get("FLASK_ENV") == "production" or os.environ.get("PORT"):
+    app.config.update(
+        SESSION_COOKIE_SAMESITE="None",
+        SESSION_COOKIE_SECURE=True,
+    )
+
 socketio = SocketIO(app, cors_allowed_origins="*", logger=True, engineio_logger=True)
 
 # ── Configuration ──────────────────────────────────────────
@@ -649,6 +657,13 @@ def fhir_pacs_status():
 
 if __name__ == '__main__':
     debug_mode = os.environ.get("FLASK_DEBUG", "false").lower() == "true"
-    host_ip = os.environ.get("FLASK_HOST", "127.0.0.1")
-    print(f"Starting Enterprise API Backend on {host_ip}:5000 (Debug: {debug_mode})...")
-    socketio.run(app, host=host_ip, port=5000, debug=debug_mode, allow_unsafe_werkzeug=True)
+    port_val = int(os.environ.get("PORT", 5000))
+    
+    # Always bind to 0.0.0.0 in production/container contexts to allow external routing
+    if os.environ.get("PORT") or os.environ.get("FLASK_ENV") == "production":
+        host_ip = "0.0.0.0"
+    else:
+        host_ip = os.environ.get("FLASK_HOST", "127.0.0.1")
+        
+    print(f"Starting Enterprise API Backend on {host_ip}:{port_val} (Debug: {debug_mode})...")
+    socketio.run(app, host=host_ip, port=port_val, debug=debug_mode, allow_unsafe_werkzeug=True)
