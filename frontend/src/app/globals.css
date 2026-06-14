@@ -37,45 +37,55 @@
   --radius-pill: 9999px;
   --radius-full: 9999px;
 
-  --background:        0 0% 100%; /* #ffffff */
-  --foreground:        0 0% 6.7%;  /* #111111 - ink */
-  --card:              0 0% 96.1%; /* #f5f5f5 - surface-card */
-  --card-foreground:   0 0% 6.7%;
+  --background:        220 15% 97.5%; /* #f4f6f8 - soft cool grey */
+  --foreground:        220 20% 10%;   /* #1a1e23 - deep charcoal */
+  --card:              0 0% 100%;     /* #ffffff - pure white card (pops out!) */
+  --card-foreground:   220 20% 10%;
   --popover:           0 0% 100%;
-  --popover-foreground:0 0% 6.7%;
+  --popover-foreground:220 20% 10%;
 
-  --primary:           0 0% 6.7%;  /* #111111 */
-  --primary-foreground:0 0% 100%; /* #ffffff */
+  --primary:           220 20% 10%;   /* #1a1e23 */
+  --primary-foreground:0 0% 100%;
 
-  --secondary:         0 0% 96.1%; /* #f5f5f5 */
-  --secondary-foreground: 0 0% 6.7%;
-  --muted:             0 0% 97.3%; /* #f8f9fa - surface-soft */
-  --muted-foreground:  240 3.8% 46.1%; /* #6b7280 */
-  --accent:            0 0% 97.3%;
-  --accent-foreground: 0 0% 6.7%;
+  --secondary:         220 15% 94%;   /* #edf0f2 */
+  --secondary-foreground: 220 20% 10%;
+  --muted:             220 15% 94.5%; /* #ebedf0 */
+  --muted-foreground:  220 8% 46%;    /* #70757f */
+  --accent:            220 15% 94.5%;
+  --accent-foreground: 220 20% 10%;
 
-  --destructive:       0 84.2% 60.2%;
+  --destructive:       348 84% 50%;   /* #e11d48 - premium crimson rose */
   --destructive-foreground: 0 0% 100%;
 
-  --border:            240 5.9% 90%; /* #e5e7eb - hairline */
-  --input:             240 5.9% 90%;
-  --ring:              0 0% 6.7%;
+  --border:            220 13% 91%;   /* #e1e4e8 - clean hairline */
+  --input:             220 13% 91%;
+  --ring:              220 20% 10%;
   --radius:            0.75rem;
 
-  --chart-1: 0 0% 6.7%;
+  --chart-1: 220 20% 10%;
   --chart-2: 142.1 76.2% 36.3%; /* #10b981 */
-  --chart-3: 37.7 92.1% 50.2%;   /* #f59e0b */
-  --chart-4: 240 3.8% 46.1%;
-  --chart-5: 0 0% 90%;
+  --chart-3: 16 85% 55%;        /* #ec5a38 - Sunset Coral */
+  --chart-4: 220 8% 46%;
+  --chart-5: 220 13% 91%;
 
-  --sidebar: 0 0% 97.3%; /* #f8f9fa */
-  --sidebar-foreground: 0 0% 6.7%;
-  --sidebar-primary: 0 0% 6.7%;
+  --sidebar: 220 15% 96%;        /* #f0f2f5 */
+  --sidebar-foreground: 220 20% 10%;
+  --sidebar-primary: 220 20% 10%;
   --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 0 0% 96.1%;
-  --sidebar-accent-foreground: 0 0% 6.7%;
-  --sidebar-border: 240 5.9% 90%;
-  --sidebar-ring: 0 0% 6.7%;
+  --sidebar-accent: 220 15% 94%;
+  --sidebar-accent-foreground: 220 20% 10%;
+  --sidebar-border: 220 13% 91%;
+  --sidebar-ring: 220 20% 10%;
+
+  /* Creative Warnings: High-contrast Sunset Coral / Terracotta for Light Mode */
+  --warning-50:        16 100% 97%;   /* #fff4f2 - sunset cream */
+  --warning-100:       16 100% 94%;   /* #ffe6e1 */
+  --warning-200:       16 90% 88%;    /* #ffcdbe */
+  --warning-500:       16 85% 55%;    /* #ec5a38 - sunset coral */
+  --warning-600:       16 80% 46%;    /* #cd4120 - rich terracotta */
+  --warning-700:       16 80% 38%;    /* #aa3114 - burnt rust */
+  --warning-800:       16 75% 30%;    /* #85220c - mahogany */
+  --warning-950:       16 50% 10%;    /* #29100a */
 }
 
 /* ─────────────────────────────────────────────────────
@@ -148,6 +158,16 @@
   --sidebar-accent-foreground: 0 0% 98%;
   --sidebar-border: 0 0% 14.9%;
   --sidebar-ring: 0 0% 98%;
+
+  /* Cyber Warning: Bright Neon Amber for Dark Mode */
+  --warning-50:        48 100% 96%;   /* amber-50 */
+  --warning-100:       48 96% 89%;    /* amber-100 */
+  --warning-200:       48 97% 77%;    /* amber-200 */
+  --warning-500:       45 93% 47%;    /* amber-500 */
+  --warning-600:       37 92% 50%;    /* amber-600 */
+  --warning-700:       35 92% 40%;    /* amber-700 */
+  --warning-800:       30 90% 30%;    /* amber-800 */
+  --warning-950:       25 80% 10%;    /* amber-950 */
 }
 
 /* ─────────────────────────────────────────────────────
@@ -192,6 +212,25 @@
   --color-sidebar-accent-foreground: hsl(var(--sidebar-accent-foreground));
   --color-sidebar-border:     hsl(var(--sidebar-border));
   --color-sidebar-ring:       hsl(var(--sidebar-ring));
+
+  /* Inject creative warnings into Tailwind v4 color mapping */
+  --color-amber-50:           hsl(var(--warning-50));
+  --color-amber-100:          hsl(var(--warning-100));
+  --color-amber-200:          hsl(var(--warning-200));
+  --color-amber-500:          hsl(var(--warning-500));
+  --color-amber-600:          hsl(var(--warning-600));
+  --color-amber-700:          hsl(var(--warning-700));
+  --color-amber-800:          hsl(var(--warning-800));
+  --color-amber-950:          hsl(var(--warning-950));
+
+  --color-yellow-50:          hsl(var(--warning-50));
+  --color-yellow-100:         hsl(var(--warning-100));
+  --color-yellow-200:         hsl(var(--warning-200));
+  --color-yellow-500:         hsl(var(--warning-500));
+  --color-yellow-600:         hsl(var(--warning-600));
+  --color-yellow-700:         hsl(var(--warning-700));
+  --color-yellow-800:         hsl(var(--warning-800));
+  --color-yellow-950:         hsl(var(--warning-950));
 }
 
 /* ─────────────────────────────────────────────────────

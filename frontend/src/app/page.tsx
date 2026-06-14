@@ -53,14 +53,20 @@ export default function AboutPage() {
           </div>
 
           <div className="flex items-center gap-4">
-            {/* <Link
-              href="/diagnose"
-              className={buttonVariants({ variant: "outline", size: "sm", className: "h-9 px-4 text-xs font-semibold cursor-pointer" })}
+            <button
+              onClick={() => {
+                const element = document.getElementById("medical-disclaimer");
+                if (element) {
+                  const y = element.getBoundingClientRect().top + window.scrollY - 80; // 64px header + 16px padding spacing
+                  window.scrollTo({ top: y, behavior: "smooth" });
+                }
+              }}
+              className="h-9 px-4 text-xs font-semibold cursor-pointer rounded-xl bg-black text-white hover:bg-black/90 dark:bg-white dark:text-black dark:hover:bg-white/90 transition-all duration-200 flex items-center justify-center font-sans shadow-sm border border-transparent"
             >
-              Launch Workspace <ArrowUpRight className="w-3.5 h-3.5 ml-1" />
-            </Link> */}
+              Get Started <ArrowRight className="w-3.5 h-3.5 ml-1" />
+            </button>
 
-            <Separator orientation="vertical" className="h-5" />
+            {/* <Separator orientation="vertical" className="h-10" /> */}
 
             <button
               onClick={() => setTheme(mounted && theme === "dark" ? "light" : "dark")}
@@ -98,7 +104,7 @@ export default function AboutPage() {
           </div>
 
           {/* ⚠️ PROMINENT CLINICAL WARNING BANNER ── */}
-          <div className="w-full max-w-2xl border-2 border-amber-500/40 bg-amber-500/5 dark:bg-amber-500/10 rounded-2xl p-6 space-y-4 text-left">
+          <div id="medical-disclaimer" className="w-full max-w-2xl border-2 border-amber-500/40 bg-amber-500/5 dark:bg-amber-500/10 rounded-2xl p-6 space-y-4 text-left">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-amber-500/10 flex items-center justify-center flex-shrink-0">
                 <ShieldAlert className="w-5 h-5 text-amber-500" strokeWidth={1.5} />
