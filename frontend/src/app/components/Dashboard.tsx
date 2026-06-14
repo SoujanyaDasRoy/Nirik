@@ -9,8 +9,7 @@ import {
   ChevronRight, 
   FolderOpen, 
   Users, 
-  AlertTriangle,
-  Download
+  AlertTriangle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -82,42 +81,6 @@ export function Dashboard({ onNavigate, onOpenWorkbench, hasFiles }: DashboardPr
     const interval = setInterval(fetchStats, 30000);
     return () => clearInterval(interval);
   }, []);
-
-  const downloadResearchExport = async (format: "json" | "csv") => {
-    try {
-      const response = await fetch(`${API_BASE}/export/research?format=${format}`, {
-        credentials: "include"
-      });
-      if (response.ok) {
-        if (format === "csv") {
-          const blob = await response.blob();
-          const url = window.URL.createObjectURL(blob);
-          const a = document.createElement("a");
-          a.href = url;
-          a.download = "Nirikshon_research_export.csv";
-          document.body.appendChild(a);
-          a.click();
-          a.remove();
-        } else {
-          const data = await response.json();
-          const jsonString = `data:text/json;charset=utf-8,${encodeURIComponent(
-            JSON.stringify(data, null, 2)
-          )}`;
-          const a = document.createElement("a");
-          a.href = jsonString;
-          a.download = "Nirikshon_research_export.json";
-          document.body.appendChild(a);
-          a.click();
-          a.remove();
-        }
-      } else {
-        alert("Failed to export research data");
-      }
-    } catch (err) {
-      console.error("Export error:", err);
-      alert("Error occurred exporting data");
-    }
-  };
 
   // 1. Disease Distribution Donut
   const renderDonutChart = () => {
@@ -380,20 +343,7 @@ export function Dashboard({ onNavigate, onOpenWorkbench, hasFiles }: DashboardPr
       </div>
 
       {/* Analytics & Charts Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Chart 1: Disease Distribution */}
-        <Card className="border border-border bg-card rounded-xl shadow-none p-5 flex flex-col justify-between items-center text-center space-y-3">
-          <div className="w-full flex justify-between items-center text-[10px] uppercase font-bold text-muted-foreground tracking-widest">
-            <span>Disease Cohort Split</span>
-            <span className="text-primary font-mono">• Donut</span>
-          </div>
-          {renderDonutChart()}
-          <div className="flex justify-between w-full text-[10px] font-semibold text-muted-foreground pt-1">
-            <span className="flex items-center gap-1"><span className="w-2 h-2 bg-emerald-500 rounded-full" /> Normal ({normalCount})</span>
-            <span className="flex items-center gap-1"><span className="w-2 h-2 bg-amber-500 rounded-full" /> TB ({tbCount})</span>
-          </div>
-        </Card>
-
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {/* Chart 2: Confidence Distribution */}
         <Card className="border border-border bg-card rounded-xl shadow-none p-5 flex flex-col justify-between items-center text-center space-y-3">
           <div className="w-full flex justify-between items-center text-[10px] uppercase font-bold text-muted-foreground tracking-widest">
@@ -421,30 +371,6 @@ export function Dashboard({ onNavigate, onOpenWorkbench, hasFiles }: DashboardPr
           {renderAgreementGauge()}
         </Card>
       </div>
-
-      {/* Research Export Action Card */}
-      <Card className="border border-border bg-card rounded-xl shadow-none p-6 flex flex-col sm:flex-row justify-between items-center gap-4">
-        <div className="space-y-1 text-center sm:text-left">
-          <h4 className="text-sm font-bold text-foreground">Research Datasets &amp; Validation Export</h4>
-          <p className="text-xs text-muted-foreground">Download the entire patient cohort study database and reviewer override reviews in CSV or JSON.</p>
-        </div>
-        <div className="flex gap-2">
-          <Button
-            onClick={() => downloadResearchExport("csv")}
-            variant="outline"
-            className="rounded-full text-xs font-semibold h-9 gap-1.5 cursor-pointer"
-          >
-            <Download className="w-3.5 h-3.5" /> Export CSV
-          </Button>
-          <Button
-            onClick={() => downloadResearchExport("json")}
-            variant="outline"
-            className="rounded-full text-xs font-semibold h-9 gap-1.5 cursor-pointer"
-          >
-            <Download className="w-3.5 h-3.5" /> Export JSON
-          </Button>
-        </div>
-      </Card>
     </div>
   );
 }

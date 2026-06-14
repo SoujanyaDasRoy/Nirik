@@ -43,16 +43,16 @@ export default function AboutPage() {
         <div className="w-full max-w-6xl mx-auto px-6 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2 select-none">
-              <Activity className="w-5 h-5 text-primary" strokeWidth={1.5} />
+              <Activity className="w-5 h-5 text-primary" strokeWidth={2} />
               <span className="font-bold text-sm tracking-tight text-foreground font-sans">Nirikhshon</span>
             </div>
-            <Separator orientation="vertical" className="h-4 mx-2" />
-            <Badge variant="outline" className="text-[10px] font-semibold px-2.5 py-0.5 rounded-full border-amber-500/30 text-amber-600 dark:text-amber-400 bg-amber-500/5">
+            <Separator orientation="vertical" className="h-10 mx-2" />
+            <Badge variant="outline" className="text-[10px] font-semibold px-3 py-4 rounded-full border-amber-500/30 text-amber-600 dark:text-amber-400 bg-amber-500/5">
               Research Prototype — Not for Clinical Use
             </Badge>
           </div>
 
-          <div className="flex items-center gap-4">
+          {/* <div className="flex items-center gap-4">
             <Link
               href="/diagnose"
               className={buttonVariants({ variant: "outline", size: "sm", className: "h-9 px-4 text-xs font-semibold cursor-pointer" })}
@@ -73,7 +73,7 @@ export default function AboutPage() {
                 <Moon className="w-4 h-4" strokeWidth={1.5} />
               )}
             </button>
-          </div>
+          </div> */}
         </div>
       </header>
 
