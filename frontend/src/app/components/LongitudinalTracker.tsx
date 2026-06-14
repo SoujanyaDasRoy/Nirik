@@ -201,7 +201,7 @@ export default function LongitudinalTracker({ patientId, patientName, currentRes
                 {rec.heatmap_b64 ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
-                    src={rec.heatmap_b64.startsWith("data:") ? rec.heatmap_b64 : `data:image/png;base64,${rec.heatmap_b64}`}
+                    src={rec.heatmap_b64.startsWith("data:") || rec.heatmap_b64.startsWith("blob:") || rec.heatmap_b64.startsWith("http") ? rec.heatmap_b64 : `data:image/png;base64,${rec.heatmap_b64}`}
                     alt={`Scan ${i + 1}`}
                     className="w-full h-[100px] object-cover"
                   />

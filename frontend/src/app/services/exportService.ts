@@ -180,7 +180,7 @@ export const exportService = {
 
     if (originalB64) {
       try {
-        const originalImg = originalB64.startsWith("data:") ? originalB64 : `data:image/png;base64,${originalB64}`;
+        const originalImg = originalB64.startsWith("data:") || originalB64.startsWith("blob:") || originalB64.startsWith("http") ? originalB64 : `data:image/png;base64,${originalB64}`;
         pdf.addImage(originalImg, "PNG", 16, 39, 83, 83);
       } catch (err) {
         console.error("Failed to render original image in PDF:", err);
@@ -188,7 +188,7 @@ export const exportService = {
     }
     if (heatmapB64) {
       try {
-        const finalHeatmap = heatmapB64.startsWith("data:") ? heatmapB64 : `data:image/png;base64,${heatmapB64}`;
+        const finalHeatmap = heatmapB64.startsWith("data:") || heatmapB64.startsWith("blob:") || heatmapB64.startsWith("http") ? heatmapB64 : `data:image/png;base64,${heatmapB64}`;
         pdf.addImage(finalHeatmap, "PNG", 111, 39, 83, 83);
       } catch (err) {
         console.error("Failed to render heatmap image in PDF:", err);

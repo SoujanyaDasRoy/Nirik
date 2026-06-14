@@ -19,9 +19,11 @@ export function usePrediction(
 
   const analyzeFile = async (idx: number) => {
     const file = files[idx];
+    // Create a local preview URL immediately so DicomViewer shows the image while backend processes
+    const localPreviewUrl = URL.createObjectURL(file);
     setResults(prev => {
       const next = [...prev];
-      next[idx] = { ...next[idx], status: "loading" };
+      next[idx] = { ...next[idx], status: "loading", original_image: localPreviewUrl };
       return next;
     });
 

@@ -7,6 +7,12 @@ import { usePrediction } from "../hooks/usePrediction";
 import { ScreeningTab } from "../components/ScreeningTab";
 import Home from "../page";
 
+// Mock URL methods for Node/JSDOM environment
+if (typeof window !== "undefined") {
+  window.URL.createObjectURL = jest.fn((file) => `blob:http://localhost:3000/${file?.name || "mock-blob"}`);
+  window.URL.revokeObjectURL = jest.fn();
+}
+
 // Mock the next/dynamic import
 jest.mock("next/dynamic", () => {
   return function mockDynamic(importFn: any) {
@@ -318,8 +324,8 @@ describe("ScreeningTab Queue Component & UI Actions", () => {
 
   it("renders empty state correctly with upload triggers", () => {
     render(<ScreeningTab {...defaultProps} />);
-    expect(screen.getByText("Drag & drop chest X-rays or DICOM files here")).toBeInTheDocument();
-    expect(screen.getByText("Nirikshon Clinical Console")).toBeInTheDocument();
+    expect(screen.getByText("No study loaded")).toBeInTheDocument();
+    expect(screen.getByText(/Go to/i)).toBeInTheDocument();
   });
 
   it("renders pending case card correctly", () => {
@@ -387,7 +393,7 @@ describe("ScreeningTab Queue Component & UI Actions", () => {
 describe("Home Page Component & UI Actions", () => {
   it("renders Landing Portal page by default", () => {
     render(<Home />);
-    expect(screen.getByText("Academic Project Suite")).toBeInTheDocument();
+    expect(screen.getByText("AI-Assisted Pulmonary Tuberculosis Screening Workstation")).toBeInTheDocument();
     expect(screen.getByText("Academic Prototype Notice")).toBeInTheDocument();
   });
 });

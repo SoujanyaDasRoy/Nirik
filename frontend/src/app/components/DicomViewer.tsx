@@ -419,13 +419,20 @@ export default function DicomViewer({
     setRuler(null);
   };
 
-  const src = imageBase64 
-    ? (imageBase64.startsWith("data:") ? imageBase64 : `data:image/png;base64,${imageBase64}`) 
-    : "";
+  // Accept three encodings so locally created blob: previews, backend data:
+  // URLs, and raw base64 strings all render correctly. Without the blob: check,
+  // a blob URL becomes "data:image/png;base64,blob:http://..." and silently
+  // fails to load, leaving the diagnostic viewport blank.
+  const toImageSrc = (raw: string | undefined): string => {
+    if (!raw) return "";
+    if (raw.startsWith("data:") || raw.startsWith("blob:") || raw.startsWith("http")) {
+      return raw;
+    }
+    return `data:image/png;base64,${raw}`;
+  };
 
-  const heatmapSrc = heatmapBase64 
-    ? (heatmapBase64.startsWith("data:") ? heatmapBase64 : `data:image/png;base64,${heatmapBase64}`) 
-    : "";
+  const src = toImageSrc(imageBase64);
+  const heatmapSrc = toImageSrc(heatmapBase64);
 
   const filterStyle = `brightness(${brightness}) contrast(${contrast}) ${invert ? "invert(1)" : ""} ${detailBoost ? "contrast(1.6) brightness(0.95) saturate(0)" : ""}`;
   const sharpenFilter = edgeSharpen ? " url(#sharpen-filter)" : "";

@@ -434,7 +434,13 @@ export default function WorkspacePage() {
                       <Button
                         size="sm"
                         className="text-xs gap-1.5 cursor-pointer"
-                        onClick={() => { setSelectedIdx(0); setViewState("workbench"); }}
+                        onClick={() => {
+                          // Auto-analyze any pending files before entering workbench
+                          const hasPending = results.some(r => r.status === "pending");
+                          if (hasPending) analyzeAll();
+                          setSelectedIdx(0);
+                          setViewState("workbench");
+                        }}
                       >
                         Open Workbench
                         <ChevronRight className="w-3.5 h-3.5" strokeWidth={2} />

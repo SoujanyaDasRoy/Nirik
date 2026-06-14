@@ -644,12 +644,7 @@ export function ScreeningTab({
         /* ── ENTERPRISE THREE-PANEL RAD WORKSPACE ── */
         <div className="w-full">
           {activeResult ? (
-            activeResult.status === "loading" ? (
-              <div className="w-full py-24 flex flex-col items-center justify-center space-y-4 animate-pulse">
-                <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-                <p className="text-xs text-muted-foreground font-semibold">Analyzing radiograph study...</p>
-              </div>
-            ) : activeResult.status === "pending" ? (
+            activeResult.status === "pending" ? (
               <div className="w-full max-w-xl mx-auto py-16 flex flex-col items-center justify-center text-center space-y-6 animate-fadein">
                 <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center text-muted-foreground">
                   <Activity className="w-6 h-6" />
