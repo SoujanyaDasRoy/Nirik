@@ -952,30 +952,6 @@ export function ScreeningTab({
                         </div>
                       )}
 
-                      {/* ───────────────── TAB 3: LONGITUDINAL & AUDIT HISTORY ───────────────── */}
-                      {activeRightTab === "history" && (
-                        <div className="space-y-6 animate-fadein">
-                          {/* AUDIT LOG TIMELINE */}
-                          <Card className="border border-border bg-card rounded-xl shadow-none">
-                            <CardContent className="p-5 space-y-4">
-                              <p className="text-xs font-bold uppercase tracking-wider text-foreground">Audit Log Timeline</p>
-                              <Separator />
-                              <div className="space-y-4 max-h-[360px] overflow-y-auto pr-1">
-                                {auditLogs.length > 0 ? (
-                                  auditLogs.map((log, lIdx) => (
-                                    <div key={lIdx} className="flex gap-3 text-xs items-start font-medium">
-                                      <span className="font-mono text-muted-foreground flex-shrink-0 text-[11px] bg-muted/65 px-2 py-0.5 rounded-md">{log.timestamp}</span>
-                                      <span className="text-foreground leading-relaxed">{log.action}</span>
-                                    </div>
-                                  ))
-                                ) : (
-                                  <p className="text-xs text-muted-foreground text-center py-4">No audit logs recorded for this study.</p>
-                                )}
-                              </div>
-                            </CardContent>
-                          </Card>
-                        </div>
-                      )}
 
                       {/* ───────────────── TAB 4: STRUCTURED CLINICAL REPORT ───────────────── */}
                       {activeRightTab === "report" && (
@@ -1071,48 +1047,6 @@ export function ScreeningTab({
                         </div>
                       )}
 
-                      {/* ───────────────── TAB 5: COLLABORATION ───────────────── */}
-                      {activeRightTab === "collaboration" && (
-                        <div className="space-y-6 animate-fadein">
-                          <Card className="border border-border bg-card rounded-xl shadow-none">
-                            <CardContent className="p-5 space-y-4">
-                              <div className="flex justify-between items-center border-b border-border pb-3">
-                                <h4 className="text-xs font-bold uppercase tracking-wider text-foreground">Multi-Disciplinary Team (MDT)</h4>
-                                <Badge variant="outline" className="badge-normal rounded-full font-bold">LIVE</Badge>
-                              </div>
-                              
-                              <div className="space-y-4 max-h-[250px] overflow-y-auto pr-1">
-                                <div className="bg-muted/30 p-3 rounded-lg text-xs space-y-1">
-                                  <p className="font-bold flex justify-between">
-                                    <span>Dr. Smith (Radiologist)</span>
-                                    <span className="text-muted-foreground font-normal text-[10px]">10 mins ago</span>
-                                  </p>
-                                  <p className="text-muted-foreground">Case assigned for secondary review. Please verify the apical opacity.</p>
-                                </div>
-                                <div className="bg-primary/5 border border-primary/20 p-3 rounded-lg text-xs space-y-1">
-                                  <p className="font-bold flex justify-between text-primary">
-                                    <span>System (Audit)</span>
-                                    <span className="text-muted-foreground font-normal text-[10px]">Just now</span>
-                                  </p>
-                                  <p className="text-primary/80">Case shared with Pulmonology Dept.</p>
-                                </div>
-                              </div>
-
-                              <div className="space-y-2 mt-4 pt-4 border-t border-border">
-                                <label className="text-[10px] text-muted-foreground uppercase font-bold">New Comment / Tag Colleague</label>
-                                <textarea
-                                  placeholder="Type @name to request second opinion..."
-                                  className="w-full text-xs bg-muted/25 border border-border/80 rounded-xl p-3 outline-none focus:ring-1 focus:ring-primary min-h-[80px]"
-                                />
-                                <div className="flex justify-end gap-2">
-                                  <Button size="sm" variant="outline" className="text-xs h-8">Share Case</Button>
-                                  <Button size="sm" className="text-xs h-8">Post Comment</Button>
-                                </div>
-                              </div>
-                            </CardContent>
-                          </Card>
-                        </div>
-                      )}
                     </>
                   ) : (
                     <div className="space-y-6 animate-fadein">
