@@ -35,7 +35,6 @@ import { ScreeningTab } from "../components/ScreeningTab";
 import { SettingsTab } from "../components/SettingsTab";
 import { PatientsTab } from "../components/PatientsTab";
 import { Dashboard } from "../components/Dashboard";
-import { NotificationsPanel } from "../components/NotificationsPanel";
 import AdminConsole from "../components/AdminConsole";
 
 type ViewState = "upload" | "workbench" | "dashboard" | "patients" | "admin" | "settings";
@@ -298,14 +297,13 @@ export default function WorkspacePage() {
             <span className="font-bold text-foreground text-sm truncate">{viewLabels[viewState]}</span>
           </div>
 
-          {/* Right side: role badge + notifications */}
+          {/* Right side: role badge */}
           <div className="flex items-center gap-3 flex-shrink-0">
             {sessionUser && (
               <Badge variant="outline" className="h-7 text-[11px] font-semibold px-3 rounded-full capitalize hidden sm:flex">
                 👤 {sessionUser.username} · {sessionUser.role}
               </Badge>
             )}
-            <NotificationsPanel />
           </div>
         </header>
 

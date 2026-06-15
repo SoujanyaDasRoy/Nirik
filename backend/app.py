@@ -198,6 +198,12 @@ def predict():
             if not patient_id:
                 patient_id = random_id
 
+        # Validate that the uploaded image is actually a chest X-ray
+        from utils.image_helpers import validate_chest_xray
+        is_xray, xray_err_msg = validate_chest_xray(img)
+        if not is_xray:
+            return jsonify({"error": f"No chest X-ray detected: {xray_err_msg}"}), 400
+
         # Generate a unique study ID
         study_id = f"ST-{secrets.randbelow(90000) + 10000}"
         

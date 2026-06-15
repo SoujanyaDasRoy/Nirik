@@ -95,3 +95,58 @@ def analyze_image_quality(img: Image.Image) -> dict:
         "warnings": warnings
     }
 
+def validate_chest_xray(img: Image.Image) -> tuple[bool, str]:
+    import numpy as np
+    
+    # 1. Size check
+    w, h = img.size
+    if w < 128 or h < 128:
+        return False, "Resolution too low. Image must be at least 128x128 pixels."
+        
+    # Convert PIL to numpy array
+    pixels = np.array(img)
+    
+    # 2. Grayscale/Color check
+    # Standard medical chest radiographs are grayscale. If an RGB image has high channel variance,
+    # it is likely a regular color photo, graph, screenshot, or other non-medical image.
+    if len(pixels.shape) == 3 and pixels.shape[2] >= 3:
+        r = pixels[:, :, 0].astype(np.float32)
+        g = pixels[:, :, 1].astype(np.float32)
+        b = pixels[:, :, 2].astype(np.float32)
+        mean_channel_diff = np.mean(np.abs(r - g) + np.abs(g - b))
+        if mean_channel_diff > 12.0:
+            return False, "Color detected. Standard chest radiographs are strictly grayscale."
+            
+    # Convert to grayscale array for structural checks
+    gray_img = img.convert("L")
+    gray_pixels = np.array(gray_img).astype(np.float32)
+    
+    # 3. Dynamic range / contrast checks
+    std_val = np.std(gray_pixels)
+    if std_val < 20.0:
+        return False, "Extremely low contrast. Image does not contain the dynamic range of a chest X-ray."
+    if std_val > 110.0:
+        return False, "Excessive contrast. Likely a binary diagram, screenshot, or document rather than a chest radiograph."
+        
+    # 4. Average intensity check
+    mean_val = np.mean(gray_pixels)
+    if mean_val < 25.0 or mean_val > 220.0:
+        return False, "Sub-optimal pixel intensity range. Standard chest X-rays have balanced exposure."
+        
+    # 5. Extreme values check (solid backgrounds, screenshots, text grids)
+    pure_black = np.sum(gray_pixels < 5)
+    pure_white = np.sum(gray_pixels > 250)
+    total_pixels = w * h
+    extreme_ratio = (pure_black + pure_white) / total_pixels
+    if extreme_ratio > 0.65:
+        return False, "Excessive solid black/white regions. Likely a screenshot, chart, or text-heavy graphic."
+        
+    # 6. Anatomical profile heuristic
+    h_30 = int(h * 0.3)
+    middle_zone = gray_pixels[h_30:h-h_30, :]
+    bottom_zone = gray_pixels[h-h_30:, :]
+    if np.mean(middle_zone) < 15.0 and np.mean(bottom_zone) < 15.0:
+        return False, "Anatomical structure check failed. Image is blank or contains no structures."
+
+    return True, "Valid chest radiograph"
+

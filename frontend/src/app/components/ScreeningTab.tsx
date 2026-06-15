@@ -678,6 +678,53 @@ export function ScreeningTab({
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
                   {/* 1. LEFT PANEL (70%): Unified Primary Viewport */}
                   <div className="lg:col-span-8 space-y-6">
+                    {/* PROMINENT AI DIAGNOSTIC STATUS BANNER */}
+                    {activeResult && workstationMode === "clinical" && (
+                      <div className={`p-5 rounded-xl border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm transition-all duration-300 ${
+                        activeResult.status === "loading" || activeResult.status === "pending"
+                          ? "bg-muted/15 border-border"
+                          : activeResult.status === "error"
+                          ? "bg-destructive/10 border-destructive/25 text-destructive-foreground dark:text-red-400"
+                          : activeResult.is_tb
+                          ? "bg-amber-500/10 border-amber-500/25 text-amber-900 dark:text-amber-400"
+                          : "bg-emerald-500/10 border-emerald-500/25 text-emerald-900 dark:text-emerald-400"
+                      }`}>
+                        <div className="flex items-center gap-3">
+                          <Activity className={`w-5 h-5 ${activeResult.status === "loading" || activeResult.status === "pending" ? "animate-pulse text-primary" : activeResult.status === "error" ? "text-destructive" : activeResult.is_tb ? "text-amber-500 animate-pulse" : "text-emerald-500"}`} />
+                          <div>
+                            <span className="text-[10px] font-bold uppercase tracking-wider block opacity-70">
+                              AI Classification Verdict
+                            </span>
+                            <span className="text-base font-extrabold tracking-tight">
+                              {activeResult.status === "loading" || activeResult.status === "pending" ? (
+                                "Calculating Pulmonary Tuberculosis Risk..."
+                              ) : activeResult.status === "error" ? (
+                                activeResult.errorMsg || "Analysis Failed"
+                              ) : activeResult.is_tb ? (
+                                `Pulmonary Tuberculosis Detected (${((activeResult.confidence || 0) * 100).toFixed(1)}% Confidence)`
+                              ) : (
+                                `Normal Chest Radiograph (${((activeResult.confidence || 0) * 100).toFixed(1)}% Confidence)`
+                              )}
+                            </span>
+                          </div>
+                        </div>
+                        <div>
+                          {activeResult.status === "loading" || activeResult.status === "pending" ? (
+                            <Badge variant="outline" className="animate-pulse bg-muted/40 text-muted-foreground uppercase font-bold text-[10px] py-1 px-3 rounded-full">
+                              Risk Calculating
+                            </Badge>
+                          ) : activeResult.status === "error" ? (
+                            <Badge variant="destructive" className="uppercase font-bold text-[10px] py-1 px-3 rounded-full">
+                              Error Warning
+                            </Badge>
+                          ) : (
+                            <Badge className={`uppercase font-bold text-[10px] py-1 px-3 rounded-full ${activeResult.is_tb ? "bg-amber-500 hover:bg-amber-600 text-white" : "bg-emerald-500 hover:bg-emerald-600 text-white"}`}>
+                              {activeResult.is_tb ? "High Risk" : "Low Risk"}
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                    )}
 
                     {/* Primary Viewport Card container */}
                     <Card className="border border-border bg-[#0a0a0a] rounded-xl overflow-hidden shadow-md">
@@ -1131,135 +1178,6 @@ export function ScreeningTab({
                           ) : (
                             <div className="py-4 text-center text-xs text-muted-foreground animate-pulse">
                               Loading model validation metrics...
-                            </div>
-                          )}
-                        </CardContent>
-                      </Card>
-
-                      {/* B. EVIDENCE EXPLORER GRID */}
-                      <Card className="border border-slate-200 bg-white text-slate-950 rounded-xl shadow-none">
-                        <CardContent className="p-5 space-y-4">
-                          <div className="flex items-center gap-2 text-slate-900">
-                            <Eye className="w-4 h-4 text-primary" />
-                            <p className="text-xs font-bold uppercase tracking-wider text-slate-900">Evidence Explorer</p>
-                          </div>
-                          <Separator className="bg-slate-200" />
-                          <div className="space-y-3">
-                            {getEvidenceCards(activeResult).map((obs, idx) => {
-                              const hasRegion = !!obs.region;
-                              const regionStr = hasRegion ? `[${obs.region.x1}, ${obs.region.y1}, ${obs.region.x2}, ${obs.region.y2}]` : "Whole lung field";
-                              
-                              return (
-                                <div
-                                  key={idx}
-                                  onClick={() => {
-                                    if (hasRegion) {
-                                      setObservationFocusRegion(obs.region);
-                                      setHighlightedAnatomicalZone(obs.anatomicalZone);
-                                      setBoxes([
-                                        {
-                                          x: obs.region.x1,
-                                          y: obs.region.y1,
-                                          w: obs.region.x2 - obs.region.x1,
-                                          h: obs.region.y2 - obs.region.y1,
-                                          zone: mapZoneToLungZone(obs.anatomicalZone)
-                                        }
-                                      ]);
-                                      addAuditLog(`Focused Evidence Explorer on region: ${obs.anatomicalZone}`);
-                                    } else {
-                                      setObservationFocusRegion(null);
-                                      setBoxes([]);
-                                      setHighlightedAnatomicalZone("");
-                                    }
-                                  }}
-                                  className={`p-3 border rounded-xl transition-all cursor-pointer text-xs space-y-2 font-medium ${
-                                    highlightedAnatomicalZone === obs.anatomicalZone
-                                      ? "border-primary bg-primary/5 shadow-sm text-slate-900"
-                                      : "border-slate-200 bg-slate-50/70 hover:bg-slate-100 text-slate-800"
-                                  }`}
-                                >
-                                  <div className="flex justify-between items-start">
-                                    <span className="font-bold text-slate-900 text-xs">{obs.title}</span>
-                                    <Badge variant="secondary" className="rounded-full text-[9px] font-bold px-2 py-0.5 bg-slate-100 text-slate-800 border-none hover:bg-slate-200">
-                                      Score: {obs.confidence.toFixed(2)}
-                                    </Badge>
-                                  </div>
-                                  
-                                  <p className="text-[11px] text-slate-600 leading-relaxed font-sans">{obs.description}</p>
-                                  
-                                  <div className="flex flex-wrap gap-2 text-[10px] text-slate-500 font-mono">
-                                    <span>📍 Location: <strong className="text-slate-800 font-sans capitalize">{obs.anatomicalZone || "Global"}</strong></span>
-                                    <span>🔲 Bounds: <strong className="text-slate-800">{regionStr}</strong></span>
-                                  </div>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </CardContent>
-                      </Card>
-
-                      {/* C. SIMILAR CASES CAROUSEL */}
-                      <Card className="border border-border bg-card rounded-xl shadow-none">
-                        <CardContent className="p-5 space-y-4">
-                          <div className="flex items-center gap-2">
-                            <Columns className="w-4 h-4 text-primary" />
-                            <p className="text-xs font-bold uppercase tracking-wider text-foreground">Similar Cohort Cases</p>
-                          </div>
-                          <Separator />
-                          {loadingSimilar ? (
-                            <div className="py-4 text-center text-xs text-muted-foreground animate-pulse">
-                              Fetching similar cohort scans...
-                            </div>
-                          ) : similarCases && (similarCases.tb_similar.length > 0 || similarCases.normal_similar.length > 0) ? (
-                            <div className="space-y-4">
-                              {similarCases.tb_similar.length > 0 && (
-                                <div className="space-y-2">
-                                  <p className="text-[10px] text-amber-500 font-bold uppercase tracking-wider">Similar Tuberculosis Cases</p>
-                                  <div className="grid grid-cols-3 gap-2">
-                                    {similarCases.tb_similar.map((cand, idx) => (
-                                      <div
-                                        key={idx}
-                                        onClick={() => handleSelectSimilarStudy(cand)}
-                                        className="group relative cursor-pointer border border-border bg-muted/20 hover:bg-muted/40 rounded-lg overflow-hidden transition-all text-center p-1.5 flex flex-col items-center"
-                                      >
-                                        <img
-                                          src={cand.original_image || undefined}
-                                          alt="TB Case"
-                                          className="w-16 h-16 object-cover rounded-md border border-border mb-1 group-hover:scale-105 transition-transform"
-                                        />
-                                        <span className="text-[9px] font-bold text-foreground truncate w-full">{cand.patient_name}</span>
-                                        <span className="text-[8px] text-muted-foreground font-mono">{cand.similarity_score}% Match</span>
-                                      </div>
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
-                              {similarCases.normal_similar.length > 0 && (
-                                <div className="space-y-2">
-                                  <p className="text-[10px] text-emerald-500 font-bold uppercase tracking-wider">Similar Normal Cases</p>
-                                  <div className="grid grid-cols-3 gap-2">
-                                    {similarCases.normal_similar.map((cand, idx) => (
-                                      <div
-                                        key={idx}
-                                        onClick={() => handleSelectSimilarStudy(cand)}
-                                        className="group relative cursor-pointer border border-border bg-muted/20 hover:bg-muted/40 rounded-lg overflow-hidden transition-all text-center p-1.5 flex flex-col items-center"
-                                      >
-                                        <img
-                                          src={cand.original_image || undefined}
-                                          alt="Normal Case"
-                                          className="w-16 h-16 object-cover rounded-md border border-border mb-1 group-hover:scale-105 transition-transform"
-                                        />
-                                        <span className="text-[9px] font-bold text-foreground truncate w-full">{cand.patient_name}</span>
-                                        <span className="text-[8px] text-muted-foreground font-mono">{cand.similarity_score}% Match</span>
-                                      </div>
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                          ) : (
-                            <div className="py-2 text-center text-xs text-muted-foreground">
-                              No similar cohort matches found in database.
                             </div>
                           )}
                         </CardContent>
