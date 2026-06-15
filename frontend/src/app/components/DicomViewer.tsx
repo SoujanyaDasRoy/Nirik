@@ -638,9 +638,6 @@ export default function DicomViewer({
         </div>
 
         <div className="absolute top-3 right-3 pointer-events-none flex flex-col gap-1 z-30">
-          <Badge variant="outline" className="bg-black/75 text-blue-400 border-blue-500/20 text-[9px] px-1.5 py-0.5 font-mono shadow-sm">
-            MAG: {zoom.toFixed(2)}×
-          </Badge>
           {viewMode === "split" && (
             <Badge variant="outline" className="bg-black/75 text-yellow-500 border-yellow-500/20 text-[9px] px-1.5 py-0.5 font-mono shadow-sm animate-pulse">
               SPLIT COMPARISON
@@ -667,39 +664,6 @@ export default function DicomViewer({
               </Button>
             }/>
             <TooltipContent>Zoom Mode</TooltipContent>
-          </Tooltip>
-
-          <Tooltip>
-            <TooltipTrigger render={
-              <Button
-                size="sm"
-                variant={windowLevelModeActive ? "default" : "ghost"}
-                className={`h-8.5 w-8.5 p-0 rounded-full cursor-pointer transition-all ${windowLevelModeActive ? "bg-purple-600 hover:bg-purple-700 text-white" : "text-muted-foreground hover:text-foreground"}`}
-                onClick={() => {
-                  setWindowLevelModeActive(!windowLevelModeActive);
-                  setZoomModeActive(false);
-                  setAnnotateMode?.(false);
-                  setMeasureMode("off");
-                }}
-              >
-                <Layers className="w-4 h-4" />
-              </Button>
-            }/>
-            <TooltipContent>Window/Level Mode</TooltipContent>
-          </Tooltip>
-
-          <Tooltip>
-            <TooltipTrigger render={
-              <Button
-                size="sm"
-                variant={viewMode === "heatmap" ? "default" : "ghost"}
-                className={`h-8.5 w-8.5 p-0 rounded-full cursor-pointer transition-all ${viewMode === "heatmap" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
-                onClick={() => setViewMode?.(viewMode === "heatmap" ? "original" : "heatmap")}
-              >
-                <Eye className="w-4 h-4" />
-              </Button>
-            }/>
-            <TooltipContent>Toggle Heatmap Overlay</TooltipContent>
           </Tooltip>
 
           <Tooltip>
@@ -754,20 +718,6 @@ export default function DicomViewer({
               </Button>
             }/>
             <TooltipContent>Fit to Screen</TooltipContent>
-          </Tooltip>
-
-          <Tooltip>
-            <TooltipTrigger render={
-              <Button
-                size="sm"
-                variant="ghost"
-                className="h-8.5 w-8.5 p-0 rounded-full cursor-pointer text-muted-foreground hover:text-red-400"
-                onClick={resetView}
-              >
-                <RotateCcw className="w-4 h-4" />
-              </Button>
-            }/>
-            <TooltipContent>Reset View</TooltipContent>
           </Tooltip>
         </div>
       </div>

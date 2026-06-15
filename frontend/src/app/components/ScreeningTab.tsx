@@ -157,76 +157,7 @@ const mapZoneToLungZone = (zoneStr: string): LungZone => {
   return "Pleural";
 };
 
-const LungAnatomicalMap = ({ highlightZone }: { highlightZone?: string }) => {
-  const isRightApical = highlightZone?.toLowerCase().includes("right apical") || highlightZone?.toLowerCase().includes("apical");
-  const isLeftMid = highlightZone?.toLowerCase().includes("left mid") || highlightZone?.toLowerCase().includes("mid-zone");
 
-  return (
-    <div className="flex flex-col items-center justify-center p-3.5 bg-slate-950/70 rounded-xl border border-border/60 w-full">
-      <p className="text-[9px] font-extrabold text-muted-foreground uppercase tracking-widest mb-2 text-center">Anatomical Focus Map</p>
-      <svg width="120" height="110" viewBox="0 0 120 100" className="opacity-90">
-        {/* Anatomical Right Lung (Left side of viewport) */}
-        <g>
-          {/* Apical Zone */}
-          <path
-            d="M 40 20 C 42 10, 50 12, 53 28 C 54 35, 48 40, 42 38 C 38 35, 38 25, 40 20 Z"
-            fill={isRightApical ? "rgba(245, 158, 11, 0.45)" : "rgba(30, 41, 59, 0.45)"}
-            stroke={isRightApical ? "#f59e0b" : "#475569"}
-            strokeWidth={isRightApical ? "2" : "1"}
-            className="transition-all duration-300"
-          />
-          {/* Mid Zone */}
-          <path
-            d="M 42 38 C 48 40, 56 42, 54 60 C 52 70, 42 70, 36 62 C 34 55, 36 42, 42 38 Z"
-            fill="rgba(30, 41, 59, 0.45)"
-            stroke="#475569"
-            strokeWidth="1"
-            className="transition-all duration-300"
-          />
-          {/* Basal Zone */}
-          <path
-            d="M 36 62 C 42 70, 52 70, 50 85 C 48 90, 34 90, 26 80 C 24 72, 28 65, 36 62 Z"
-            fill="rgba(30, 41, 59, 0.45)"
-            stroke="#475569"
-            strokeWidth="1"
-            className="transition-all duration-300"
-          />
-        </g>
-
-        {/* Anatomical Left Lung (Right side of viewport) */}
-        <g>
-          {/* Apical Zone */}
-          <path
-            d="M 80 20 C 78 10, 70 12, 67 28 C 66 35, 72 40, 78 38 C 82 35, 82 25, 80 20 Z"
-            fill="rgba(30, 41, 59, 0.45)"
-            stroke="#475569"
-            strokeWidth="1"
-            className="transition-all duration-300"
-          />
-          {/* Mid Zone */}
-          <path
-            d="M 78 38 C 72 40, 64 42, 66 60 C 68 70, 78 70, 84 62 C 86 55, 84 42, 78 38 Z"
-            fill={isLeftMid ? "rgba(245, 158, 11, 0.45)" : "rgba(30, 41, 59, 0.45)"}
-            stroke={isLeftMid ? "#f59e0b" : "#475569"}
-            strokeWidth={isLeftMid ? "2" : "1"}
-            className="transition-all duration-300"
-          />
-          {/* Basal Zone */}
-          <path
-            d="M 84 62 C 78 70, 68 70, 70 85 C 72 90, 86 90, 94 80 C 96 72, 92 65, 84 62 Z"
-            fill="rgba(30, 41, 59, 0.45)"
-            stroke="#475569"
-            strokeWidth="1"
-            className="transition-all duration-300"
-          />
-        </g>
-
-        <text x="45" y="98" fill="#94a3b8" fontSize="7" fontFamily="monospace" textAnchor="middle">R. Lung</text>
-        <text x="75" y="98" fill="#94a3b8" fontSize="7" fontFamily="monospace" textAnchor="middle">L. Lung</text>
-      </svg>
-    </div>
-  );
-};
 
 interface ScreeningTabProps {
   files: File[];
@@ -969,8 +900,6 @@ export function ScreeningTab({
                             </CardContent>
                           </Card>
 
-                          {/* ANATOMICAL RAD MAP */}
-                          <LungAnatomicalMap highlightZone={activeResult.attention_region} />
                         </div>
                       )}
 

@@ -416,36 +416,21 @@ export default function WorkspacePage() {
                   </div>
 
                   {/* Action row */}
-                  <div className="px-5 py-4 border-t border-border bg-muted/10 flex items-center justify-between gap-3">
-                    <Button variant="outline" size="sm" className="text-xs gap-1.5 cursor-pointer" onClick={exportCSV}>
-                      <Download className="w-3.5 h-3.5" /> Export CSV
+                  <div className="px-5 py-4 border-t border-border bg-muted/10 flex items-center justify-end gap-3">
+                    <Button
+                      size="sm"
+                      className="text-xs gap-1.5 cursor-pointer ml-auto"
+                      onClick={() => {
+                        // Auto-analyze any pending files before entering workbench
+                        const hasPending = results.some(r => r.status === "pending");
+                        if (hasPending) analyzeAll();
+                        setSelectedIdx(0);
+                        setViewState("workbench");
+                      }}
+                    >
+                      Start Scanning
+                      <ChevronRight className="w-3.5 h-3.5" strokeWidth={2} />
                     </Button>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="text-xs gap-1.5 cursor-pointer"
-                        onClick={analyzeAll}
-                        disabled={isBatchProcessing}
-                      >
-                        <Play className="w-3.5 h-3.5 fill-current" />
-                        {isBatchProcessing ? "Analyzing…" : "Analyze All"}
-                      </Button>
-                      <Button
-                        size="sm"
-                        className="text-xs gap-1.5 cursor-pointer"
-                        onClick={() => {
-                          // Auto-analyze any pending files before entering workbench
-                          const hasPending = results.some(r => r.status === "pending");
-                          if (hasPending) analyzeAll();
-                          setSelectedIdx(0);
-                          setViewState("workbench");
-                        }}
-                      >
-                        Open Workbench
-                        <ChevronRight className="w-3.5 h-3.5" strokeWidth={2} />
-                      </Button>
-                    </div>
                   </div>
                 </div>
               )}
