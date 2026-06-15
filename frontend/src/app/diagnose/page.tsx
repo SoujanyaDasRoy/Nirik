@@ -83,9 +83,48 @@ export default function WorkspacePage() {
 
   const reportRef = useRef<HTMLDivElement>(null);
 
-  // ── Session check ──────────────────────────────────────────
+  // ── Sync URL query parameter on load & popstate ──────────────────────────
   useEffect(() => {
     setMounted(true);
+    
+    // Parse tab from URL on mount
+    const params = new URLSearchParams(window.location.search);
+    const tab = params.get("tab") as ViewState | null;
+    if (tab && ["upload", "workbench", "dashboard", "patients", "admin", "settings"].includes(tab)) {
+      setViewState(tab);
+    } else {
+      // Initialize URL if no tab is present
+      const newUrl = `${window.location.pathname}?tab=upload`;
+      window.history.replaceState({ viewState: "upload" }, "", newUrl);
+    }
+
+    const handlePopState = (event: PopStateEvent) => {
+      const currentParams = new URLSearchParams(window.location.search);
+      const currentTab = currentParams.get("tab") as ViewState | null;
+      if (currentTab && ["upload", "workbench", "dashboard", "patients", "admin", "settings"].includes(currentTab)) {
+        setViewState(currentTab);
+      } else {
+        setViewState("upload");
+      }
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
+
+  // Synchronize viewState changes to URL history
+  useEffect(() => {
+    if (!mounted) return;
+    const params = new URLSearchParams(window.location.search);
+    const currentTab = params.get("tab");
+    if (currentTab !== viewState) {
+      const newUrl = `${window.location.pathname}?tab=${viewState}`;
+      window.history.pushState({ viewState }, "", newUrl);
+    }
+  }, [viewState, mounted]);
+
+  // ── Session check ──────────────────────────────────────────
+  useEffect(() => {
     const checkUserSession = async () => {
       try {
         const res = await fetch(`${API_BASE}/session`, { credentials: "include" });
