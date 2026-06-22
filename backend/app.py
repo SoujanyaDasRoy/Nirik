@@ -113,7 +113,12 @@ def index():
             "login": "/login [POST]",
             "logout": "/logout [POST]",
             "session": "/session [GET]",
-            "report_audit": "/report/audit [POST]"
+            "report_audit": "/report/audit [POST]",
+            "model_metadata": "/model/metadata [GET]",
+            "model_tsne": "/model/tsne [GET]",
+            "study_similar": "/studies/<study_id>/similar [GET]",
+            "study_heatmaps": "/studies/<study_id>/heatmaps [GET]",
+            "study_audit_logs": "/studies/<study_id>/audit_logs [GET]"
         }
     })
 
