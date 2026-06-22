@@ -387,14 +387,15 @@ export function ScreeningTab({
       });
       if (response.ok) {
         const data = await response.json();
-        if (data.heatmaps) {
-          // Update the results state to include heatmaps for this index
+        if (data.heatmaps || data.xai_results) {
+          // Update the results state to include heatmaps and XAI telemetry for this index
           setResults((prev: AnalysisResult[]) => {
             const next = [...prev];
             if (next[idx]) {
               next[idx] = {
                 ...next[idx],
-                heatmaps: data.heatmaps
+                heatmaps: data.heatmaps || next[idx].heatmaps,
+                xai_results: data.xai_results || next[idx].xai_results
               };
             }
             return next;
