@@ -1125,6 +1125,19 @@ export function ScreeningTab({
                               </div>
 
                               <div className="space-y-2">
+                                <label className="text-[10px] text-muted-foreground uppercase font-bold">XAI Observations &amp; Study Notes</label>
+                                <Textarea
+                                  value={clinicianNote}
+                                  onChange={e => {
+                                    setClinicianNote(e.target.value);
+                                    syncFeedback(clinicalReviewStatus, reviewComments, reviewerName, e.target.value);
+                                  }}
+                                  placeholder="Type focal anomaly observations, model alignment comments, or secondary findings..."
+                                  className="text-xs bg-muted/25 border-border/80 resize-none h-20 rounded-xl"
+                                />
+                              </div>
+
+                              <div className="space-y-2">
                                 <label className="text-[10px] text-muted-foreground uppercase font-bold">Reviewer Signature</label>
                                 <input
                                   type="text"
