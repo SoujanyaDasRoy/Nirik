@@ -238,7 +238,15 @@ export function ScreeningTab({
   // ── WORKSTATION VIEWING STATES ──
   const [viewMode, setViewMode] = useState<"original" | "heatmap" | "heatmap-only" | "side-by-side" | "split">("original");
   const [heatmapOpacity, setHeatmapOpacity] = useState(0.55);
-  const [workstationMode, setWorkstationMode] = useState<"clinical" | "research" | "xai">("clinical");
+  const [workstationMode, setWorkstationMode] = useState<"clinical" | "research" | "xai">("xai"); // Default to XAI view for better UX
+
+  // Automatically switch to XAI mode when an image successfully finishes AI processing
+  useEffect(() => {
+    if (activeResult?.status === "success" && activeResult?.xai_results) {
+      setWorkstationMode("xai");
+    }
+  }, [activeResult?.status, activeResult?.study_id]);
+
   const [activeRightTab, setActiveRightTab] = useState<"findings" | "review" | "report">("findings");
   const [highlightedAnatomicalZone, setHighlightedAnatomicalZone] = useState<string>("");
 
