@@ -187,6 +187,7 @@ export default function WorkspacePage() {
       reviewer_name: record.reviewer_name || "",
       study_id: record.study_id,
       image_quality: record.image_quality,
+      xai_results: record.xai_results || record.xai || null,
     };
     setResults([mappedResult]);
     setSelectedIdx(0);
