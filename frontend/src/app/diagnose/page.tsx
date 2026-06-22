@@ -359,19 +359,11 @@ export default function WorkspacePage() {
 
           {/* Right side tools */}
           <div className="flex items-center gap-4">
-            <div className="hidden lg:flex items-center relative">
-              <span className="absolute left-3 text-muted-foreground">🔍</span>
-              <input 
-                type="text" 
-                placeholder="Search Study ID or Patient..." 
-                className="h-9 w-64 bg-card/50 border border-border/50 rounded-full pl-9 pr-4 text-xs focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all font-mono"
-              />
-            </div>
             {sessionUser && (
-              <div className="flex items-center gap-3 pl-4 border-l border-border/50">
+              <div className="flex items-center gap-3">
                 <div className="text-right hidden sm:block">
                   <div className="text-xs font-bold text-foreground">{sessionUser.username}</div>
-                  <div className="text-[10px] text-muted-foreground uppercase tracking-widest font-mono">{sessionUser.role}</div>
+                  <div className="text-[9px] text-muted-foreground uppercase tracking-wider font-bold font-sans">{sessionUser.role}</div>
                 </div>
                 <div className="w-8 h-8 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center text-primary font-bold text-xs uppercase shadow-[0_0_10px_rgba(8,145,178,0.2)]">
                   {sessionUser.username.charAt(0)}
