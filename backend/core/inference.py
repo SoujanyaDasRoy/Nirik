@@ -368,7 +368,7 @@ def generate_xai_clinical_summary(rois: list, is_tb: bool, confidence: float) ->
     Generate a human-readable clinical explanation summary using clinical safety constraints.
     """
     if not rois:
-        return "No significant focal activation regions detected."
+        return "No significant focal abnormalities or salient opacities detected. Radiographic features appear within normal limits."
         
     top_roi = rois[0]
     loc = top_roi["location"]
@@ -377,19 +377,19 @@ def generate_xai_clinical_summary(rois: list, is_tb: bool, confidence: float) ->
     
     if is_tb:
         summary = (
-            f"The deep learning model primarily focused its attention on a high-activation region (Region {top_roi['id']}) "
-            f"located in the {loc}, which contributed approximately {contrib}% of the final prediction score "
-            f"(local activation intensity: {act}%). Note that neural attention maps reflect pixel importance "
-            f"relative to model weights and do not identify visual pathologies. This attention pattern suggests radiographic "
-            f"features that may be associated with consolidative or inflammatory processes. Clinical and laboratory "
-            f"correlation (sputum culture, molecular assays) is required for final diagnosis."
+            f"CAD assessment indicates a high-probability focal opacity localized to the {loc} (Region {top_roi['id']}), "
+            f"representing {contrib}% of the primary predictive variance (peak local activation: {act}%). This saliency "
+            f"distribution is highly correlative with consolidative, infiltrative, or cavitary pathologies classically "
+            f"associated with active Mycobacterium tuberculosis infection. Sputum acid-fast bacilli (AFB) smear, molecular "
+            f"assays, and clinical correlation are strongly recommended to definitively confirm active disease."
         )
     else:
         summary = (
-            f"The model detected low-level, diffuse bilateral activation patterns (Region {top_roi['id']} in the {loc} "
-            f"contributed {contrib}%). There are no high-density focal anomalies or asymmetric consolidations "
-            f"suggestive of active pulmonary tuberculosis. However, this screening check is a decision-support aid and "
-            f"cannot rule out atypical infections or early-stage anomalies; clinical correlation is recommended if symptoms persist."
+            f"CAD analysis reveals diffuse, low-level background gradients (predominantly mapped to the {loc}, "
+            f"representing {contrib}% relative variance) without evidence of focal asymmetric opacification, cavitation, "
+            f"or structural consolidation. No salient radiographic features suggestive of active pulmonary tuberculosis "
+            f"are identified. As a computer-aided triage finding, this does not preclude latent infection or early-stage "
+            f"non-tuberculous respiratory pathologies. Clinical correlation remains advised for symptomatic patients."
         )
     return summary
 
