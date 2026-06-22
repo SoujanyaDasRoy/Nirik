@@ -236,89 +236,88 @@ export default function WorkspacePage() {
     <div className="min-h-screen bg-background flex flex-col md:flex-row font-sans overflow-hidden" style={{ height: "100vh" }}>
 
       {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      {/* LEFT SIDEBAR / BOTTOM MOBILE NAV BAR */}
+      {/* LEFT SIDEBAR (Pro Max Dimensional Layout) */}
       {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <aside className="fixed bottom-0 left-0 right-0 h-14 w-full border-t border-r-0 md:relative md:bottom-auto md:left-auto md:right-auto md:h-full md:w-16 flex flex-row md:flex-col items-center justify-around md:justify-start py-0 md:py-4 gap-1 bg-card border-border z-40">
-        {/* Logo */}
-        <div
-          onClick={() => window.location.href = "/"}
-          className="w-10 h-10 rounded-xl bg-primary/10 items-center justify-center text-primary cursor-pointer mb-4 hover:bg-primary/20 transition-colors hidden md:flex"
-          title="Nirikhshon Home"
-        >
-          <Activity className="w-5 h-5" strokeWidth={1.5} />
+      <aside className="fixed bottom-0 left-0 right-0 h-16 w-full border-t border-border/50 md:relative md:bottom-auto md:left-auto md:right-auto md:h-full md:w-[260px] flex flex-row md:flex-col items-center justify-around md:justify-start py-0 md:py-6 gap-2 bg-card/40 backdrop-blur-xl border-r-0 md:border-r md:border-border/50 z-40 shadow-[1px_0_15px_rgba(0,0,0,0.1)]">
+        {/* Logo Area */}
+        <div className="w-full px-6 mb-6 hidden md:flex items-center gap-3">
+          <div
+            onClick={() => window.location.href = "/"}
+            className="w-10 h-10 rounded-xl bg-primary/20 border border-primary/30 flex items-center justify-center text-primary cursor-pointer transition-colors shadow-[0_0_15px_rgba(8,145,178,0.2)]"
+            title="Nirikhshon Home"
+          >
+            <Activity className="w-5 h-5" strokeWidth={2} />
+          </div>
+          <div>
+            <h1 className="text-sm font-bold text-foreground tracking-tight leading-tight">Nirikhshon</h1>
+            <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-mono">Workspace</p>
+          </div>
         </div>
 
-        <Separator className="w-8 mb-2 hidden md:block" />
-
-        {/* Nav icons */}
-        {navItems.map(item => {
-          if (item.adminOnly && !isAdmin) return null;
-          const isActive = viewState === item.id;
-          const isDisabled = item.id === "workbench" && files.length === 0;
-          return (
-            <div key={item.id} className="relative group">
+        {/* Nav items */}
+        <div className="w-full flex flex-row md:flex-col md:px-3 gap-1">
+          <div className="hidden md:block px-3 mb-2 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Main Menu</div>
+          {navItems.map(item => {
+            if (item.adminOnly && !isAdmin) return null;
+            const isActive = viewState === item.id;
+            const isDisabled = item.id === "workbench" && files.length === 0;
+            return (
               <button
+                key={item.id}
                 onClick={() => handleNavigate(item.id)}
                 disabled={isDisabled}
-                className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all cursor-pointer ${
+                className={`flex-1 md:flex-none h-12 md:h-10 md:w-full rounded-xl flex items-center justify-center md:justify-start md:px-4 gap-3 transition-all cursor-pointer relative ${
                   isActive
-                    ? "bg-primary text-primary-foreground shadow-md shadow-primary/20"
+                    ? "bg-primary text-primary-foreground shadow-md shadow-primary/20 font-semibold"
                     : isDisabled
                     ? "text-muted-foreground/30 cursor-not-allowed"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                    : "text-muted-foreground hover:bg-background/50 hover:text-foreground font-medium"
                 }`}
                 title={item.label}
               >
                 {item.icon}
-                {/* Active indicator dot */}
-                {isActive && <span className="absolute -right-0.5 top-1/2 -translate-y-1/2 w-1 h-4 rounded-full bg-primary hidden md:block" />}
+                <span className="hidden md:block text-sm">{item.label}</span>
+                
+                {/* Active indicator edge line */}
+                {isActive && <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 rounded-r-md bg-primary-foreground hidden md:block opacity-50" />}
+                
+                {/* File count badge on upload icon */}
+                {item.id === "upload" && files.length > 0 && (
+                  <span className={`ml-auto hidden md:flex w-5 h-5 rounded-full text-[10px] font-bold items-center justify-center ${isActive ? 'bg-primary-foreground text-primary' : 'bg-primary/20 text-primary'}`}>
+                    {files.length}
+                  </span>
+                )}
+                {/* Mobile file count badge */}
+                {item.id === "upload" && files.length > 0 && (
+                  <span className="absolute top-1 right-2 md:hidden w-4 h-4 rounded-full bg-primary text-primary-foreground text-[9px] font-bold flex items-center justify-center">
+                    {files.length}
+                  </span>
+                )}
               </button>
+            );
+          })}
+        </div>
 
-              {/* Tooltip */}
-              <div className="absolute left-14 top-1/2 -translate-y-1/2 hidden group-hover:flex items-center pointer-events-none z-50">
-                <div className="bg-foreground text-background text-[11px] font-semibold px-2.5 py-1 rounded-lg whitespace-nowrap shadow-lg">
-                  {item.label}
-                  {isDisabled && <span className="text-muted ml-1">(upload first)</span>}
-                </div>
-              </div>
-
-              {/* File count badge on upload icon */}
-              {item.id === "upload" && files.length > 0 && (
-                <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-primary text-primary-foreground text-[9px] font-bold flex items-center justify-center">
-                  {files.length}
-                </span>
-              )}
-            </div>
-          );
-        })}
-
-        <div className="mt-0 md:mt-auto flex flex-row md:flex-col gap-1 items-center">
-          <Separator className="w-8 mb-2 hidden md:block" />
+        {/* Bottom Actions */}
+        <div className="mt-0 md:mt-auto w-full md:px-3 flex flex-row md:flex-col gap-1 items-center md:items-stretch">
+          <div className="hidden md:block px-3 mb-2 mt-4 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">System</div>
           {/* Theme toggle */}
-          <div className="relative group">
-            <button
-              onClick={() => setTheme(mounted && theme === "dark" ? "light" : "dark")}
-              className="w-10 h-10 rounded-xl text-muted-foreground hover:bg-muted hover:text-foreground flex items-center justify-center transition-all cursor-pointer"
-              title="Toggle Theme"
-            >
-              {mounted && theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-            </button>
-          </div>
+          <button
+            onClick={() => setTheme(mounted && theme === "dark" ? "light" : "dark")}
+            className="h-12 md:h-10 md:w-full rounded-xl text-muted-foreground hover:bg-background/50 hover:text-foreground flex items-center justify-center md:justify-start md:px-4 gap-3 transition-all cursor-pointer font-medium"
+          >
+            {mounted && theme === "dark" ? <Sun className="w-5 h-5 md:w-4 md:h-4" /> : <Moon className="w-5 h-5 md:w-4 md:h-4" />}
+            <span className="hidden md:block text-sm">Toggle Theme</span>
+          </button>
+          
           {/* Logout */}
-          <div className="relative group">
-            <button
-              onClick={handleLogout}
-              className="w-10 h-10 rounded-xl text-muted-foreground hover:bg-destructive/10 hover:text-destructive flex items-center justify-center transition-all cursor-pointer"
-              title="Logout"
-            >
-              <LogOut className="w-4 h-4" />
-            </button>
-            <div className="absolute left-14 bottom-0 hidden group-hover:flex items-center pointer-events-none z-50">
-              <div className="bg-foreground text-background text-[11px] font-semibold px-2.5 py-1 rounded-lg whitespace-nowrap shadow-lg">
-                Logout ({sessionUser?.username})
-              </div>
-            </div>
-          </div>
+          <button
+            onClick={handleLogout}
+            className="h-12 md:h-10 md:w-full rounded-xl text-muted-foreground hover:bg-destructive/10 hover:text-destructive flex items-center justify-center md:justify-start md:px-4 gap-3 transition-all cursor-pointer font-medium"
+          >
+            <LogOut className="w-5 h-5 md:w-4 md:h-4" />
+            <span className="hidden md:block text-sm">Logout</span>
+          </button>
         </div>
       </aside>
 
@@ -327,21 +326,35 @@ export default function WorkspacePage() {
       {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden pb-14 md:pb-0">
 
-        {/* ── TOP BAR ─────────────────────────────────────────────── */}
-        <header className="h-14 border-b border-border bg-background flex items-center px-6 gap-3 flex-shrink-0 z-30">
+        {/* ── TOP NAV BAR (Global Sticky Header) ─────────────────────────────────────────────── */}
+        <header className="h-16 border-b border-border/50 bg-background/80 backdrop-blur-xl flex items-center justify-between px-6 z-30 sticky top-0 shadow-sm">
           {/* Breadcrumb */}
-          <div className="flex items-center gap-2 text-sm flex-1 min-w-0">
-            <span className="font-bold text-muted-foreground text-xs">Nirikhshon</span>
-            <ChevronRight className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" strokeWidth={2} />
-            <span className="font-bold text-foreground text-sm truncate">{viewLabels[viewState]}</span>
+          <div className="flex items-center gap-2 text-sm">
+            <span className="font-bold text-muted-foreground text-xs font-mono uppercase tracking-widest hidden md:inline-block">Workspace</span>
+            <ChevronRight className="w-3.5 h-3.5 text-muted-foreground hidden md:block" strokeWidth={2} />
+            <span className="font-bold text-foreground text-sm tracking-tight">{viewLabels[viewState]}</span>
           </div>
 
-          {/* Right side: role badge */}
-          <div className="flex items-center gap-3 flex-shrink-0">
+          {/* Right side tools */}
+          <div className="flex items-center gap-4">
+            <div className="hidden lg:flex items-center relative">
+              <span className="absolute left-3 text-muted-foreground">🔍</span>
+              <input 
+                type="text" 
+                placeholder="Search Study ID or Patient..." 
+                className="h-9 w-64 bg-card/50 border border-border/50 rounded-full pl-9 pr-4 text-xs focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all font-mono"
+              />
+            </div>
             {sessionUser && (
-              <Badge variant="outline" className="h-7 text-[11px] font-semibold px-3 rounded-full capitalize hidden sm:flex">
-                👤 {sessionUser.username} · {sessionUser.role}
-              </Badge>
+              <div className="flex items-center gap-3 pl-4 border-l border-border/50">
+                <div className="text-right hidden sm:block">
+                  <div className="text-xs font-bold text-foreground">{sessionUser.username}</div>
+                  <div className="text-[10px] text-muted-foreground uppercase tracking-widest font-mono">{sessionUser.role}</div>
+                </div>
+                <div className="w-8 h-8 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center text-primary font-bold text-xs uppercase shadow-[0_0_10px_rgba(8,145,178,0.2)]">
+                  {sessionUser.username.charAt(0)}
+                </div>
+              </div>
             )}
           </div>
         </header>
