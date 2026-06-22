@@ -119,45 +119,45 @@
   --radius-pill: 9999px;
   --radius-full: 9999px;
 
-  --background:        0 0% 6.3%;  /* #101010 */
-  --foreground:        0 0% 98%;   /* #fafafa */
-  --card:              0 0% 10.2%; /* #1a1a1a */
-  --card-foreground:   0 0% 98%;
-  --popover:           0 0% 6.3%;
-  --popover-foreground:0 0% 98%;
+  --background:        222 47% 11%;  /* #0F172A */
+  --foreground:        0 0% 100%;    /* #FFFFFF */
+  --card:              217 33% 17%;  /* #1E293B */
+  --card-foreground:   0 0% 100%;
+  --popover:           222 47% 11%;
+  --popover-foreground:0 0% 100%;
 
-  --primary:           0 0% 98%;   /* #fafafa */
-  --primary-foreground:0 0% 6.3%;  /* #101010 */
+  --primary:           191 91% 36%;  /* #0891B2 Medical Teal */
+  --primary-foreground:0 0% 100%;
 
-  --secondary:         0 0% 14.9%; /* #262626 */
-  --secondary-foreground: 0 0% 98%;
-  --muted:             0 0% 14.9%;
-  --muted-foreground:  0 0% 63.9%; /* #a1a1aa */
-  --accent:            0 0% 14.9%;
-  --accent-foreground: 0 0% 98%;
+  --secondary:         215 25% 27%;  /* #334155 */
+  --secondary-foreground: 0 0% 100%;
+  --muted:             222 46% 12%;  /* #10182B */
+  --muted-foreground:  215 16% 65%;  /* #94A3B8 */
+  --accent:            142 76% 36%;  /* #16A34A Health Green */
+  --accent-foreground: 0 0% 100%;
 
-  --destructive:       0 62.8% 30.6%;
-  --destructive-foreground: 0 0% 98%;
+  --destructive:       0 72% 51%;    /* #DC2626 */
+  --destructive-foreground: 0 0% 100%;
 
-  --border:            0 0% 14.9%; /* #262626 */
-  --input:             0 0% 14.9%;
-  --ring:              0 0% 98%;
+  --border:            215 25% 27%;  /* #334155 */
+  --input:             215 25% 27%;
+  --ring:              191 91% 36%;
   --radius:            0.75rem;
 
-  --chart-1: 0 0% 98%;
-  --chart-2: 142.1 70.2% 45.3%;
-  --chart-3: 37.7 90.1% 45.2%;
-  --chart-4: 0 0% 63.9%;
-  --chart-5: 0 0% 14.9%;
+  --chart-1: 191 91% 36%;
+  --chart-2: 142 76% 36%;
+  --chart-3: 37 90% 45%;
+  --chart-4: 215 16% 65%;
+  --chart-5: 215 25% 27%;
 
-  --sidebar: 0 0% 8%;
-  --sidebar-foreground: 0 0% 98%;
-  --sidebar-primary: 0 0% 98%;
-  --sidebar-primary-foreground: 0 0% 6.3%;
-  --sidebar-accent: 0 0% 14.9%;
-  --sidebar-accent-foreground: 0 0% 98%;
-  --sidebar-border: 0 0% 14.9%;
-  --sidebar-ring: 0 0% 98%;
+  --sidebar: 222 47% 11%;
+  --sidebar-foreground: 0 0% 100%;
+  --sidebar-primary: 191 91% 36%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 217 33% 17%;
+  --sidebar-accent-foreground: 0 0% 100%;
+  --sidebar-border: 215 25% 27%;
+  --sidebar-ring: 191 91% 36%;
 
   /* Cyber Warning: Bright Neon Amber for Dark Mode */
   --warning-50:        48 100% 96%;   /* amber-50 */

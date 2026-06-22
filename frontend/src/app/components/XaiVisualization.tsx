@@ -114,23 +114,23 @@ export default function XaiVisualization({ result, similarCases, loadingSimilar 
   };
 
   return (
-    <div className="bg-[#09090b] rounded-3xl overflow-hidden text-zinc-100 shadow-2xl font-sans">
+    <div className="bg-background rounded-3xl overflow-hidden text-foreground shadow-2xl font-sans border border-border/50">
       
       {/* Sleek Top Header */}
-      <div className="px-8 py-5 border-b border-white/10 bg-white/[0.02] backdrop-blur-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+      <div className="px-8 py-5 border-b border-border/50 bg-card/40 backdrop-blur-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div className="flex items-center gap-4">
-          <div className="w-10 h-10 rounded-xl bg-teal-500/20 border border-teal-500/30 flex items-center justify-center shadow-[0_0_15px_rgba(20,184,166,0.2)]">
-            <Activity className="w-5 h-5 text-teal-400" />
+          <div className="w-10 h-10 rounded-xl bg-primary/20 border border-primary/30 flex items-center justify-center shadow-[0_0_15px_rgba(8,145,178,0.2)]">
+            <Activity className="w-5 h-5 text-primary" />
           </div>
           <div>
-            <h2 className="text-xl font-semibold tracking-tight text-white flex items-center gap-2">
+            <h2 className="text-xl font-semibold tracking-tight text-foreground flex items-center gap-2">
               Diagnostic Workbench
-              <Badge className="bg-teal-500/20 text-teal-300 border-none px-2 font-mono text-[10px] uppercase tracking-widest">
+              <Badge className="bg-primary/20 text-primary border-none px-2 font-mono text-[10px] uppercase tracking-widest">
                 XAI Live
               </Badge>
             </h2>
-            <p className="text-sm text-zinc-400 mt-0.5">
-              Study ID: <span className="font-mono text-zinc-300">{result.study_id || "N/A"}</span>
+            <p className="text-sm text-muted-foreground mt-0.5">
+              Study ID: <span className="font-mono text-foreground/80">{result.study_id || "N/A"}</span>
             </p>
           </div>
         </div>
@@ -139,7 +139,7 @@ export default function XaiVisualization({ result, similarCases, loadingSimilar 
           <Button 
             variant="outline" 
             size="sm" 
-            className={`border-white/10 text-xs font-medium rounded-xl transition-all ${isComparing ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30' : 'bg-white/5 text-zinc-300 hover:bg-white/10 hover:text-white'}`}
+            className={`border-border/50 text-xs font-medium rounded-xl transition-all ${isComparing ? 'bg-secondary text-secondary-foreground border-secondary/80' : 'bg-card/50 text-muted-foreground hover:bg-card hover:text-foreground'}`}
             onClick={() => setIsComparing(!isComparing)}
           >
             <LayoutDashboard className="w-4 h-4 mr-2" />
@@ -148,7 +148,7 @@ export default function XaiVisualization({ result, similarCases, loadingSimilar 
           <Button 
             variant="outline" 
             size="sm" 
-            className="border-white/10 bg-white/5 text-zinc-300 hover:bg-white/10 hover:text-white text-xs font-medium rounded-xl transition-all"
+            className="border-border/50 bg-card/50 text-muted-foreground hover:bg-card hover:text-foreground text-xs font-medium rounded-xl transition-all"
             onClick={() => setZoomLevel(zoomLevel === 1.3 ? 1 : 1.3)}
           >
             <Search className="w-4 h-4 mr-2" />
@@ -310,43 +310,43 @@ export default function XaiVisualization({ result, similarCases, loadingSimilar 
           <div className={`xl:col-span-5 ${isComparing ? "xl:col-span-4" : "xl:col-span-5"} flex flex-col gap-6`}>
             
             {/* Panel 1: Circular Progress Metrics */}
-            <div className="bg-white/[0.02] backdrop-blur-xl border border-white/5 rounded-3xl p-6 shadow-xl relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-teal-500/10 rounded-full blur-[50px] -mr-10 -mt-10 pointer-events-none"></div>
+            <div className="bg-card/40 backdrop-blur-xl border border-border/50 rounded-3xl p-6 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-[50px] -mr-10 -mt-10 pointer-events-none"></div>
               
-              <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest mb-6 flex items-center gap-2">
-                <Layers className="w-4 h-4 text-zinc-500" /> Predictive Telemetry
+              <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-6 flex items-center gap-2">
+                <Layers className="w-4 h-4 text-primary" /> Predictive Telemetry
               </h3>
               
               <div className="grid grid-cols-2 gap-4">
                 <CircularProgress 
                   value={metrics?.tb_probability !== undefined ? metrics.tb_probability : Math.round((result.confidence || 0) * 100)} 
                   label="Raw Probability" 
-                  colorClass="text-white" 
-                  strokeColor="#3b82f6" 
+                  colorClass="text-foreground" 
+                  strokeColor="hsl(191, 91%, 36%)" 
                 />
                 <CircularProgress 
                   value={metrics?.calibrated_confidence !== undefined ? metrics.calibrated_confidence : 50} 
                   label="Calibrated Certainty" 
-                  colorClass="text-teal-400" 
-                  strokeColor="#14b8a6" 
+                  colorClass="text-accent" 
+                  strokeColor="hsl(142, 76%, 36%)" 
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4 mt-4">
-                <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-4 flex flex-col justify-center">
-                  <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest mb-1">System Reliability</span>
+                <div className="bg-background/50 border border-border/50 rounded-2xl p-4 flex flex-col justify-center">
+                  <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest mb-1">System Reliability</span>
                   <div className="flex items-center gap-2">
-                    <CheckCircle2 className={`w-4 h-4 ${metrics?.reliability === "High" ? "text-emerald-500" : "text-amber-500"}`} />
-                    <span className={`text-sm font-bold ${metrics?.reliability === "High" ? "text-emerald-400" : "text-amber-400"}`}>
+                    <CheckCircle2 className={`w-4 h-4 ${metrics?.reliability === "High" ? "text-accent" : "text-amber-500"}`} />
+                    <span className={`text-sm font-bold font-mono ${metrics?.reliability === "High" ? "text-accent" : "text-amber-400"}`}>
                       {metrics?.reliability || "High"}
                     </span>
                   </div>
                 </div>
-                <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-4 flex flex-col justify-center">
-                  <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest mb-1">Decision Uncertainty</span>
+                <div className="bg-background/50 border border-border/50 rounded-2xl p-4 flex flex-col justify-center">
+                  <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest mb-1">Decision Uncertainty</span>
                   <div className="flex items-center gap-2">
-                    <AlertCircle className={`w-4 h-4 ${metrics?.uncertainty === "Low" ? "text-emerald-500" : "text-red-500"}`} />
-                    <span className={`text-sm font-bold ${metrics?.uncertainty === "Low" ? "text-emerald-400" : "text-red-400"}`}>
+                    <AlertCircle className={`w-4 h-4 ${metrics?.uncertainty === "Low" ? "text-accent" : "text-destructive"}`} />
+                    <span className={`text-sm font-bold font-mono ${metrics?.uncertainty === "Low" ? "text-accent" : "text-destructive"}`}>
                       {metrics?.uncertainty || "Low"}
                     </span>
                   </div>
@@ -355,17 +355,17 @@ export default function XaiVisualization({ result, similarCases, loadingSimilar 
             </div>
 
             {/* Panel 2: Interactive ROI Rankings */}
-            <div className="bg-white/[0.02] backdrop-blur-xl border border-white/5 rounded-3xl p-6 shadow-xl flex-1 flex flex-col">
+            <div className="bg-card/40 backdrop-blur-xl border border-border/50 rounded-3xl p-6 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] flex-1 flex flex-col">
               <div className="flex justify-between items-center mb-6">
-                <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest">Identified Anomalies</h3>
-                <Badge className="bg-teal-500/10 text-teal-300 border-teal-500/20 text-xs px-2.5 py-0.5 rounded-full">
+                <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Identified Anomalies</h3>
+                <Badge className="bg-primary/10 text-primary border-primary/20 text-xs px-2.5 py-0.5 rounded-full font-mono">
                   {rois.length} Regions
                 </Badge>
               </div>
               
               <div className="space-y-3 flex-1 overflow-y-auto pr-2 custom-scrollbar">
                 {rois.length === 0 ? (
-                  <div className="text-center py-8 text-zinc-500 text-sm italic">No focal anomalies detected.</div>
+                  <div className="text-center py-8 text-muted-foreground text-sm italic">No focal anomalies detected.</div>
                 ) : (
                   rois.map((roi: any) => {
                     const isHovered = hoveredRoiId === roi.id;
@@ -376,33 +376,33 @@ export default function XaiVisualization({ result, similarCases, loadingSimilar 
                         onMouseLeave={() => setHoveredRoiId(null)}
                         className={`group relative overflow-hidden rounded-2xl p-4 transition-all duration-300 cursor-pointer border ${
                           isHovered 
-                            ? "bg-gradient-to-r from-red-500/20 to-rose-500/5 border-red-500/30 scale-[1.02] shadow-lg" 
-                            : "bg-white/[0.02] border-white/5 hover:border-white/10"
+                            ? "bg-gradient-to-r from-destructive/20 to-destructive/5 border-destructive/30 scale-[1.02] shadow-[0_4px_20px_rgba(220,38,38,0.15)]" 
+                            : "bg-background/40 border-border/50 hover:border-border"
                         }`}
                       >
-                        {isHovered && <div className="absolute left-0 top-0 bottom-0 w-1 bg-red-500 shadow-[0_0_10px_#ef4444]"></div>}
+                        {isHovered && <div className="absolute left-0 top-0 bottom-0 w-1 bg-destructive shadow-[0_0_10px_#DC2626]"></div>}
                         
                         <div className="flex items-center justify-between relative z-10">
                           <div className="flex items-center gap-4">
                             <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm transition-colors ${
-                              isHovered ? "bg-red-500 text-white shadow-lg" : "bg-white/10 text-zinc-300"
+                              isHovered ? "bg-destructive text-destructive-foreground shadow-lg" : "bg-secondary text-secondary-foreground"
                             }`}>
                               {roi.id}
                             </div>
                             <div>
-                              <div className={`font-bold transition-colors ${isHovered ? "text-white" : "text-zinc-200"}`}>
+                              <div className={`font-bold transition-colors ${isHovered ? "text-foreground" : "text-foreground/80"}`}>
                                 {roi.location}
                               </div>
-                              <div className="text-[11px] text-zinc-500 font-medium mt-0.5">
+                              <div className="text-[11px] text-muted-foreground font-medium mt-0.5 font-mono">
                                 Activation Peak: {roi.activation_score}%
                               </div>
                             </div>
                           </div>
                           <div className="text-right">
-                            <span className={`text-xl font-bold font-mono tracking-tighter ${isHovered ? "text-red-400" : "text-teal-400"}`}>
+                            <span className={`text-xl font-bold font-mono tracking-tighter ${isHovered ? "text-destructive" : "text-primary"}`}>
                               {roi.contribution_pct}%
                             </span>
-                            <span className="text-[10px] text-zinc-500 block font-bold uppercase">Weight</span>
+                            <span className="text-[10px] text-muted-foreground block font-bold uppercase">Weight</span>
                           </div>
                         </div>
                       </div>
@@ -413,13 +413,13 @@ export default function XaiVisualization({ result, similarCases, loadingSimilar 
             </div>
 
             {/* Panel 3: Medical Report Block */}
-            <div className="bg-white/[0.02] backdrop-blur-xl border border-white/5 rounded-3xl p-6 shadow-xl relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-1 bg-gradient-to-b from-teal-500 to-indigo-500 h-full opacity-50"></div>
-              <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest mb-4">CAD Explanatory Report</h3>
-              <div className="text-sm text-zinc-300 leading-relaxed space-y-4">
-                <p className="font-serif italic text-zinc-200">"{summary}"</p>
-                <div className="flex items-start gap-2 bg-yellow-500/10 border border-yellow-500/20 p-3 rounded-xl text-yellow-200/80 text-[11px] leading-snug">
-                  <AlertCircle className="w-4 h-4 shrink-0 text-yellow-500" />
+            <div className="bg-card/40 backdrop-blur-xl border border-border/50 rounded-3xl p-6 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-1 bg-gradient-to-b from-primary to-accent h-full opacity-50"></div>
+              <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-4">CAD Explanatory Report</h3>
+              <div className="text-sm text-foreground/90 leading-relaxed space-y-4">
+                <p className="font-serif italic text-foreground/80">"{summary}"</p>
+                <div className="flex items-start gap-2 bg-amber-500/10 border border-amber-500/20 p-3 rounded-xl text-amber-200/80 text-[11px] leading-snug">
+                  <AlertCircle className="w-4 h-4 shrink-0 text-amber-500" />
                   <p>Computer-Aided Detection (CAD) is a triage support tool. Always correlate with clinical history, microbiological assays, and expert radiological review.</p>
                 </div>
               </div>
@@ -429,14 +429,14 @@ export default function XaiVisualization({ result, similarCases, loadingSimilar 
         </div>
 
         {/* BOTTOM: Sleek Carousel for Similar Cases */}
-        <div className="mt-8 bg-white/[0.02] backdrop-blur-xl border border-white/5 rounded-3xl p-6 md:p-8 shadow-xl">
+        <div className="mt-8 bg-card/40 backdrop-blur-xl border border-border/50 rounded-3xl p-6 md:p-8 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-2">
             <div>
-              <h3 className="text-sm font-bold text-zinc-200 tracking-wide">K-Nearest Clinical Cohorts</h3>
-              <p className="text-xs text-zinc-500 mt-1">Matched feature embeddings from the Indian Patient Calibration Database</p>
+              <h3 className="text-sm font-bold text-foreground tracking-wide">K-Nearest Clinical Cohorts</h3>
+              <p className="text-xs text-muted-foreground mt-1">Matched feature embeddings from the Indian Patient Calibration Database</p>
             </div>
             {similarCases && (
-              <Badge className="bg-white/5 border-white/10 text-zinc-400 font-normal">
+              <Badge className="bg-background/50 border-border/50 text-muted-foreground font-mono font-normal">
                 {(similarCases.tb_similar?.length || 0) + (similarCases.normal_similar?.length || 0)} References Found
               </Badge>
             )}
@@ -444,10 +444,10 @@ export default function XaiVisualization({ result, similarCases, loadingSimilar 
 
           {loadingSimilar ? (
             <div className="flex items-center justify-center py-12">
-              <div className="animate-spin w-8 h-8 border-4 border-teal-500 border-t-transparent rounded-full"></div>
+              <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full"></div>
             </div>
           ) : !similarCases || (!similarCases.tb_similar?.length && !similarCases.normal_similar?.length) ? (
-            <div className="text-center py-12 text-sm text-zinc-500 bg-black/20 rounded-2xl border border-white/5 border-dashed">
+            <div className="text-center py-12 text-sm text-muted-foreground bg-background/50 rounded-2xl border border-border/50 border-dashed">
               No matching cohort records available for comparison.
             </div>
           ) : (
@@ -456,22 +456,22 @@ export default function XaiVisualization({ result, similarCases, loadingSimilar 
               {/* TB Cases */}
               {similarCases.tb_similar?.map((cand: any, idx: number) => (
                 <div key={`tb-${idx}`} className="snap-start shrink-0 w-[220px] group">
-                  <div className="relative h-[220px] bg-black/60 rounded-2xl overflow-hidden border border-white/5 group-hover:border-red-500/30 transition-all duration-300">
+                  <div className="relative h-[220px] bg-background rounded-2xl overflow-hidden border border-border/50 group-hover:border-destructive/50 shadow-lg transition-all duration-300">
                     <img src={cand.original_image} alt="Cohort Case" className="w-full h-full object-cover opacity-70 group-hover:opacity-100 group-hover:scale-105 transition-all duration-700" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent"></div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/20 to-transparent"></div>
                     
                     <div className="absolute top-3 left-3 flex gap-2">
-                      <Badge className="bg-red-500/90 text-white border-none shadow-lg backdrop-blur-sm px-2">TB</Badge>
+                      <Badge className="bg-destructive/90 text-destructive-foreground border-none shadow-lg backdrop-blur-sm px-2 font-mono">TB</Badge>
                     </div>
                     <div className="absolute top-3 right-3">
-                      <Badge className="bg-black/60 text-white border-white/10 shadow-lg backdrop-blur-md px-2 font-mono">
+                      <Badge className="bg-background/80 text-foreground border-border/50 shadow-lg backdrop-blur-md px-2 font-mono">
                         {cand.similarity_score}% Match
                       </Badge>
                     </div>
                     
                     <div className="absolute bottom-4 left-4 right-4">
-                      <div className="font-semibold text-white truncate text-sm">{cand.patient_name || cand.patient_id}</div>
-                      <div className="text-xs text-zinc-400 mt-0.5">{cand.age} yrs • {cand.sex}</div>
+                      <div className="font-semibold text-foreground truncate text-sm">{cand.patient_name || cand.patient_id}</div>
+                      <div className="text-xs text-muted-foreground mt-0.5">{cand.age} yrs • {cand.sex}</div>
                     </div>
                   </div>
                 </div>
@@ -480,22 +480,22 @@ export default function XaiVisualization({ result, similarCases, loadingSimilar 
               {/* Normal Cases */}
               {similarCases.normal_similar?.map((cand: any, idx: number) => (
                 <div key={`n-${idx}`} className="snap-start shrink-0 w-[220px] group">
-                  <div className="relative h-[220px] bg-black/60 rounded-2xl overflow-hidden border border-white/5 group-hover:border-teal-500/30 transition-all duration-300">
+                  <div className="relative h-[220px] bg-background rounded-2xl overflow-hidden border border-border/50 group-hover:border-accent/50 shadow-lg transition-all duration-300">
                     <img src={cand.original_image} alt="Cohort Case" className="w-full h-full object-cover opacity-70 group-hover:opacity-100 group-hover:scale-105 transition-all duration-700" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent"></div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/20 to-transparent"></div>
                     
                     <div className="absolute top-3 left-3 flex gap-2">
-                      <Badge className="bg-teal-500/90 text-white border-none shadow-lg backdrop-blur-sm px-2">Normal</Badge>
+                      <Badge className="bg-accent/90 text-accent-foreground border-none shadow-lg backdrop-blur-sm px-2 font-mono">Normal</Badge>
                     </div>
                     <div className="absolute top-3 right-3">
-                      <Badge className="bg-black/60 text-white border-white/10 shadow-lg backdrop-blur-md px-2 font-mono">
+                      <Badge className="bg-background/80 text-foreground border-border/50 shadow-lg backdrop-blur-md px-2 font-mono">
                         {cand.similarity_score}% Match
                       </Badge>
                     </div>
                     
                     <div className="absolute bottom-4 left-4 right-4">
-                      <div className="font-semibold text-white truncate text-sm">{cand.patient_name || cand.patient_id}</div>
-                      <div className="text-xs text-zinc-400 mt-0.5">{cand.age} yrs • {cand.sex}</div>
+                      <div className="font-semibold text-foreground truncate text-sm">{cand.patient_name || cand.patient_id}</div>
+                      <div className="text-xs text-muted-foreground mt-0.5">{cand.age} yrs • {cand.sex}</div>
                     </div>
                   </div>
                 </div>

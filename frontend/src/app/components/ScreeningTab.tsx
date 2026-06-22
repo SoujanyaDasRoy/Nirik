@@ -673,8 +673,8 @@ export function ScreeningTab({
           {activeResult ? (
               /* ── 3-PANEL PACS WORKSPACE (SUCCESSFUL INFERENCE STATE) ── */
               <div className="flex flex-col space-y-6 w-full">
-                {/* Workstation Header & Switcher */}
-                <div className="flex flex-wrap items-center justify-between gap-4 p-4 border border-border bg-card rounded-xl shadow-none">
+                {/* Right Top Header Info */}
+                <div className="flex flex-wrap items-center justify-between gap-4 p-4 border border-border/50 bg-card/40 backdrop-blur-xl rounded-2xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]">
                   <div className="flex items-center gap-3">
                     <Activity className="w-5 h-5 text-primary animate-pulse" strokeWidth={2} />
                     <div>
@@ -789,7 +789,7 @@ export function ScreeningTab({
                     )}
 
                     {/* Primary Viewport Card container */}
-                    <Card className="border border-border bg-[#0a0a0a] rounded-xl overflow-hidden shadow-md">
+                    <Card className="border border-border/50 bg-background/30 backdrop-blur-md rounded-2xl overflow-hidden shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]">
                       <DicomViewer
                         imageBase64={activeResult.original_image || ""}
                         heatmapBase64={activeResult.heatmaps?.[xaiMethod] || activeResult.heatmap_image}
@@ -819,7 +819,7 @@ export function ScreeningTab({
 
                   {/* Redraw list of active markups drawn on top of the X-ray */}
                   {boxes.length > 0 && (
-                    <div className="flex flex-wrap items-center gap-2 p-3 border border-border bg-card rounded-xl">
+                    <div className="flex flex-wrap items-center gap-2 p-3 border border-border/50 bg-card/40 backdrop-blur-xl rounded-2xl">
                       <span className="text-xs font-bold text-foreground mr-1">Marked Zones:</span>
                       <div className="flex flex-wrap gap-1.5 items-center flex-1">
                         {boxes.map((b, idx) => (
@@ -883,7 +883,7 @@ export function ScreeningTab({
 
 
                           {/* WORKFLOW STATUS STEPPER */}
-                          <div className="p-4 border border-border bg-card rounded-xl space-y-3">
+                          <div className="p-4 border border-border/50 bg-card/40 backdrop-blur-xl rounded-2xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] space-y-3">
                             <p className="text-xs font-bold uppercase tracking-wider text-foreground">Workflow Checklist</p>
                             <div className="space-y-2">
                               {getStepperStatus().map((step, idx) => (
@@ -906,7 +906,7 @@ export function ScreeningTab({
                           </div>
 
                           {/* IMAGE QUALITY ASSESSMENT (IQA) */}
-                          <Card className="border border-border bg-card rounded-xl shadow-none">
+                          <Card className="border border-border/50 bg-card/40 backdrop-blur-xl rounded-2xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]">
                             <CardContent className="p-5 space-y-3">
                               <div className="flex items-center justify-between">
                                 <p className="text-xs font-bold uppercase tracking-wider text-foreground">Image Quality (IQA)</p>
@@ -957,7 +957,7 @@ export function ScreeningTab({
                           </Card>
 
                           {/* AI DIAGNOSTICS CARD */}
-                          <Card className="border border-border bg-card rounded-xl shadow-none">
+                          <Card className="border border-border/50 bg-card/40 backdrop-blur-xl rounded-2xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]">
                             <CardContent className="p-5 space-y-4">
                               <div className="flex justify-between items-center">
                                 <p className="text-xs font-bold uppercase tracking-wider text-foreground">AI Diagnostics Output</p>
@@ -1031,7 +1031,7 @@ export function ScreeningTab({
                           
                           {/* IMAGE QUALITY CHECKER CARD */}
                           {activeResult.status === "success" && activeResult.image_quality && (
-                            <Card className="border border-border bg-card rounded-xl shadow-none mt-4 animate-fadein">
+                            <Card className="border border-border/50 bg-card/40 backdrop-blur-xl rounded-2xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] mt-4 animate-fadein">
                               <CardContent className="p-5 space-y-4">
                                 <div className="flex justify-between items-center">
                                   <p className="text-xs font-bold uppercase tracking-wider text-foreground">Image Quality Checker</p>
@@ -1093,7 +1093,7 @@ export function ScreeningTab({
                       {activeRightTab === "review" && (
                         <div className="space-y-6 animate-fadein">
                           {/* CLINICAL AUDIT / OVERRIDE INPUTS */}
-                          <Card className="border border-border bg-card rounded-xl shadow-none">
+                          <Card className="border border-border/50 bg-card/40 backdrop-blur-xl rounded-2xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]">
                             <CardContent className="p-5 space-y-4">
                               <p className="text-xs font-bold uppercase tracking-wider text-foreground">Clinical Sign-Off</p>
                               <Separator />
@@ -1164,7 +1164,7 @@ export function ScreeningTab({
                       {activeRightTab === "report" && (
                         <div className="space-y-6 animate-fadein">
                           {/* REPORT SUMMARY CARD */}
-                          <Card className="border border-border bg-card rounded-xl shadow-none">
+                          <Card className="border border-border/50 bg-card/40 backdrop-blur-xl rounded-2xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]">
                             <CardContent className="p-5 space-y-4">
                               <div className="flex justify-between items-center border-b border-border pb-3">
                                 <div>
@@ -1267,7 +1267,7 @@ export function ScreeningTab({
                   ) : (
                     <div className="space-y-6 animate-fadein">
                       {/* A. MODEL METRICS & DATASET TRACKER CARD */}
-                      <Card className="border border-border bg-card rounded-xl shadow-none">
+                      <Card className="border border-border/50 bg-card/40 backdrop-blur-xl rounded-2xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]">
                         <CardContent className="p-5 space-y-4">
                           <div className="flex items-center gap-2">
                             <Activity className="w-4 h-4 text-primary" />
