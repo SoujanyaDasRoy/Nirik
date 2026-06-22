@@ -338,8 +338,10 @@ def extract_xai_rois(heatmap_blurred: np.ndarray, is_tb: bool) -> list:
     Extract Regions of Interest (ROIs) from the heatmap using OpenCV contours.
     """
     h, w = heatmap_blurred.shape
-    # Threshold to identify hot spots (values >= 0.38 for TB, 0.28 for Normal)
-    thresh_val = 0.38 if is_tb else 0.28
+    max_val = np.max(heatmap_blurred)
+    # Threshold dynamically to identify hot spots relative to peak activation
+    relative_thresh = 0.60 if is_tb else 0.70
+    thresh_val = max(0.15, max_val * relative_thresh)
     _, mask = cv2.threshold((heatmap_blurred * 255).astype(np.uint8), int(thresh_val * 255), 255, cv2.THRESH_BINARY)
     
     contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
