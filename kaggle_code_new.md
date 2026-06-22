@@ -1,4 +1,4 @@
-﻿# TB Chest X-Ray Classification — Kaggle Notebook (Cell-Split Version)
+# TB Chest X-Ray Classification — Kaggle Notebook (Cell-Split Version)
 #
 # Each fenced ```python block is a separate Kaggle cell. Copy each block
 # into its own cell in your Kaggle notebook (top to bottom, in order).
@@ -298,8 +298,15 @@ class Distiller(models.Model):
 
     def compile(self, optimizer, **kw):
         super().compile(optimizer=optimizer, **kw)
-        self.acc = metrics.BinaryAccuracy(threshold=0.0)
-        self.auc = metrics.AUC(from_logits=True, name="auc")
+        self.acc_metric = metrics.BinaryAccuracy(threshold=0.0, name="acc")  # operates on logits
+        self.auc_metric = metrics.AUC(from_logits=True, name="auc")
+
+    @property
+    def metrics(self):
+        # Registering these is what makes Keras call reset_state() at the
+        # start of every epoch (and before validation). Without this,
+        # the metrics silently accumulate forever across the whole run.
+        return [self.acc_metric, self.auc_metric]
 
     def _kd_loss(self, t_logits, s_logits):
         t  = tf.sigmoid(t_logits / self.T)
@@ -317,22 +324,19 @@ class Distiller(models.Model):
             loss = self.alpha * hard + (1 - self.alpha) * soft
         grads = tape.gradient(loss, self.student.trainable_variables)
         self.optimizer.apply_gradients(zip(grads, self.student.trainable_variables))
-        self.acc.update_state(y, tf.sigmoid(s_logits))
-        self.auc.update_state(y, tf.sigmoid(s_logits))
-        return {"loss": loss, "acc": self.acc.result(), "auc": self.auc.result()}
+        self.acc_metric.update_state(y, s_logits)   # raw logits, matches threshold=0.0
+        self.auc_metric.update_state(y, s_logits)   # raw logits, matches from_logits=True
+        return {"loss": loss, "acc": self.acc_metric.result(), "auc": self.auc_metric.result()}
 
     def test_step(self, data):
         x, y = data
         s_logits = self.student(x, training=False)
-        # Track validation loss too, so 'val_loss' appears in history.
-        # We don't backprop on it (test_step is wrapped in no tape),
-        # so this is a read-only metric.
         val_loss = self.bce(y, s_logits)
-        self.acc.update_state(y, tf.sigmoid(s_logits))
-        self.auc.update_state(y, tf.sigmoid(s_logits))
+        self.acc_metric.update_state(y, s_logits)
+        self.auc_metric.update_state(y, s_logits)
         return {"loss": val_loss,
-                "acc":  self.acc.result(),
-                "auc":  self.auc.result()}
+                "acc":  self.acc_metric.result(),
+                "auc":  self.auc_metric.result()}
 
 # Freeze teacher so no test info leaks through distillation
 teacher.trainable = False
