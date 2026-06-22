@@ -239,9 +239,9 @@ export default function WorkspacePage() {
       {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       {/* LEFT SIDEBAR (Pro Max Dimensional Layout) */}
       {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <aside className="fixed bottom-0 left-0 right-0 h-16 w-full border-t border-border md:relative md:bottom-auto md:left-auto md:right-auto md:h-full md:w-[240px] flex flex-row md:flex-col items-center justify-around md:justify-start py-0 md:py-5 gap-1 bg-card border-r-0 md:border-r md:border-border z-40">
+      <aside className="fixed bottom-0 left-0 right-0 h-16 w-full border-t border-border md:relative md:bottom-auto md:left-auto md:right-auto md:h-full md:w-[240px] flex flex-row md:flex-col items-center justify-around md:justify-start py-0 md:py-0 gap-1 bg-card border-r-0 md:border-r md:border-border z-40">
         {/* Logo Area */}
-        <div className="w-full px-6 mb-6 hidden md:flex items-center gap-3">
+        <div className="w-full h-14 border-b border-border px-6 hidden md:flex items-center gap-3 flex-shrink-0">
           <div
             onClick={() => window.location.href = "/"}
             className="w-9 h-9 rounded-lg bg-primary flex items-center justify-center text-white cursor-pointer transition-all hover:bg-primary/90 hover:shadow-md"
@@ -251,12 +251,12 @@ export default function WorkspacePage() {
           </div>
           <div>
             <h1 className="text-sm font-bold text-foreground tracking-tight leading-tight">Nirikhshon</h1>
-            <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-mono">Workspace</p>
+            <p className="text-[9px] text-muted-foreground/80 font-bold uppercase tracking-wider font-sans">Workspace</p>
           </div>
         </div>
 
         {/* Nav items */}
-        <div className="w-full flex flex-row md:flex-col md:px-3 gap-1">
+        <div className="w-full flex flex-row md:flex-col md:px-3 gap-1 md:mt-4">
           <div className="hidden md:block px-3 mb-2 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Main Menu</div>
           {navItems.map(item => {
             if (item.adminOnly && !isAdmin) return null;
@@ -300,7 +300,7 @@ export default function WorkspacePage() {
         </div>
 
         {/* Bottom Actions */}
-        <div className="mt-0 md:mt-auto w-full md:px-3 flex flex-row md:flex-col gap-1 items-center md:items-stretch">
+        <div className="mt-0 md:mt-auto w-full md:px-3 flex flex-row md:flex-col gap-1 items-center md:items-stretch md:mb-5">
           <div className="hidden md:block px-3 mb-2 mt-4 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">System</div>
           
           {/* Logout */}
@@ -323,7 +323,7 @@ export default function WorkspacePage() {
         <header className="h-14 border-b border-border bg-card flex items-center justify-between px-6 z-30 sticky top-0">
           {/* Breadcrumb */}
           <div className="flex items-center gap-2 text-sm">
-            <span className="font-bold text-muted-foreground text-xs font-mono uppercase tracking-widest hidden md:inline-block">Workspace</span>
+            <span className="font-bold text-muted-foreground/80 text-[10px] uppercase tracking-wider hidden md:inline-block font-sans">Workspace</span>
             <ChevronRight className="w-3.5 h-3.5 text-muted-foreground hidden md:block" strokeWidth={2} />
             <span className="font-bold text-foreground text-sm tracking-tight">{viewLabels[viewState]}</span>
             {viewState === "workbench" && files.length > 0 && selectedIdx !== null && results[selectedIdx] && (
