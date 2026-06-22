@@ -148,44 +148,95 @@ def generate_saliency_heatmap(model, tensor, original_img: Image.Image, is_tb: b
             cam_np = cv2.GaussianBlur(cam_np, (31, 31), 0)
             cam_np = (cam_np - cam_np.min()) / (cam_np.max() - cam_np.min() + 1e-8)
         else:
-            # Multi-output model targeting Keras "relu" activation layer of DenseNet
+            # ── Grad-CAM / Grad-CAM++ via Keras-native GradientTape ──────────────
+            #
+            # Architecture note (DenseNet121, verified from config.json):
+            #
+            #   conv5_block16_2_conv  → 32-ch slice  (WRONG target — pre-norm, pre-concat)
+            #   conv5_block16_concat  → 1024-ch concatenated tensor
+            #   bn                    → BatchNorm
+            #   relu                  ← CORRECT target: 1024-ch, feeds avg_pool directly
+            #   avg_pool              → GlobalAveragePooling2D
+            #   dense_1               → sigmoid output
+            #
+            # Targeting "relu" covers all 1024 channels that the Dense layer actually
+            # sees, including everything accumulated across all four dense blocks.
+            # Targeting "conv5_block16_2_conv" would explain only 32 of those 1024
+            # channels — the pre-normalization slice from the final layer alone.
             import keras
-            last_conv_layer = model.get_layer("relu")
-            grad_model = keras.Model(inputs=model.inputs, outputs=[last_conv_layer.output, model.output])
-            
-            with torch.enable_grad():
-                tensor_input = tensor.clone().detach().requires_grad_(True)
-                act, logit = grad_model(tensor_input)
-                
-                if logit.dim() > 1:
-                    logit = logit.squeeze(1)
-                if logit.dim() > 0:
-                    logit = logit.squeeze()
-                    
-                grads = torch.autograd.grad(logit, act, grad_outputs=torch.ones_like(logit), retain_graph=False)[0]
-            
+            import tensorflow as tf  # Keras 3 w/ PyTorch backend still exposes tf.GradientTape
+
+            # Resolve and validate the target layer once; log it for auditability
+            TARGET_LAYER = "relu"
+            try:
+                last_conv_layer = model.get_layer(TARGET_LAYER)
+            except ValueError:
+                # Fallback: find the last activation layer before global pooling
+                for layer in reversed(model.layers):
+                    if hasattr(layer, "activation") or "activation" in layer.name.lower():
+                        last_conv_layer = layer
+                        TARGET_LAYER = layer.name
+                        break
+                else:
+                    raise RuntimeError("Could not locate a suitable Grad-CAM target layer")
+
+            print(
+                f"[GradCAM] Target layer: '{TARGET_LAYER}' | "
+                f"output shape: {last_conv_layer.output.shape}"
+            )
+
+            grad_model = keras.Model(
+                inputs=model.inputs,
+                outputs=[last_conv_layer.output, model.output]
+            )
+
+            # Convert PyTorch tensor → NumPy → Keras tensor (channels-last: NHWC)
+            np_input = tensor.detach().cpu().numpy()
+            # If input came in NCHW (PyTorch default), transpose to NHWC for Keras
+            if np_input.ndim == 4 and np_input.shape[1] in (1, 3):
+                np_input = np_input.transpose(0, 2, 3, 1)
+            keras_input = tf.constant(np_input, dtype=tf.float32)
+
+            with tf.GradientTape() as tape:
+                tape.watch(keras_input)
+                act, logit = grad_model(keras_input, training=False)
+                # Squeeze to scalar for single-output sigmoid head
+                score = tf.reduce_mean(logit)
+
+            grads = tape.gradient(score, act)  # shape: (1, H, W, C)
+
+            # Convert to float32 numpy for consistent downstream processing
+            act_np   = act.numpy().astype(np.float32)    # (1, H, W, C)
+            grads_np = grads.numpy().astype(np.float32)  # (1, H, W, C)
+
+            # Squeeze batch dimension
+            act_np   = act_np[0]    # (H, W, C)
+            grads_np = grads_np[0]  # (H, W, C)
+
             if method == "gradcam":
-                # Standard Grad-CAM
-                weights = torch.mean(grads, dim=(1, 2), keepdim=True)
-                cam = torch.sum(weights * act, dim=-1).squeeze(0)
-                cam = torch.clamp(cam, min=0)
+                # Standard Grad-CAM: global-average-pool the gradients → per-channel weights
+                # spatial dims are axes 0,1 for (H,W,C) layout
+                weights = np.mean(grads_np, axis=(0, 1))          # (C,)
+                cam = np.sum(act_np * weights[np.newaxis, np.newaxis, :], axis=-1)  # (H, W)
+                cam = np.maximum(cam, 0)
             else:
-                # Standard Grad-CAM++ (used as base for all other modes)
-                grads_power_2 = grads ** 2
-                grads_power_3 = grads ** 3
-                sum_act = torch.sum(act, dim=(1, 2), keepdim=True)
-                denominator = 2 * grads_power_2 + sum_act * grads_power_3
-                denominator = torch.where(denominator != 0.0, denominator, torch.ones_like(denominator))
-                alpha = grads_power_2 / denominator
-                weights = torch.sum(alpha * torch.clamp(grads, min=0), dim=(1, 2), keepdim=True)
-                cam = torch.sum(weights * act, dim=-1).squeeze(0)
-                cam = torch.clamp(cam, min=0)
-                
+                # Grad-CAM++ — second/third-order gradient approximation
+                grads_sq  = grads_np ** 2
+                grads_cu  = grads_np ** 3
+                sum_act   = np.sum(act_np, axis=(0, 1), keepdims=True)  # (1,1,C)
+                denom     = 2.0 * grads_sq + sum_act * grads_cu
+                denom     = np.where(denom != 0.0, denom, np.ones_like(denom))
+                alpha     = grads_sq / denom                             # (H,W,C)
+                weights   = np.sum(alpha * np.maximum(grads_np, 0), axis=(0, 1))  # (C,)
+                cam = np.sum(act_np * weights[np.newaxis, np.newaxis, :], axis=-1)  # (H, W)
+                cam = np.maximum(cam, 0)
+
             cam_min, cam_max = cam.min(), cam.max()
             if cam_max > cam_min:
                 cam = (cam - cam_min) / (cam_max - cam_min + 1e-8)
-                
-            cam_np = cam.detach().cpu().numpy()
+
+            cam_np = cam  # (H, W) normalized float32
+
             
         # Apply specific XAI post-processing to the normalized cam_np map
         if method == "attention":
