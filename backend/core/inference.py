@@ -610,21 +610,54 @@ def predict_image(img: Image.Image):
             "xai_results": xai_payload
         }, gradcam_plusplus_cropped
         
-    # Pad to square to preserve aspect ratio (matches training preprocessing)
-    padded_img = pad_to_square(img)
-    # Force grayscale to match the degenerate 3-channel distribution (R=G=B) of training
-    gray_img = padded_img.convert("L")
-    resized_img = gray_img.resize((IMG_SIZE, IMG_SIZE))
-    
-    # Preprocess matching training pipeline (ResNet50 preprocess_input style: BGR mean subtracted, no division by 255)
+    # ── Preprocessing ─────────────────────────────────────────────────────────
+    #
+    # BUG NOTICE (Bug 2 — training-time, cannot be fixed without retraining):
+    #
+    # The deployed model (tb_student_densenet121.keras) was trained with the
+    # data pipeline in __notebook_source__.ipynb, which calls:
+    #
+    #     tf.keras.applications.resnet50.preprocess_input(img)   ← applied to DenseNet!
+    #
+    # ResNet50 preprocessing (mode='caffe'):
+    #   1. Reverses RGB → BGR channel order
+    #   2. Subtracts fixed ImageNet means [103.939, 116.779, 123.68] (no /255, no std)
+    #   Output range: roughly −123 to +152
+    #
+    # DenseNet121's CORRECT preprocessing (mode='torch') would be:
+    #   1. Divide by 255  →  [0, 1]
+    #   2. Subtract mean [0.485, 0.456, 0.406], divide by std [0.229, 0.224, 0.225]
+    #   Output range: roughly −2.1 to +2.6
+    #
+    # Since the model adapted to ResNet preprocessing during training (BatchNorm
+    # partially re-calibrated), inference MUST match training exactly — applying
+    # correct DenseNet preprocessing here would break the deployed model entirely.
+    #
+    # TO FIX PROPERLY: retrain the student using `densenet.preprocess_input` in
+    # make_ds(), then flip INFERENCE_USES_RESNET_PREPROCESSING to False below.
+    # The notebook fix is already committed in __notebook_source__.ipynb.
+    #
+    INFERENCE_USES_RESNET_PREPROCESSING = True  # ← set False after retraining
+
     arr = np.array(resized_img, dtype=np.float32)
-    # Stack 3 times to create R=G=B channels
-    x = np.stack([arr, arr, arr], axis=-1)
-    # Apply BGR mean subtraction: B -= 103.939, G -= 116.779, R -= 123.68
-    x[..., 0] -= 103.939
-    x[..., 1] -= 116.779
-    x[..., 2] -= 123.68
-    tensor = torch.tensor(x).unsqueeze(0).to(DEVICE)
+    # Stack 3 times to create R=G=B channels (grayscale X-ray, degenerate RGB)
+    x = np.stack([arr, arr, arr], axis=-1)  # shape: (224, 224, 3)
+
+    if INFERENCE_USES_RESNET_PREPROCESSING:
+        # ResNet50 mode='caffe': BGR mean subtraction, no division, no std
+        # This matches what resnet50.preprocess_input() applies in the notebook
+        x[..., 0] -= 103.939  # B channel mean
+        x[..., 1] -= 116.779  # G channel mean
+        x[..., 2] -= 123.680  # R channel mean
+    else:
+        # DenseNet121 CORRECT preprocessing (mode='torch') — use after retraining
+        # Matches tf.keras.applications.densenet.preprocess_input()
+        x /= 255.0
+        x[..., 0] = (x[..., 0] - 0.485) / 0.229
+        x[..., 1] = (x[..., 1] - 0.456) / 0.224
+        x[..., 2] = (x[..., 2] - 0.406) / 0.225
+
+    tensor = torch.tensor(x).unsqueeze(0).to(DEVICE)  # shape: (1, 224, 224, 3) NHWC
     
     # Check prediction
     with torch.no_grad():
