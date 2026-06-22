@@ -577,11 +577,11 @@ export default function DicomViewer({
         </div>
 
         {/* Viewport indicators */}
-        <div className="absolute top-3 left-3 pointer-events-none flex flex-col gap-1 z-30">
-          <Badge variant="outline" className="bg-black/75 text-white border-white/20 text-[9px] px-1.5 py-0.5 font-mono shadow-sm">
+        <div className="absolute top-3 left-3 pointer-events-none flex flex-col gap-1.5 z-30 font-sans">
+          <Badge variant="outline" className="bg-black/80 text-white border-white/10 text-[9px] px-2 py-0.5 font-sans font-bold shadow-md tracking-wide">
             Resolution: {mmPerPx.toFixed(3)} mm/px
           </Badge>
-          <Badge variant="outline" className="bg-black/75 text-white border-white/20 text-[9px] px-1.5 py-0.5 shadow-sm">
+          <Badge variant="outline" className="bg-black/80 text-white border-white/10 text-[9px] px-2 py-0.5 font-sans font-bold shadow-md tracking-wide">
             💡 Drag: {windowLevelModeActive ? "Adjust W/L" : "Pan View"}
           </Badge>
         </div>
