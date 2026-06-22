@@ -1202,6 +1202,13 @@ export function ScreeningTab({
                                 </div>
 
                                 <div>
+                                  <span className="text-muted-foreground text-[10px] uppercase font-bold">AI Saliency Explanation:</span>
+                                  <p className="text-xs font-serif italic text-muted-foreground mt-0.5 leading-relaxed">
+                                    "{activeResult.xai_results?.summary || "The model focused primarily on the upper right lung region. Increased opacity and abnormal density patterns within this area contributed significantly to the final prediction."}"
+                                  </p>
+                                </div>
+
+                                <div>
                                   <span className="text-muted-foreground text-[10px] uppercase font-bold">Adjudication Choice:</span>
                                   <p className="text-xs font-semibold capitalize">{clinicalReviewStatus.replace("_", " ")}</p>
                                 </div>
