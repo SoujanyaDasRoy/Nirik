@@ -7,6 +7,7 @@ import torch
 import numpy as np
 import cv2
 import threading
+import random
 from PIL import Image
 
 OPTIMAL_THRESHOLD = 0.93 
@@ -129,7 +130,7 @@ def _generate_density_heatmap(original_img: Image.Image, is_tb: bool) -> Image.I
     blended = cv2.addWeighted(orig_np, 1.0 - alpha, color_heatmap_rgb, alpha, 0)
     return Image.fromarray(blended)
 
-def generate_saliency_heatmap(model, tensor, original_img: Image.Image, is_tb: bool, method: str = "gradcam_plusplus"):
+def generate_saliency_heatmap(model, tensor, original_img: Image.Image, is_tb: bool, method: str = "gradcam_plusplus", return_raw: bool = False) -> tuple:
     try:
         if model is None or tensor is None:
             # Generate simulated base activation map (224x224)
@@ -147,38 +148,21 @@ def generate_saliency_heatmap(model, tensor, original_img: Image.Image, is_tb: b
             cam_np = cv2.GaussianBlur(cam_np, (31, 31), 0)
             cam_np = (cam_np - cam_np.min()) / (cam_np.max() - cam_np.min() + 1e-8)
         else:
-            # Clone tensor and enable gradients
-            tensor_input = tensor.clone().detach().requires_grad_(True)
-            
-            # Dictionary to capture feature activation
-            activations = {}
-            def hook_fn(m, i, o):
-                activations['value'] = o
-                
-            target_layer = None
-            for layer in reversed(model.layers):
-                if layer.__class__.__name__ in ['Activation', 'ReLU'] or 'relu' in layer.name.lower():
-                    target_layer = layer
-                    break
-            if target_layer is None:
-                raise ValueError("Could not dynamically find a target Activation/ReLU layer for Grad-CAM")
-                
-            hook = target_layer.register_forward_hook(hook_fn)
+            # Multi-output model targeting Keras "relu" activation layer of DenseNet
+            import keras
+            last_conv_layer = model.get_layer("relu")
+            grad_model = keras.Model(inputs=model.inputs, outputs=[last_conv_layer.output, model.output])
             
             with torch.enable_grad():
-                logit = model(tensor_input)
+                tensor_input = tensor.clone().detach().requires_grad_(True)
+                act, logit = grad_model(tensor_input)
+                
                 if logit.dim() > 1:
                     logit = logit.squeeze(1)
                 if logit.dim() > 0:
                     logit = logit.squeeze()
                     
-                act = activations.get('value')
-                if act is None:
-                    raise ValueError("Target activation layer not captured")
-                    
                 grads = torch.autograd.grad(logit, act, grad_outputs=torch.ones_like(logit), retain_graph=False)[0]
-                
-            hook.remove()
             
             if method == "gradcam":
                 # Standard Grad-CAM
@@ -267,11 +251,277 @@ def generate_saliency_heatmap(model, tensor, original_img: Image.Image, is_tb: b
             alpha = 0.45
             
         blended = cv2.addWeighted(orig_np, 1.0 - alpha, color_heatmap_rgb, alpha, 0)
-        return Image.fromarray(blended)
+        
+        if return_raw:
+            return Image.fromarray(blended), False, heatmap_blurred
+        return Image.fromarray(blended), False
         
     except Exception as e:
         print(f"Explainable AI mapping failed for {method}: {e}. Falling back to density.")
-        return _generate_density_heatmap(original_img, is_tb)
+        fallback_img = _generate_density_heatmap(original_img, is_tb)
+        # Create a mock raw heatmap for the fallback
+        w, h = original_img.size
+        fallback_raw = np.zeros((h, w), dtype=np.float32)
+        if is_tb:
+            cv2.circle(fallback_raw, (int(w * 0.38), int(h * 0.35)), int(min(w, h) * 0.2), 1.0, -1)
+        else:
+            cv2.circle(fallback_raw, (int(w * 0.5), int(h * 0.5)), int(min(w, h) * 0.25), 0.25, -1)
+        fallback_raw = cv2.GaussianBlur(fallback_raw, (31, 31), 0)
+        
+        if return_raw:
+            return fallback_img, True, fallback_raw
+        return fallback_img, True
+
+# ── Explainable AI (XAI) Helpers ─────────────────────────────
+
+def calibrate_confidence(prob: float, threshold: float, is_tb: bool) -> float:
+    """Mathematically calibrate confidence relative to dynamic threshold."""
+    if is_tb:
+        calibrated = 0.50 + 0.50 * (prob - threshold) / (1.0 - threshold) if threshold < 1.0 else 1.0
+    else:
+        calibrated = 0.50 + 0.50 * (threshold - prob) / threshold if threshold > 0.0 else 1.0
+    return max(0.50, min(1.00, calibrated))
+
+def extract_xai_rois(heatmap_blurred: np.ndarray, is_tb: bool) -> list:
+    """
+    Extract Regions of Interest (ROIs) from the heatmap using OpenCV contours.
+    """
+    h, w = heatmap_blurred.shape
+    # Threshold to identify hot spots (values >= 0.38 for TB, 0.28 for Normal)
+    thresh_val = 0.38 if is_tb else 0.28
+    _, mask = cv2.threshold((heatmap_blurred * 255).astype(np.uint8), int(thresh_val * 255), 255, cv2.THRESH_BINARY)
+    
+    contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    
+    rois = []
+    total_activation_sum = 0.0
+    
+    # Process each contour
+    for idx, contour in enumerate(contours):
+        if cv2.contourArea(contour) < 15: # Filter very small noise
+            continue
+            
+        x, y, cw, ch = cv2.boundingRect(contour)
+        
+        # Enclosing circle
+        (cx, cy), radius = cv2.minEnclosingCircle(contour)
+        
+        # Simplified contour for rendering
+        epsilon = 0.015 * cv2.arcLength(contour, True)
+        approx = cv2.approxPolyDP(contour, epsilon, True)
+        contour_pts = [[int(pt[0][0]), int(pt[0][1])] for pt in approx]
+        
+        # Calculate mean activation in this contour
+        contour_mask = np.zeros_like(mask)
+        cv2.drawContours(contour_mask, [contour], -1, 255, -1)
+        mean_val = cv2.mean(heatmap_blurred, mask=contour_mask)[0]
+        
+        # Calculate sum of activation as proxy for contribution
+        sum_val = cv2.sumElems(cv2.multiply(heatmap_blurred, contour_mask.astype(np.float32)/255.0))[0]
+        total_activation_sum += sum_val
+        
+        # Map center to anatomical zones
+        nx = (x + cw/2.0) / w
+        ny = (y + ch/2.0) / h
+        
+        side = "Right" if nx < 0.50 else "Left"
+        if ny < 0.40:
+            zone = "Upper"
+        elif ny < 0.68:
+            zone = "Middle"
+        else:
+            zone = "Lower"
+            
+        location = f"{side} {zone} Lung Zone"
+        
+        rois.append({
+            "id": chr(65 + idx),
+            "activation_score": float(mean_val),
+            "sum_activation": float(sum_val),
+            "location": location,
+            "bbox": [int(x), int(y), int(cw), int(ch)],
+            "circle": [int(cx), int(cy), int(radius)],
+            "contour": contour_pts,
+            "center": [float(nx), float(ny)]
+        })
+        
+    # Sort ROIs by sum activation (descending)
+    rois.sort(key=lambda x: x["sum_activation"], reverse=True)
+    
+    # Calculate relative contribution percentage
+    final_rois = []
+    for idx, r in enumerate(rois[:6]): # Limit to top 6 ROIs
+        contrib = (r["sum_activation"] / total_activation_sum * 100.0) if total_activation_sum > 0 else 0.0
+        # Assign clean sorted IDs (A, B, C...)
+        r["id"] = chr(65 + idx)
+        r["contribution_pct"] = round(contrib, 1)
+        r["activation_score"] = round(r["activation_score"] * 100.0, 1)
+        
+        # Delete temporary field
+        del r["sum_activation"]
+        final_rois.append(r)
+        
+    return final_rois
+
+def generate_xai_clinical_summary(rois: list, is_tb: bool, confidence: float) -> str:
+    """
+    Generate a human-readable clinical explanation summary using clinical safety constraints.
+    """
+    if not rois:
+        return "No significant focal activation regions detected."
+        
+    top_roi = rois[0]
+    loc = top_roi["location"]
+    contrib = top_roi["contribution_pct"]
+    act = top_roi["activation_score"]
+    
+    if is_tb:
+        summary = (
+            f"The deep learning model primarily focused its attention on a high-activation region (Region {top_roi['id']}) "
+            f"located in the {loc}, which contributed approximately {contrib}% of the final prediction score "
+            f"(local activation intensity: {act}%). Note that neural attention maps reflect pixel importance "
+            f"relative to model weights and do not identify visual pathologies. This attention pattern suggests radiographic "
+            f"features that may be associated with consolidative or inflammatory processes. Clinical and laboratory "
+            f"correlation (sputum culture, molecular assays) is required for final diagnosis."
+        )
+    else:
+        summary = (
+            f"The model detected low-level, diffuse bilateral activation patterns (Region {top_roi['id']} in the {loc} "
+            f"contributed {contrib}%). There are no high-density focal anomalies or asymmetric consolidations "
+            f"suggestive of active pulmonary tuberculosis. However, this screening check is a decision-support aid and "
+            f"cannot rule out atypical infections or early-stage anomalies; clinical correlation is recommended if symptoms persist."
+        )
+    return summary
+
+def compute_xai_payload(is_tb: bool, prob: float, heatmap_blurred: np.ndarray, quality_score=85) -> dict:
+    """Assemble final Explainable AI payload structures."""
+    rois = extract_xai_rois(heatmap_blurred, is_tb)
+    summary = generate_xai_clinical_summary(rois, is_tb, prob)
+    
+    ranking = [
+        {"region_id": r["id"], "location": r["location"], "contribution_pct": r["contribution_pct"]}
+        for r in rois
+    ]
+    
+    calibrated_conf = calibrate_confidence(prob, OPTIMAL_THRESHOLD, is_tb)
+    
+    reliability = "High" if quality_score >= 85 else "Medium" if quality_score >= 60 else "Low"
+    
+    # Calculate uncertainty
+    diff = abs(calibrated_conf - 0.50)
+    uncertainty = "Low" if diff >= 0.35 else "Medium" if diff >= 0.15 else "High"
+    
+    metrics = {
+        "tb_probability": round(prob * 100.0, 1),
+        "calibrated_confidence": round(calibrated_conf * 100.0, 1),
+        "reliability": reliability,
+        "uncertainty": uncertainty
+    }
+    
+    return {
+        "rois": rois,
+        "summary": summary,
+        "ranking": ranking,
+        "metrics": metrics
+    }
+
+def get_mock_xai_payload(img_size: tuple, is_tb: bool, prob: float, quality_score=85) -> dict:
+    """Generate mock XAI results payload for demo run consistency."""
+    w, h = img_size
+    calibrated_conf = calibrate_confidence(prob, OPTIMAL_THRESHOLD, is_tb)
+    reliability = "High" if quality_score >= 85 else "Medium"
+    
+    diff = abs(calibrated_conf - 0.50)
+    uncertainty = "Low" if diff >= 0.35 else "Medium" if diff >= 0.15 else "High"
+    
+    metrics = {
+        "tb_probability": round(prob * 100.0, 1),
+        "calibrated_confidence": round(calibrated_conf * 100.0, 1),
+        "reliability": reliability,
+        "uncertainty": uncertainty
+    }
+    
+    if is_tb:
+        rois = [
+            {
+                "id": "A",
+                "activation_score": 92.4,
+                "contribution_pct": 82.0,
+                "location": "Right Upper Lung Zone",
+                "bbox": [int(w * 0.18), int(h * 0.15), int(w * 0.22), int(h * 0.25)],
+                "circle": [int(w * 0.29), int(h * 0.27), int(w * 0.12)],
+                "contour": [
+                    [int(w * 0.18), int(h * 0.15)],
+                    [int(w * 0.40), int(h * 0.15)],
+                    [int(w * 0.40), int(h * 0.40)],
+                    [int(w * 0.18), int(h * 0.40)]
+                ],
+                "center": [0.29, 0.27]
+            },
+            {
+                "id": "B",
+                "activation_score": 78.1,
+                "contribution_pct": 18.0,
+                "location": "Left Mid Lung Zone",
+                "bbox": [int(w * 0.58), int(h * 0.38), int(w * 0.20), int(h * 0.22)],
+                "circle": [int(w * 0.68), int(h * 0.49), int(w * 0.10)],
+                "contour": [
+                    [int(w * 0.58), int(h * 0.38)],
+                    [int(w * 0.78), int(h * 0.38)],
+                    [int(w * 0.78), int(h * 0.60)],
+                    [int(w * 0.58), int(h * 0.60)]
+                ],
+                "center": [0.68, 0.49]
+            }
+        ]
+    else:
+        rois = [
+            {
+                "id": "A",
+                "activation_score": 32.5,
+                "contribution_pct": 60.0,
+                "location": "Left Lower Lung Zone",
+                "bbox": [int(w * 0.55), int(h * 0.60), int(w * 0.22), int(h * 0.22)],
+                "circle": [int(w * 0.66), int(h * 0.71), int(w * 0.11)],
+                "contour": [
+                    [int(w * 0.55), int(h * 0.60)],
+                    [int(w * 0.77), int(h * 0.60)],
+                    [int(w * 0.77), int(h * 0.82)],
+                    [int(w * 0.55), int(h * 0.82)]
+                ],
+                "center": [0.66, 0.71]
+            },
+            {
+                "id": "B",
+                "activation_score": 28.2,
+                "contribution_pct": 40.0,
+                "location": "Right Lower Lung Zone",
+                "bbox": [int(w * 0.22), int(h * 0.58), int(w * 0.20), int(h * 0.22)],
+                "circle": [int(w * 0.32), int(h * 0.69), int(w * 0.10)],
+                "contour": [
+                    [int(w * 0.22), int(h * 0.58)],
+                    [int(w * 0.42), int(h * 0.58)],
+                    [int(w * 0.42), int(h * 0.80)],
+                    [int(w * 0.22), int(h * 0.80)]
+                ],
+                "center": [0.32, 0.69]
+            }
+        ]
+        
+    ranking = [
+        {"region_id": r["id"], "location": r["location"], "contribution_pct": r["contribution_pct"]}
+        for r in rois
+    ]
+    summary = generate_xai_clinical_summary(rois, is_tb, prob)
+    
+    return {
+        "rois": rois,
+        "summary": summary,
+        "ranking": ranking,
+        "metrics": metrics
+    }
+
+# ── Main Prediction Flow ─────────────────────────────────────
 
 def predict_image(img: Image.Image):
     model = get_model()
@@ -280,7 +530,6 @@ def predict_image(img: Image.Image):
 
     if model is None:
         # Mock/Demo mode fallback to keep the application fully testable without the weight file
-        import random
         prob = random.uniform(0.15, 0.88)
         is_tb = prob >= OPTIMAL_THRESHOLD
         
@@ -290,12 +539,14 @@ def predict_image(img: Image.Image):
         # Generate all 5 heatmaps for demo mode
         heatmaps_b64 = {}
         for method in ["gradcam", "gradcam_plusplus", "attention", "coverage", "attribution"]:
-            h_img = generate_saliency_heatmap(None, None, padded_img, is_tb, method=method)
+            h_img, _ = generate_saliency_heatmap(None, None, padded_img, is_tb, method=method)
             h_cropped = crop_to_original(h_img, img.size)
             heatmaps_b64[method] = image_to_base64(h_cropped)
 
-        gradcam_plusplus_img = generate_saliency_heatmap(None, None, padded_img, is_tb, method="gradcam_plusplus")
+        gradcam_plusplus_img, _ = generate_saliency_heatmap(None, None, padded_img, is_tb, method="gradcam_plusplus")
         gradcam_plusplus_cropped = crop_to_original(gradcam_plusplus_img, img.size)
+        
+        xai_payload = get_mock_xai_payload(img.size, is_tb, prob)
         
         return {
             "prediction": "Tuberculosis" if is_tb else "Normal",
@@ -303,7 +554,9 @@ def predict_image(img: Image.Image):
             "threshold_used": OPTIMAL_THRESHOLD,
             "is_tb": bool(is_tb),
             "demo_mode": True,
-            "heatmaps": heatmaps_b64
+            "saliency_fallback": False,
+            "heatmaps": heatmaps_b64,
+            "xai_results": xai_payload
         }, gradcam_plusplus_cropped
         
     # Pad to square to preserve aspect ratio (matches training preprocessing)
@@ -312,17 +565,14 @@ def predict_image(img: Image.Image):
     gray_img = padded_img.convert("L")
     resized_img = gray_img.resize((IMG_SIZE, IMG_SIZE))
     
-    # Preprocess matching Kaggle's Keras resnet50.preprocess_input requirements
+    # Preprocess matching training pipeline (ResNet50 preprocess_input style: BGR mean subtracted, no division by 255)
     arr = np.array(resized_img, dtype=np.float32)
     # Stack 3 times to create R=G=B channels
     x = np.stack([arr, arr, arr], axis=-1)
-    
-    # RGB to BGR
-    x = x[..., ::-1].copy()
-    # Zero-centering BGR channels
-    x[..., 0] -= 103.939 # B
-    x[..., 1] -= 116.779 # G
-    x[..., 2] -= 123.68  # R
+    # Apply BGR mean subtraction: B -= 103.939, G -= 116.779, R -= 123.68
+    x[..., 0] -= 103.939
+    x[..., 1] -= 116.779
+    x[..., 2] -= 123.68
     tensor = torch.tensor(x).unsqueeze(0).to(DEVICE)
     
     # Check prediction
@@ -336,18 +586,32 @@ def predict_image(img: Image.Image):
     
     # Generate all 5 heatmaps for actual model runs
     heatmaps_b64 = {}
+    any_fallback = False
     for method in ["gradcam", "gradcam_plusplus", "attention", "coverage", "attribution"]:
-        h_img = generate_saliency_heatmap(model, tensor, padded_img, is_tb, method=method)
+        h_img, is_fb = generate_saliency_heatmap(model, tensor, padded_img, is_tb, method=method)
         h_cropped = crop_to_original(h_img, img.size)
         heatmaps_b64[method] = image_to_base64(h_cropped)
+        if is_fb:
+            any_fallback = True
         
-    gradcam_plusplus_img = generate_saliency_heatmap(model, tensor, padded_img, is_tb, method="gradcam_plusplus")
+    gradcam_plusplus_img, is_fb, raw_map = generate_saliency_heatmap(model, tensor, padded_img, is_tb, method="gradcam_plusplus", return_raw=True)
     gradcam_plusplus_cropped = crop_to_original(gradcam_plusplus_img, img.size)
+    
+    # Crop raw heatmap to preserve original aspect ratio bounding box alignments
+    raw_map_cropped = crop_to_original(Image.fromarray((raw_map * 255).astype(np.uint8)), img.size)
+    raw_map_np = np.array(raw_map_cropped, dtype=np.float32) / 255.0
+    
+    xai_payload = compute_xai_payload(is_tb, prob, raw_map_np)
+    if is_fb:
+        any_fallback = True
     
     return {
         "prediction": "Tuberculosis" if is_tb else "Normal",
         "confidence": float(prob),
         "threshold_used": OPTIMAL_THRESHOLD,
         "is_tb": bool(is_tb),
-        "heatmaps": heatmaps_b64
+        "demo_mode": False,
+        "saliency_fallback": any_fallback,
+        "heatmaps": heatmaps_b64,
+        "xai_results": xai_payload
     }, gradcam_plusplus_cropped

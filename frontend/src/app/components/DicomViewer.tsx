@@ -2,19 +2,10 @@
 
 import { useState, useRef, useCallback, useEffect, MouseEvent } from "react";
 import { 
-  Activity, 
   RotateCcw, 
-  RefreshCw, 
-  Zap, 
   Ruler as RulerIcon, 
-  CircleDot, 
   ZoomIn, 
-  ZoomOut, 
   Maximize2,
-  Sparkles,
-  Layers,
-  Eye,
-  Columns,
   GitPullRequest
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -41,7 +32,6 @@ interface DicomViewerProps {
 
   viewMode: "original" | "heatmap" | "heatmap-only" | "side-by-side" | "split";
   heatmapOpacity: number;
-  lungSegmentationActive: boolean;
 
   boxes: Box[];
   setBoxes: React.Dispatch<React.SetStateAction<Box[]>>;
@@ -51,7 +41,6 @@ interface DicomViewerProps {
   setViewMode?: (mode: "original" | "heatmap" | "heatmap-only" | "side-by-side" | "split") => void;
   setAnnotateMode?: (active: boolean) => void;
   setHeatmapOpacity?: (opacity: number) => void;
-  setLungSegmentationActive?: (active: boolean) => void;
   setActiveZone?: (zone: LungZone) => void;
 
   observationFocusRegion: {
@@ -81,7 +70,6 @@ export default function DicomViewer({
   pixelSpacing,
   viewMode,
   heatmapOpacity,
-  lungSegmentationActive,
   boxes,
   setBoxes,
   activeZone,
@@ -91,7 +79,6 @@ export default function DicomViewer({
   setAnnotateMode,
   observationFocusRegion,
   setHeatmapOpacity,
-  setLungSegmentationActive,
   setActiveZone,
 }: DicomViewerProps) {
   const [brightness, setBrightness] = useState(1.0);
@@ -110,8 +97,6 @@ export default function DicomViewer({
 
   const [activePreset, setActivePreset] = useState<Preset>("default");
   const [invert, setInvert]         = useState(false);
-  const [detailBoost, setDetailBoost] = useState(false);
-  const [edgeSharpen, setEdgeSharpen] = useState(false);
   
   const [splitOffset, setSplitOffset] = useState(50); // percentage divider for split mode
   const [histogramData, setHistogramData] = useState<number[]>([]);
@@ -135,7 +120,7 @@ export default function DicomViewer({
   const resetView = () => {
     setZoom(1.0); setPan({ x: 0, y: 0 }); setRuler(null);
     applyPreset("default"); setMeasureMode("off");
-    setInvert(false); setDetailBoost(false); setEdgeSharpen(false);
+    setInvert(false);
     setZoomModeActive(false); setWindowLevelModeActive(false);
   };
 
@@ -196,35 +181,7 @@ export default function DicomViewer({
     const w = canvas.width;
     const h = canvas.height;
 
-    // 1. Draw lung segmentation masks if active
-    if (lungSegmentationActive) {
-      ctx.fillStyle = "rgba(16, 185, 129, 0.12)"; // emerald opacity 12
-      ctx.strokeStyle = "#10b981"; 
-      ctx.lineWidth = 1.5; 
-      ctx.setLineDash([3, 3]);
-
-      // Left lung outlines
-      ctx.beginPath();
-      ctx.moveTo(w * 0.18, h * 0.20);
-      ctx.bezierCurveTo(w * 0.28, h * 0.08, w * 0.42, h * 0.15, w * 0.44, h * 0.35);
-      ctx.bezierCurveTo(w * 0.45, h * 0.55, w * 0.42, h * 0.82, w * 0.38, h * 0.88);
-      ctx.bezierCurveTo(w * 0.28, h * 0.90, w * 0.18, h * 0.80, w * 0.16, h * 0.65);
-      ctx.bezierCurveTo(w * 0.14, h * 0.45, w * 0.12, h * 0.30, w * 0.18, h * 0.20);
-      ctx.closePath();
-      ctx.fill(); ctx.stroke();
-
-      // Right lung outlines
-      ctx.beginPath();
-      ctx.moveTo(w * 0.82, h * 0.20);
-      ctx.bezierCurveTo(w * 0.72, h * 0.08, w * 0.58, h * 0.15, w * 0.56, h * 0.35);
-      ctx.bezierCurveTo(w * 0.55, h * 0.55, w * 0.58, h * 0.82, w * 0.62, h * 0.88);
-      ctx.bezierCurveTo(w * 0.72, h * 0.90, w * 0.82, h * 0.80, w * 0.84, h * 0.65);
-      ctx.bezierCurveTo(w * 0.86, h * 0.45, w * 0.88, h * 0.30, w * 0.82, h * 0.20);
-      ctx.closePath();
-      ctx.fill(); ctx.stroke();
-    }
-
-    // 2. Draw active observation flashing indicator
+    // 1. Draw active observation flashing indicator
     if (observationFocusRegion) {
       ctx.strokeStyle = "#22c55e"; // green-500
       ctx.lineWidth = 3;
@@ -294,7 +251,7 @@ export default function DicomViewer({
         }
       }
     }
-  }, [ruler, measureMode, mmPerPx, lungSegmentationActive, observationFocusRegion]);
+  }, [ruler, measureMode, mmPerPx, observationFocusRegion]);
 
   const generateHistogram = useCallback(() => {
     const img = imgRef.current;
@@ -365,7 +322,7 @@ export default function DicomViewer({
     ctx.stroke();
   }, [histogramData, brightness, contrast]);
 
-  useEffect(() => { redrawCanvas(); }, [ruler, lungSegmentationActive, observationFocusRegion, redrawCanvas]);
+  useEffect(() => { redrawCanvas(); }, [ruler, observationFocusRegion, redrawCanvas]);
   useEffect(() => { drawHistogram(); }, [histogramData, brightness, contrast, drawHistogram]);
 
   const getCanvasCoords = (e: MouseEvent<HTMLCanvasElement>) => {
@@ -434,19 +391,11 @@ export default function DicomViewer({
   const src = toImageSrc(imageBase64);
   const heatmapSrc = toImageSrc(heatmapBase64);
 
-  const filterStyle = `brightness(${brightness}) contrast(${contrast}) ${invert ? "invert(1)" : ""} ${detailBoost ? "contrast(1.6) brightness(0.95) saturate(0)" : ""}`;
-  const sharpenFilter = edgeSharpen ? " url(#sharpen-filter)" : "";
+  const filterStyle = `brightness(${brightness}) contrast(${contrast}) ${invert ? "invert(1)" : ""}`;
+  const sharpenFilter = "";
 
   return (
     <div className="space-y-3 flex-1 flex flex-col">
-      {/* SVG convolve matrix edge-sharpen filter */}
-      <svg className="hidden w-0 h-0 absolute" aria-hidden="true">
-        <defs>
-          <filter id="sharpen-filter">
-            <feConvolveMatrix order="3" preserveAlpha="true" kernelMatrix="0 -1 0 -1 5 -1 0 -1 0" />
-          </filter>
-        </defs>
-      </svg>
 
       {/* ── VIEWPORT TOOLBAR ── */}
       <div className="flex flex-col gap-3">

@@ -1,5 +1,6 @@
 import io
 import base64
+import cv2
 from PIL import Image
 
 def process_standard_image(file_bytes) -> Image.Image:
@@ -28,10 +29,9 @@ def analyze_image_quality(img: Image.Image) -> dict:
         exposure = "Adequate Exposure"
         
     # 2. Resolution
+    resolution = f"{width} x {height} pixels"
     if width < 512 or height < 512:
-        resolution = "Low Resolution"
-    else:
-        resolution = "Acceptable Resolution"
+        resolution = f"{width} x {height} pixels (Low)"
         
     # 3. Rotation (check symmetry by comparing left and right halves)
     left_half = pixels[:, :width//2]
@@ -49,12 +49,35 @@ def analyze_image_quality(img: Image.Image) -> dict:
     else:
         rotation = "No Rotation"
         
-    # 4. Coverage (heuristic based on aspect ratio)
-    aspect_ratio = width / height
-    if aspect_ratio < 0.65 or aspect_ratio > 1.35:
+    # 4. Coverage (heuristic based on body contours & aspect ratio)
+    touches_edge = False
+    _, binary = cv2.threshold(pixels, 35, 255, cv2.THRESH_BINARY)
+    contours, _ = cv2.findContours(binary, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    
+    if contours:
+        min_x = width
+        max_x = 0
+        has_large_contour = False
+        for c in contours:
+            if cv2.contourArea(c) > (width * height * 0.02):
+                x, y, w_c, h_c = cv2.boundingRect(c)
+                min_x = min(min_x, x)
+                max_x = max(max_x, x + w_c)
+                has_large_contour = True
+        
+        if has_large_contour:
+            margin_x = max(2, int(width * 0.015))
+            if min_x <= margin_x or max_x >= width - margin_x:
+                touches_edge = True
+
+    if touches_edge:
         coverage = "Partial Coverage"
     else:
-        coverage = "Full Lung Coverage"
+        aspect_ratio = width / height
+        if aspect_ratio < 0.65 or aspect_ratio > 1.35:
+            coverage = "Partial Coverage"
+        else:
+            coverage = "Full Lung Coverage"
         
     # Quality Score calculation (deduct from 100)
     score = 100.0
@@ -80,7 +103,10 @@ def analyze_image_quality(img: Image.Image) -> dict:
         
     if coverage == "Partial Coverage":
         score -= 15
-        warnings.append("Sub-optimal aspect ratio. Possible cropping of lateral lung fields.")
+        if touches_edge:
+            warnings.append("Body structures touch the edge of the image frame. Lateral lung fields may be cropped.")
+        else:
+            warnings.append("Sub-optimal aspect ratio. Possible cropping of lateral lung fields.")
         
     quality_score = max(10.0, min(100.0, score))
     suitable_for_ai = quality_score >= 70.0
@@ -107,8 +133,6 @@ def validate_chest_xray(img: Image.Image) -> tuple[bool, str]:
     pixels = np.array(img)
     
     # 2. Grayscale/Color check
-    # Standard medical chest radiographs are grayscale. If an RGB image has high channel variance,
-    # it is likely a regular color photo, graph, screenshot, or other non-medical image.
     if len(pixels.shape) == 3 and pixels.shape[2] >= 3:
         r = pixels[:, :, 0].astype(np.float32)
         g = pixels[:, :, 1].astype(np.float32)
@@ -119,34 +143,63 @@ def validate_chest_xray(img: Image.Image) -> tuple[bool, str]:
             
     # Convert to grayscale array for structural checks
     gray_img = img.convert("L")
-    gray_pixels = np.array(gray_img).astype(np.float32)
+    gray_pixels = np.array(gray_img)
+    
+    # Crop any black borders (padding) to analyze the actual image content
+    non_black = np.argwhere(gray_pixels > 15)
+    if len(non_black) > 0:
+        min_y, min_x = non_black.min(axis=0)
+        max_y, max_x = non_black.max(axis=0)
+        # Verify the cropped box represents a significant chest structure (at least 50% of width/height)
+        if (max_x - min_x) >= int(w * 0.5) and (max_y - min_y) >= int(h * 0.5):
+            analyzed_pixels = gray_pixels[min_y:max_y+1, min_x:max_x+1]
+        else:
+            analyzed_pixels = gray_pixels
+    else:
+        analyzed_pixels = gray_pixels
+        
+    h_a, w_a = analyzed_pixels.shape
+    analyzed_pixels_f = analyzed_pixels.astype(np.float32)
     
     # 3. Dynamic range / contrast checks
-    std_val = np.std(gray_pixels)
+    std_val = np.std(analyzed_pixels_f)
     if std_val < 20.0:
         return False, "Extremely low contrast. Image does not contain the dynamic range of a chest X-ray."
     if std_val > 110.0:
-        return False, "Excessive contrast. Likely a binary diagram, screenshot, or document rather than a chest radiograph."
+        return False, "Excessive contrast. Likely a binary diagram, screenshot, or document."
         
     # 4. Average intensity check
-    mean_val = np.mean(gray_pixels)
+    mean_val = np.mean(analyzed_pixels_f)
     if mean_val < 25.0 or mean_val > 220.0:
         return False, "Sub-optimal pixel intensity range. Standard chest X-rays have balanced exposure."
         
-    # 5. Extreme values check (solid backgrounds, screenshots, text grids)
-    pure_black = np.sum(gray_pixels < 5)
-    pure_white = np.sum(gray_pixels > 250)
-    total_pixels = w * h
+    # 5. Extreme values check
+    pure_black = np.sum(analyzed_pixels < 5)
+    pure_white = np.sum(analyzed_pixels > 250)
+    total_pixels = h_a * w_a
     extreme_ratio = (pure_black + pure_white) / total_pixels
     if extreme_ratio > 0.65:
         return False, "Excessive solid black/white regions. Likely a screenshot, chart, or text-heavy graphic."
         
-    # 6. Anatomical profile heuristic
-    h_30 = int(h * 0.3)
-    middle_zone = gray_pixels[h_30:h-h_30, :]
-    bottom_zone = gray_pixels[h-h_30:, :]
-    if np.mean(middle_zone) < 15.0 and np.mean(bottom_zone) < 15.0:
-        return False, "Anatomical structure check failed. Image is blank or contains no structures."
+    # Left-Right Structural Symmetry Check and Mediastinum/Spine Center Column Brightness Check
+    # are bypassed to prevent rejecting chest radiographs with severe asymmetrical pathologies
+    # (e.g. unilateral consolidations, pleural effusions, collapses).
+        
+    # 8. High Frequency Edge Orientation check (to detect text/diagrams/screenshots)
+    grad_x = cv2.Sobel(analyzed_pixels, cv2.CV_32F, 1, 0, ksize=3)
+    grad_y = cv2.Sobel(analyzed_pixels, cv2.CV_32F, 0, 1, ksize=3)
+    
+    abs_grad_x = np.abs(grad_x)
+    abs_grad_y = np.abs(grad_y)
+    
+    strong_edges_x = abs_grad_x > (np.max(abs_grad_x) * 0.15)
+    strong_edges_y = abs_grad_y > (np.max(abs_grad_y) * 0.15)
+    
+    x_edge_ratio = np.sum(strong_edges_x) / total_pixels
+    y_edge_ratio = np.sum(strong_edges_y) / total_pixels
+    
+    if x_edge_ratio > 0.09 or y_edge_ratio > 0.09:
+        return False, f"Excessive sharp straight edges detected (X: {x_edge_ratio:.3f}, Y: {y_edge_ratio:.3f}). Screenshots, documents, or diagrams are not supported."
 
     return True, "Valid chest radiograph"
 

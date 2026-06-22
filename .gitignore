@@ -31,3 +31,14 @@ Thumbs.db
 
 # Vercel Cache
 .vercel/
+
+# Heavy Data / Models
+backend/patients.db
+backend/patients.db-journal
+results/teacher_resnet50.keras
+results/__results___files/
+results/tb_student_densenet121.keras
+backend/dist/
+backend/build/
+desktop_build/
+results.zip

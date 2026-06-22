@@ -1,4 +1,5 @@
 import os
+import simple_websocket
 import json
 import random
 import secrets
@@ -33,13 +34,13 @@ app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET", "Nirikshon-clinical-key-9281")
 
 # Configure cross-site cookies for Vercel -> Hugging Face production deployments
-if os.environ.get("FLASK_ENV") == "production" or os.environ.get("PORT"):
+if (os.environ.get("FLASK_ENV") == "production" or os.environ.get("PORT")) and os.environ.get("DESKTOP_APP") != "true":
     app.config.update(
         SESSION_COOKIE_SAMESITE="None",
         SESSION_COOKIE_SECURE=True,
     )
 
-socketio = SocketIO(app, cors_allowed_origins="*", logger=True, engineio_logger=True)
+socketio = SocketIO(app, cors_allowed_origins="*", async_mode="threading", logger=True, engineio_logger=True)
 
 # ── Configuration ──────────────────────────────────────────
 
@@ -48,6 +49,8 @@ ALLOWED_ORIGINS_ENV = os.environ.get("ALLOWED_ORIGIN", "http://localhost:3000,ht
 ALLOWED_ORIGINS = [o.strip() for o in ALLOWED_ORIGINS_ENV.split(",")]
 # Support any vercel.app subdomain dynamically for preview/production urls
 ALLOWED_ORIGINS.append(re.compile(r"^https://.*\.vercel\.app$"))
+if os.environ.get("DESKTOP_APP") == "true":
+    ALLOWED_ORIGINS.append(re.compile(r"^http://(127\.0\.0\.1|localhost)(:\d+)?$"))
 
 CORS(app, resources={r"/*": {
     "origins": ALLOWED_ORIGINS,
@@ -63,20 +66,18 @@ app.register_blueprint(api_v1)
 # CSRF protection double-submit cookie validation hook
 @app.before_request
 def csrf_protect():
-    if request.method == 'POST':
-        # Match routes requiring CSRF validation: /patients/<patient_id>/save and /feedback
-        is_protected = False
-        if request.path == '/feedback':
-            is_protected = True
-        elif request.path.startswith('/patients/') and request.path.endswith('/save'):
-            is_protected = True
+    if app.config.get("CSRF_DISABLED"):
+        return
+    if request.method in ['POST', 'PUT', 'DELETE', 'PATCH']:
+        # Exclude stateless third-party blueprint routes and login
+        if request.path.startswith('/api/v1/') or request.path == '/login':
+            return
             
-        if is_protected:
-            csrf_cookie = request.cookies.get('csrf_token')
-            csrf_header = request.headers.get('X-CSRF-Token')
-            if not csrf_cookie or not csrf_header or csrf_cookie != csrf_header:
-                app.logger.warning("CSRF validation failed: Token mismatch or missing")
-                return jsonify({"error": "CSRF validation failed"}), 403
+        csrf_cookie = request.cookies.get('csrf_token')
+        csrf_header = request.headers.get('X-CSRF-Token')
+        if not csrf_cookie or not csrf_header or csrf_cookie != csrf_header:
+            app.logger.warning(f"CSRF validation failed for {request.path}: Token mismatch or missing")
+            return jsonify({"error": "CSRF validation failed"}), 403
 
 @app.after_request
 def set_csrf_cookie(response):
@@ -471,7 +472,8 @@ def get_study_heatmaps(study_id):
         result_dict, _ = predict_image(img)
         return jsonify({
             "study_id": study_id,
-            "heatmaps": result_dict.get("heatmaps", {})
+            "heatmaps": result_dict.get("heatmaps", {}),
+            "xai_results": result_dict.get("xai_results", {})
         })
     except Exception as e:
         app.logger.error("Error generating study heatmaps", exc_info=True)
@@ -661,7 +663,68 @@ def fhir_pacs_status():
         is_debug = os.environ.get("FLASK_DEBUG", "false").lower() == "true"
         return jsonify({"error": str(e) if is_debug else "Internal server error"}), 500
 
+
+# ── Audit Log Endpoint ─────────────────────────────────────
+@app.route('/audit/logs', methods=['GET'])
+def get_audit_logs():
+    """Return a real audit trail built from the studies database."""
+    if "username" not in session:
+        return jsonify({"error": "Authentication required"}), 401
+    if session.get("role") != "admin":
+        return jsonify({"error": "Admin access required"}), 403
+    try:
+        conn = get_connection()
+        rows = conn.execute(
+            """
+            SELECT
+                id,
+                study_date  AS timestamp,
+                patient_name AS user,
+                filename,
+                prediction,
+                confidence,
+                clinician_override,
+                clinician_note,
+                created_at
+            FROM studies
+            ORDER BY created_at DESC
+            LIMIT 100
+            """
+        ).fetchall()
+        conn.close()
+
+        logs = []
+        for i, r in enumerate(rows):
+            # Build a human-readable event description from real study data
+            pred = r["prediction"] or "Unknown"
+            conf = r["confidence"] or 0.0
+            override = r["clinician_override"]
+            note = r["clinician_note"]
+
+            if override:
+                event = "Clinician Override Applied"
+                details = f"File: {r['filename']} · AI: {pred} ({conf*100:.1f}%) · Overridden to: {override}"
+                if note:
+                    details += f" · Note: {note[:60]}"
+            else:
+                event = "Inference Completed"
+                details = f"File: {r['filename']} · Result: {pred} · Confidence: {conf*100:.1f}%"
+
+            logs.append({
+                "id": r["id"],
+                "timestamp": r["created_at"] or r["timestamp"] or "",
+                "user": r["user"] or session.get("username", "system"),
+                "event": event,
+                "details": details,
+            })
+
+        return jsonify({"logs": logs, "count": len(logs)})
+    except Exception as e:
+        app.logger.error("Exception in get_audit_logs", exc_info=True)
+        return jsonify({"logs": [], "count": 0})
+
 if __name__ == '__main__':
+
     debug_mode = os.environ.get("FLASK_DEBUG", "false").lower() == "true"
     port_val = int(os.environ.get("PORT", 5000))
     

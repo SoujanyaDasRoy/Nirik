@@ -5,7 +5,7 @@ import http.cookiejar
 from PIL import Image
 import json
 
-def test_predict():
+def run_predict_endpoint_test():
     print("Testing /predict endpoint...")
     
     # Setup cookie jar to maintain authenticated session
@@ -28,14 +28,14 @@ def test_predict():
     )
     
     try:
-        with urllib.request.urlopen(login_req) as login_resp:
-            login_result = json.loads(login_resp.read().decode("utf-8"))
-            print("Login success:", login_result.get("success"), "Role:", login_result.get("role"))
+         with urllib.request.urlopen(login_req) as login_resp:
+             login_result = json.loads(login_resp.read().decode("utf-8"))
+             print("Login success:", login_result.get("success"), "Role:", login_result.get("role"))
     except Exception as e:
-        print("✗ Authentication failed:", e)
-        if hasattr(e, 'read'):
-            print("Response details:", e.read().decode('utf-8'))
-        raise e
+         print("✗ Authentication failed:", e)
+         if hasattr(e, 'read'):
+             print("Response details:", e.read().decode('utf-8'))
+         raise e
 
     # 1. Create dummy image bytes
     img = Image.new("RGB", (400, 300), color=(100, 100, 100))
@@ -93,5 +93,4 @@ def test_predict():
         raise e
 
 if __name__ == "__main__":
-    test_predict()
-
+    run_predict_endpoint_test()

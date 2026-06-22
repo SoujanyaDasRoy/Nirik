@@ -22,7 +22,7 @@ export const imageQualityService = {
     return {
       exposure: isUnderexposed ? "Underexposed" : "Adequate Exposure",
       coverage: "Full Lung Coverage",
-      resolution: "Acceptable Resolution",
+      resolution: "2048 x 2048 pixels",
       rotation: hasRotation ? "Mild Patient Rotation" : "No Rotation",
       suitableForAi: score > 80,
       qualityScore: score

@@ -18,8 +18,7 @@ def require_api_key(f):
             cursor = conn.execute("SELECT * FROM api_keys WHERE key_hash = ?", (api_key,))
             key_record = cursor.fetchone()
             if not key_record:
-                if api_key != "demo_sk_12345":
-                    return jsonify({"error": "Invalid API Key"}), 401
+                return jsonify({"error": "Invalid API Key"}), 401
         return f(*args, **kwargs)
     return decorated_function
 

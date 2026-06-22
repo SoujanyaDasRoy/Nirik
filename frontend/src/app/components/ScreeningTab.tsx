@@ -44,6 +44,7 @@ import { imageQualityService } from "../services/imageQualityService";
 import { reportService } from "../services/reportService";
 import { auditService, AuditLogEntry } from "../services/auditService";
 import { exportService } from "../services/exportService";
+import XaiVisualization from "./XaiVisualization";
 
 const DicomViewer = dynamic(() => import("./DicomViewer"), { ssr: false });
 
@@ -60,11 +61,10 @@ const getEvidenceCards = (result: AnalysisResult | null) => {
     ];
   }
 
+  const diag = predictionService.getDiagnosis(result.prediction || "Normal", result.confidence || 0.0, result.threshold_used);
   const cond = result.prediction || "Normal";
   const isNormal = cond.toLowerCase().includes("normal") || cond === "Normal";
-  const confidence = result.confidence ?? 0.0;
-  const confidencePct = (confidence * 100).toFixed(1);
-  const inverseConfidencePct = ((1 - confidence) * 100).toFixed(1);
+  const confidencePct = (diag.confidence * 100).toFixed(1);
 
   // Get attention region
   const region = result.attention_region || "lung fields";
@@ -78,15 +78,15 @@ const getEvidenceCards = (result: AnalysisResult | null) => {
     return [
       {
         title: "Parenchymal Clearance",
-        description: `Bilateral lung fields exhibit normal aeration without signs of active consolidation, effusion, or masses (AI confidence: ${inverseConfidencePct}%).`,
-        confidence: Math.max(0.95, 1 - confidence),
+        description: `Bilateral lung fields exhibit normal aeration without signs of active consolidation, effusion, or masses (AI confidence: ${confidencePct}%).`,
+        confidence: diag.confidence,
         region: null,
         anatomicalZone: "bilateral"
       },
       {
         title: "Clear Costophrenic Angles",
         description: `Pleural boundaries are sharp and well-defined with no indication of fluid accumulation. Costophrenic angles are completely clear.`,
-        confidence: Math.max(0.92, 1 - confidence - 0.04),
+        confidence: Math.max(0.92, diag.confidence - 0.04),
         region: null,
         anatomicalZone: "pleural space"
       },
@@ -128,21 +128,21 @@ const getEvidenceCards = (result: AnalysisResult | null) => {
     {
       title: `Consolidation & Opacity Focus`,
       description: `Grad-CAM++ highlighted an area of increased opacity in the ${zoneLabel} zone. This density gradient is consistent with focal active ${cond} consolidation (AI confidence: ${confidencePct}%).`,
-      confidence: confidence,
+      confidence: diag.confidence,
       region: targetRegion,
       anatomicalZone: zoneLabel
     },
     {
       title: "Asymmetric Density Gradients",
       description: `Significant localized markings and architectural asymmetry identified in the ${zoneLabel} zone compared to contralateral regions.`,
-      confidence: Math.max(0.70, confidence * 0.85),
+      confidence: Math.max(0.70, diag.confidence * 0.85),
       region: targetRegion,
       anatomicalZone: zoneLabel
     },
     {
       title: "Hilar Lymphadenopathy Suggestion",
       description: `Bronchovascular tree markings and mediastinal structures show signs of inflammation or congestion adjacent to the primary focus area.`,
-      confidence: Math.max(0.60, confidence * 0.70),
+      confidence: Math.max(0.60, diag.confidence * 0.70),
       region: null,
       anatomicalZone: "hilar"
     }
@@ -231,12 +231,14 @@ export function ScreeningTab({
 }: ScreeningTabProps) {
   const activeResult = selectedIdx !== null ? results[selectedIdx] : null;
   const q = activeResult ? getQualityMetrics(activeResult) : null;
+  const activeDiagnosis = activeResult
+    ? predictionService.getDiagnosis(activeResult.prediction || "Normal", activeResult.confidence || 0.0, activeResult.threshold_used)
+    : null;
 
   // ── WORKSTATION VIEWING STATES ──
   const [viewMode, setViewMode] = useState<"original" | "heatmap" | "heatmap-only" | "side-by-side" | "split">("original");
   const [heatmapOpacity, setHeatmapOpacity] = useState(0.55);
-  const [lungSegmentationActive, setLungSegmentationActive] = useState(false);
-  const [workstationMode, setWorkstationMode] = useState<"clinical" | "research">("clinical");
+  const [workstationMode, setWorkstationMode] = useState<"clinical" | "research" | "xai">("clinical");
   const [activeRightTab, setActiveRightTab] = useState<"findings" | "review" | "report">("findings");
   const [highlightedAnatomicalZone, setHighlightedAnatomicalZone] = useState<string>("");
 
@@ -298,10 +300,15 @@ export function ScreeningTab({
     };
     const backendStatus = getBackendStatus(status);
 
+    let annotatedB64 = "";
+    if (annotationCanvasRef.current) {
+      annotatedB64 = annotationCanvasRef.current.toDataURL("image/png");
+    }
+
     handleFeedbackSaved(
       status,
       note,
-      activeResult?.annotated_image || "",
+      annotatedB64 || activeResult?.annotated_image || "",
       comments,
       reviewer
     );
@@ -320,7 +327,7 @@ export function ScreeningTab({
             patient_id: activeResult.metadata.patient_id,
             clinician_prediction: backendStatus,
             reason: comments,
-            annotation_b64: activeResult.annotated_image || "",
+            annotation_b64: annotatedB64 || activeResult.annotated_image || "",
             clinician_note: note
           })
         });
@@ -442,7 +449,7 @@ export function ScreeningTab({
       image_quality: {
         exposure: "Adequate Exposure",
         coverage: "Full Lung Coverage",
-        resolution: "Acceptable Resolution",
+        resolution: "2048 x 2048 pixels",
         rotation: "No Rotation",
         quality_score: 95,
         suitable_for_ai: true,
@@ -458,7 +465,6 @@ export function ScreeningTab({
   useEffect(() => {
     setViewMode("original");
     setHeatmapOpacity(0.55);
-    setLungSegmentationActive(false);
     setBoxes([]);
     setAnnotateMode(false);
     setObservationFocusRegion(null);
@@ -506,8 +512,11 @@ export function ScreeningTab({
 
     // Package parameters
     const qualityMetrics = q;
-    const diagnosisObj = predictionService.getDiagnosis(activeResult.prediction || "Normal", activeResult.confidence || 0.0);
-    const observationsList = observationService.getObservations(activeResult.prediction || "Normal");
+    const diagnosisObj = predictionService.getDiagnosis(activeResult.prediction || "Normal", activeResult.confidence || 0.0, activeResult.threshold_used);
+    const observationsList = observationService.getObservations(
+      activeResult.prediction || "Normal",
+      activeResult.xai_results ?? null
+    );
 
     const reviewData = {
       status: clinicalReviewStatus === "confirm" ? "Confirm AI finding" : clinicalReviewStatus === "reject" ? "Reject AI finding" : clinicalReviewStatus === "investigate" ? "Request Investigation" : "Insufficient Quality",
@@ -523,7 +532,8 @@ export function ScreeningTab({
       diagnosisObj.riskLevel,
       observationsList,
       reviewData,
-      clinicianNote || globalNote
+      clinicianNote || globalNote,
+      activeResult.xai_results
     );
 
     // Call service
@@ -556,11 +566,14 @@ export function ScreeningTab({
 
   const handleJsonSR = () => {
     if (!activeResult || !q) return;
-    addAuditLog("Exporting DICOM Structured Report (SR)");
+    addAuditLog("Exporting Structured JSON Report");
 
     const qualityMetrics = q;
-    const diagnosisObj = predictionService.getDiagnosis(activeResult.prediction || "Normal", activeResult.confidence || 0.0);
-    const observationsList = observationService.getObservations(activeResult.prediction || "Normal");
+    const diagnosisObj = predictionService.getDiagnosis(activeResult.prediction || "Normal", activeResult.confidence || 0.0, activeResult.threshold_used);
+    const observationsList = observationService.getObservations(
+      activeResult.prediction || "Normal",
+      activeResult.xai_results ?? null
+    );
 
     const reviewData = {
       status: clinicalReviewStatus,
@@ -579,8 +592,8 @@ export function ScreeningTab({
       clinicianNote || globalNote
     );
 
-    exportService.exportDICOMSR(payload);
-    addAuditLog("DICOM SR JSON package generated");
+    exportService.exportStructuredJSON(payload);
+    addAuditLog("Structured JSON report metadata generated");
   };
 
   const handleRegisterDb = async () => {
@@ -589,8 +602,11 @@ export function ScreeningTab({
     addAuditLog("Registering case to research database");
 
     const qualityMetrics = q;
-    const diagnosisObj = predictionService.getDiagnosis(activeResult.prediction || "Normal", activeResult.confidence || 0.0);
-    const observationsList = observationService.getObservations(activeResult.prediction || "Normal");
+    const diagnosisObj = predictionService.getDiagnosis(activeResult.prediction || "Normal", activeResult.confidence || 0.0, activeResult.threshold_used);
+    const observationsList = observationService.getObservations(
+      activeResult.prediction || "Normal",
+      activeResult.xai_results ?? null
+    );
 
     const reviewData = {
       status: clinicalReviewStatus,
@@ -661,22 +677,59 @@ export function ScreeningTab({
                   {/* Premium double-pill mode switcher */}
                   <div className="flex bg-muted/70 p-1 rounded-full border border-border/60">
                     <button
-                      onClick={() => setWorkstationMode("clinical")}
-                      className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all duration-200 cursor-pointer ${workstationMode === "clinical" ? "bg-white text-black shadow-sm font-bold border border-border/10" : "text-muted-foreground hover:text-foreground"}`}
+                      onClick={() => {
+                        setWorkstationMode("clinical");
+                        addAuditLog("Swapped workstation mode to clinical");
+                      }}
+                      className={`px-3 py-1.5 rounded-full text-[11px] font-semibold transition-all duration-200 cursor-pointer ${workstationMode === "clinical" ? "bg-white text-black shadow-sm font-bold border border-border/10" : "text-muted-foreground hover:text-foreground"}`}
                     >
                       Clinical View
                     </button>
                     <button
-                      onClick={() => setWorkstationMode("research")}
-                      className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all duration-200 cursor-pointer ${workstationMode === "research" ? "bg-white text-black shadow-sm font-bold border border-border/10" : "text-muted-foreground hover:text-foreground"}`}
+                      onClick={() => {
+                        setWorkstationMode("research");
+                        addAuditLog("Swapped workstation mode to research");
+                      }}
+                      className={`px-3 py-1.5 rounded-full text-[11px] font-semibold transition-all duration-200 cursor-pointer ${workstationMode === "research" ? "bg-white text-black shadow-sm font-bold border border-border/10" : "text-muted-foreground hover:text-foreground"}`}
                     >
                       Research View
+                    </button>
+                    <button
+                      onClick={() => {
+                        setWorkstationMode("xai");
+                        addAuditLog("Swapped workstation mode to XAI Explainability");
+                      }}
+                      className={`px-3 py-1.5 rounded-full text-[11px] font-semibold transition-all duration-200 cursor-pointer ${workstationMode === "xai" ? "bg-white text-black shadow-sm font-bold border border-border/10" : "text-muted-foreground hover:text-foreground"}`}
+                    >
+                      Explainable AI (XAI)
                     </button>
                   </div>
                 </div>
 
+                {activeResult && activeResult.demo_mode && (
+                  <div className="p-4 border border-yellow-500/20 bg-yellow-500/5 text-yellow-600 dark:text-yellow-500 rounded-xl flex items-center gap-3 animate-fadein mb-4">
+                    <ShieldAlert className="w-5 h-5 shrink-0 text-yellow-500" />
+                    <div>
+                      <p className="text-xs font-bold uppercase tracking-wider">Demo / Fallback Mode Active</p>
+                      <p className="text-[11px] text-muted-foreground mt-0.5 font-normal leading-normal">
+                        The neural network model weights file is offline or failed to load. Displaying simulated diagnostic classifications and heatmaps for testing and preview purposes.
+                      </p>
+                    </div>
+                  </div>
+                )}
+
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-                  {/* 1. LEFT PANEL (70%): Unified Primary Viewport */}
+                  {workstationMode === "xai" ? (
+                    <div className="lg:col-span-12">
+                      <XaiVisualization
+                        result={activeResult}
+                        similarCases={similarCases}
+                        loadingSimilar={loadingSimilar}
+                      />
+                    </div>
+                  ) : (
+                    <>
+                      {/* 1. LEFT PANEL (70%): Unified Primary Viewport */}
                   <div className="lg:col-span-8 space-y-6">
                     {/* PROMINENT AI DIAGNOSTIC STATUS BANNER */}
                     {activeResult && workstationMode === "clinical" && (
@@ -701,9 +754,9 @@ export function ScreeningTab({
                               ) : activeResult.status === "error" ? (
                                 activeResult.errorMsg || "Analysis Failed"
                               ) : activeResult.is_tb ? (
-                                `Pulmonary Tuberculosis Detected (${((activeResult.confidence || 0) * 100).toFixed(1)}% Confidence)`
+                                `Pulmonary Tuberculosis Detected (${((activeDiagnosis?.confidence || 0) * 100).toFixed(1)}% Confidence)`
                               ) : (
-                                `Normal Chest Radiograph (${((activeResult.confidence || 0) * 100).toFixed(1)}% Confidence)`
+                                `Normal Chest Radiograph (${((activeDiagnosis?.confidence || 0) * 100).toFixed(1)}% Confidence)`
                               )}
                             </span>
                           </div>
@@ -735,7 +788,7 @@ export function ScreeningTab({
                         pixelSpacing={activeResult.metadata?.pixel_spacing}
                         viewMode={viewMode}
                         heatmapOpacity={heatmapOpacity}
-                        lungSegmentationActive={lungSegmentationActive}
+                        setHeatmapOpacity={setHeatmapOpacity}
                         boxes={boxes}
                         setBoxes={setBoxes}
                         activeZone={activeZone}
@@ -744,11 +797,16 @@ export function ScreeningTab({
                         observationFocusRegion={observationFocusRegion}
                         setViewMode={setViewMode}
                         setAnnotateMode={setAnnotateMode}
-                        setHeatmapOpacity={setHeatmapOpacity}
-                        setLungSegmentationActive={setLungSegmentationActive}
                         setActiveZone={setActiveZone}
                       />
                     </Card>
+
+                    {activeResult && activeResult.saliency_fallback && (
+                      <div className="mt-2 px-3 py-1.5 border border-amber-500/20 bg-amber-500/5 text-amber-600 dark:text-amber-500 rounded-lg flex items-center gap-2 text-[10px] font-medium leading-relaxed animate-fadein">
+                        <AlertCircle className="w-3.5 h-3.5 shrink-0 text-amber-500" />
+                        <span>Notice: Displaying raw density intensity heatmap (model activation gradients offline).</span>
+                      </div>
+                    )}
 
                   {/* Redraw list of active markups drawn on top of the X-ray */}
                   {boxes.length > 0 && (
@@ -903,8 +961,8 @@ export function ScreeningTab({
                                     Analysis Error
                                   </Badge>
                                 ) : (
-                                  <Badge variant="outline" className={`${predictionService.getDiagnosis(activeResult.prediction || "Normal", activeResult.confidence || 0).riskLevel === "High" ? "badge-tb" : "badge-normal"} rounded-full font-bold uppercase`}>
-                                    {predictionService.getDiagnosis(activeResult.prediction || "Normal", activeResult.confidence || 0).riskLevel} RISK
+                                  <Badge variant="outline" className={`${activeDiagnosis?.riskLevel === "High" ? "badge-tb" : "badge-normal"} rounded-full font-bold uppercase`}>
+                                    {activeDiagnosis?.riskLevel} RISK
                                   </Badge>
                                 )}
                               </div>
@@ -922,7 +980,7 @@ export function ScreeningTab({
                                     </h3>
                                   ) : (
                                     <h3 className={`text-sm font-bold ${activeResult.is_tb ? "text-amber-600 dark:text-amber-500" : "text-emerald-600 dark:text-emerald-500"}`}>
-                                      {predictionService.getDiagnosis(activeResult.prediction || "Normal", activeResult.confidence || 0).condition}
+                                      {activeDiagnosis?.condition}
                                     </h3>
                                   )}
                                 </div>
@@ -933,7 +991,7 @@ export function ScreeningTab({
                                   ) : activeResult.status === "error" ? (
                                     <span className="text-xs font-bold font-mono text-destructive">0.0%</span>
                                   ) : (
-                                    <span className="text-xs font-bold font-mono text-foreground">{((activeResult.confidence || 0) * 100).toFixed(1)}%</span>
+                                    <span className="text-xs font-bold font-mono text-foreground">{((activeDiagnosis?.confidence || 0) * 100).toFixed(1)}%</span>
                                   )}
                                 </div>
                                 {activeResult.status === "loading" || activeResult.status === "pending" ? (
@@ -941,11 +999,83 @@ export function ScreeningTab({
                                 ) : activeResult.status === "error" ? (
                                   <Progress value={0} className="h-1.5 bg-destructive/20" />
                                 ) : (
-                                  <Progress value={(activeResult.confidence || 0) * 100} className={`h-1.5 ${activeResult.is_tb ? "bg-amber-100 dark:bg-amber-950" : "bg-emerald-100 dark:bg-emerald-950"}`} />
+                                  <>
+                                    <Progress value={(activeDiagnosis?.confidence || 0) * 100} className={`h-1.5 ${activeResult.is_tb ? "bg-amber-100 dark:bg-amber-950" : "bg-emerald-100 dark:bg-emerald-950"}`} />
+                                    
+                                    {/* Clinical Uncertainty Warning Banner */}
+                                    {activeDiagnosis?.isBorderline && (
+                                      <div className="mt-3 p-3.5 border border-amber-500/20 bg-amber-500/5 text-amber-600 dark:text-amber-500 rounded-lg flex items-start gap-2.5 text-[11px] font-medium leading-relaxed animate-fadein">
+                                        <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5 text-amber-500" />
+                                        <div>
+                                          <p className="font-bold text-amber-700 dark:text-amber-400">Clinical Uncertainty Warning</p>
+                                          <p className="mt-0.5 text-muted-foreground text-[10px] leading-normal font-normal">
+                                            AI confidence is in the borderline zone ({((activeDiagnosis?.confidence || 0) * 100).toFixed(1)}%). Direct human radiologist review is strongly recommended to verify this screening output.
+                                          </p>
+                                        </div>
+                                      </div>
+                                    )}
+                                  </>
                                 )}
                               </div>
                             </CardContent>
                           </Card>
+                          
+                          {/* IMAGE QUALITY CHECKER CARD */}
+                          {activeResult.status === "success" && activeResult.image_quality && (
+                            <Card className="border border-border bg-card rounded-xl shadow-none mt-4 animate-fadein">
+                              <CardContent className="p-5 space-y-4">
+                                <div className="flex justify-between items-center">
+                                  <p className="text-xs font-bold uppercase tracking-wider text-foreground">Image Quality Checker</p>
+                                  <Badge 
+                                    variant="outline" 
+                                    className={activeResult.image_quality.suitable_for_ai 
+                                      ? "rounded-full font-bold uppercase border-emerald-500/20 bg-emerald-500/5 text-emerald-600 dark:text-emerald-500" 
+                                      : "rounded-full font-bold uppercase border-amber-500/20 bg-amber-500/5 text-amber-600 dark:text-amber-500"
+                                    }
+                                  >
+                                    {activeResult.image_quality.suitable_for_ai ? "SUITABLE FOR AI" : "SUB-OPTIMAL QUALITY"}
+                                  </Badge>
+                                </div>
+                                <Separator />
+                                <div className="space-y-3">
+                                  <div className="flex justify-between items-center">
+                                    <span className="text-xs text-muted-foreground">Quality Score:</span>
+                                    <span className="text-xs font-bold font-mono text-foreground">{activeResult.image_quality.quality_score}%</span>
+                                  </div>
+                                  <Progress 
+                                    value={activeResult.image_quality.quality_score} 
+                                    className={`h-1.5 ${activeResult.image_quality.suitable_for_ai ? "bg-emerald-100 dark:bg-emerald-950" : "bg-amber-100 dark:bg-amber-950"}`} 
+                                  />
+                                  
+                                  <div className="grid grid-cols-2 gap-2.5 pt-2 text-[10px] uppercase font-bold text-muted-foreground">
+                                    <div className="p-2 border border-border bg-muted/20 rounded-lg">
+                                      <p className="text-[9px] text-muted-foreground font-semibold">Exposure</p>
+                                      <p className="text-[11px] font-bold text-foreground mt-0.5">{activeResult.image_quality.exposure}</p>
+                                    </div>
+                                    <div className="p-2 border border-border bg-muted/20 rounded-lg">
+                                      <p className="text-[9px] text-muted-foreground font-semibold">Rotation</p>
+                                      <p className="text-[11px] font-bold text-foreground mt-0.5">{activeResult.image_quality.rotation}</p>
+                                    </div>
+                                    <div className="p-2 border border-border bg-muted/20 rounded-lg col-span-2">
+                                      <p className="text-[9px] text-muted-foreground font-semibold">Anatomical Coverage</p>
+                                      <p className="text-[11px] font-bold text-foreground mt-0.5">{activeResult.image_quality.coverage} · {activeResult.image_quality.resolution}</p>
+                                    </div>
+                                  </div>
+
+                                  {activeResult.image_quality.warnings && activeResult.image_quality.warnings.length > 0 && (
+                                    <div className="pt-2 space-y-1">
+                                      <p className="text-[9px] text-amber-600 dark:text-amber-500 uppercase font-bold tracking-wider">Quality Advisories</p>
+                                      <ul className="text-[10px] text-muted-foreground list-disc pl-4 space-y-0.5 leading-normal font-normal">
+                                        {activeResult.image_quality.warnings.map((warn, idx) => (
+                                          <li key={idx} className="text-muted-foreground">{warn}</li>
+                                        ))}
+                                      </ul>
+                                    </div>
+                                  )}
+                                </div>
+                              </CardContent>
+                            </Card>
+                          )}
 
                         </div>
                       )}
@@ -1056,8 +1186,8 @@ export function ScreeningTab({
                                       <span className="text-destructive">Analysis failed</span>
                                     ) : (
                                       <>
-                                        {predictionService.getDiagnosis(activeResult.prediction || "Normal", activeResult.confidence || 0).condition}
-                                        <span className="text-muted-foreground text-[11px] font-normal ml-1">({((activeResult.confidence || 0) * 100).toFixed(1)}% confidence)</span>
+                                        {activeDiagnosis?.condition}
+                                        <span className="text-muted-foreground text-[11px] font-normal ml-1">({((activeDiagnosis?.confidence || 0) * 100).toFixed(1)}% confidence)</span>
                                       </>
                                     )}
                                   </p>
@@ -1107,7 +1237,7 @@ export function ScreeningTab({
                                 disabled={activeResult.status !== "success"}
                                 className="flex-1 text-xs font-semibold h-9 gap-1.5 cursor-pointer"
                               >
-                                <Download className="w-3.5 h-3.5" /> DICOM SR
+                                <Download className="w-3.5 h-3.5" /> Export JSON
                               </Button>
                               <Button
                                 size="sm"
@@ -1184,10 +1314,11 @@ export function ScreeningTab({
                       </Card>
                     </div>
                   )}
-
                 </div>
-              </div>
-            </div>
+              </>
+            )}
+          </div>
+        </div>
           ) : (
             <div className="w-full max-w-xl mx-auto py-16 flex flex-col items-center justify-center text-center space-y-6 animate-fadein">
               <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center text-muted-foreground">

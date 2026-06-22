@@ -16,6 +16,7 @@ from utils.fhir_mock import search_patients, get_pacs_status
 @pytest.fixture
 def client():
     app.config["TESTING"] = True
+    app.config["CSRF_DISABLED"] = True
     with app.test_client() as client:
         yield client
 
@@ -88,45 +89,51 @@ def test_predict_invalid_file(client):
     assert b"Internal server error" in response.data
 
 def test_csrf_protection(client):
-    # Pre-populate dummy record so feedback endpoint has a record to update
-    save_result("PX-12345", {"confidence": 0.5, "is_tb": False, "prediction": "Normal"})
+    # Enable CSRF protection temporarily for this test
+    app.config["CSRF_DISABLED"] = False
+    try:
+        # Pre-populate dummy record so feedback endpoint has a record to update
+        save_result("PX-12345", {"confidence": 0.5, "is_tb": False, "prediction": "Normal"})
 
-    # Verify POST /feedback fails without CSRF headers
-    response = client.post("/feedback", json={"patient_id": "PX-12345"})
-    assert response.status_code == 403
-    assert b"CSRF validation failed" in response.data
+        # Verify POST /feedback fails without CSRF headers
+        response = client.post("/feedback", json={"patient_id": "PX-12345"})
+        assert response.status_code == 403
+        assert b"CSRF validation failed" in response.data
 
-    # Verify POST /patients/PX-12345/save fails without CSRF headers
-    response = client.post("/patients/PX-12345/save", json={"confidence": 0.5})
-    assert response.status_code == 403
-    assert b"CSRF validation failed" in response.data
-    
-    # Use a fresh test client to guarantee a clean cookie jar
-    fresh_client = app.test_client()
-    health_response = fresh_client.get("/health")
-    csrf_cookie = None
-    for cookie_header in health_response.headers.getlist("Set-Cookie"):
-        if "csrf_token=" in cookie_header:
-            csrf_cookie = cookie_header.split(";")[0].split("=")[1]
-            break
-            
-    assert csrf_cookie is not None, "csrf_token cookie not set by backend"
-    
-    # Authenticate fresh_client session
-    with fresh_client.session_transaction() as sess:
-        sess["username"] = "reviewer"
-        sess["role"] = "reviewer"
+        # Verify POST /patients/PX-12345/save fails without CSRF headers
+        response = client.post("/patients/PX-12345/save", json={"confidence": 0.5})
+        assert response.status_code == 403
+        assert b"CSRF validation failed" in response.data
+        
+        # Use a fresh test client to guarantee a clean cookie jar
+        fresh_client = app.test_client()
+        health_response = fresh_client.get("/health")
+        csrf_cookie = None
+        for cookie_header in health_response.headers.getlist("Set-Cookie"):
+            if "csrf_token=" in cookie_header:
+                csrf_cookie = cookie_header.split(";")[0].split("=")[1]
+                break
+                
+            assert csrf_cookie is not None, "csrf_token cookie not set by backend"
+        
+        # Authenticate fresh_client session
+        with fresh_client.session_transaction() as sess:
+            sess["username"] = "reviewer"
+            sess["role"] = "reviewer"
 
-    # Send valid POST request with matching header and cookie
-    fresh_client.set_cookie("csrf_token", csrf_cookie)
-    headers = {"X-CSRF-Token": csrf_cookie}
-    
-    feedback_response = fresh_client.post(
-        "/feedback", 
-        json={"patient_id": "PX-12345", "clinician_prediction": "Normal"},
-        headers=headers
-    )
-    assert feedback_response.status_code == 200
+        # Send valid POST request with matching header and cookie
+        fresh_client.set_cookie("csrf_token", csrf_cookie)
+        headers = {"X-CSRF-Token": csrf_cookie}
+        
+        feedback_response = fresh_client.post(
+            "/feedback", 
+            json={"patient_id": "PX-12345", "clinician_prediction": "Normal"},
+            headers=headers
+        )
+        assert feedback_response.status_code == 200
+    finally:
+        # Restore CSRF_DISABLED to True for other tests
+        app.config["CSRF_DISABLED"] = True
 
 def test_root_index(client):
     response = client.get("/")

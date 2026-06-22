@@ -44,6 +44,32 @@ export interface AnalysisResult {
     coverage: string;
     attribution: string;
   };
+  demo_mode?: boolean;
+  saliency_fallback?: boolean;
+  xai_results?: {
+    rois: {
+      id: string;
+      activation_score: number;
+      contribution_pct: number;
+      location: string;
+      bbox: [number, number, number, number];
+      circle: [number, number, number];
+      contour: [number, number][];
+      center: [number, number];
+    }[];
+    summary: string;
+    ranking: {
+      region_id: string;
+      location: string;
+      contribution_pct: number;
+    }[];
+    metrics: {
+      tb_probability: number;
+      calibrated_confidence: number;
+      reliability: string;
+      uncertainty: string;
+    };
+  };
 }
 
 export function useFileUpload() {

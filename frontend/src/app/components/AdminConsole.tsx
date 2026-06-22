@@ -1,144 +1,194 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Shield, Key, Users, Activity, Database } from 'lucide-react';
+import { Shield, Activity, Database, Server, Info } from 'lucide-react';
+
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+
+interface HealthStatus {
+  status: string;
+  model_loaded: boolean;
+  database: string;
+  uptime_seconds: number;
+  version: string;
+}
 
 export default function AdminConsole() {
-  const [activeTab, setActiveTab] = useState<'users' | 'apikeys' | 'system'>('users');
+  const [health, setHealth] = useState<HealthStatus | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchHealth = async () => {
+      try {
+        const res = await fetch(`${API_BASE}/health`, { credentials: "include" });
+        if (res.ok) {
+          const data = await res.json();
+          setHealth(data);
+        }
+      } catch { /* silent */ }
+      finally { setLoading(false); }
+    };
+    fetchHealth();
+    const iv = setInterval(fetchHealth, 30000);
+    return () => clearInterval(iv);
+  }, []);
+
+  const formatUptime = (seconds: number) => {
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = Math.floor(seconds % 60);
+    return `${h}h ${m}m ${s}s`;
+  };
 
   return (
-    <div className="p-6 max-w-6xl mx-auto space-y-6 animate-fadein">
+    <div className="p-6 max-w-4xl mx-auto space-y-6 animate-fadein">
       <div className="flex justify-between items-end">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight">Enterprise Administration</h2>
-          <p className="text-sm text-muted-foreground mt-1">Manage users, access control, and system health for ApolloDx.</p>
+          <h2 className="text-2xl font-bold tracking-tight">System Administration</h2>
+          <p className="text-sm text-muted-foreground mt-1">Backend health, model status, and runtime diagnostics.</p>
         </div>
         <Badge variant="outline" className="h-8 uppercase font-bold text-xs">Admin Access</Badge>
       </div>
 
-      <div className="flex border-b border-border gap-6">
-        {[
-          { id: 'users', label: 'Users & Roles', icon: Users },
-          { id: 'apikeys', label: 'API Keys', icon: Key },
-          { id: 'system', label: 'System Health', icon: Activity },
-        ].map(tab => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id as any)}
-            className={`pb-3 text-sm font-semibold flex items-center gap-2 border-b-2 transition-colors ${
-              activeTab === tab.id ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            <tab.icon className="w-4 h-4" />
-            {tab.label}
-          </button>
-        ))}
+      {/* Academic prototype notice */}
+      <div className="flex items-start gap-3 p-4 border border-blue-500/20 bg-blue-500/5 rounded-xl text-xs">
+        <Info className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" strokeWidth={1.5} />
+        <div>
+          <p className="font-bold text-blue-700 dark:text-blue-400">Academic Prototype</p>
+          <p className="text-muted-foreground mt-0.5 leading-relaxed">
+            This is a research prototype for a university final year project. User management, API key generation,
+            and multi-tenant RBAC are not implemented and are out of scope for this system.
+          </p>
+        </div>
       </div>
 
-      <div className="pt-4">
-        {activeTab === 'users' && (
-          <div className="space-y-4">
-            <div className="flex justify-between items-center">
-              <h3 className="text-lg font-bold">User Directory</h3>
-              <button className="bg-primary text-primary-foreground px-4 py-2 rounded-lg text-xs font-bold">
-                + Add User
-              </button>
+      {/* System Health Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <Card className="shadow-none border border-border bg-card">
+          <CardContent className="p-5 space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                <Server className="w-4 h-4 text-primary" strokeWidth={1.5} />
+              </div>
+              <h4 className="font-bold text-sm">Flask API Server</h4>
             </div>
-            <Card className="shadow-none border border-border">
-              <CardContent className="p-0">
-                <table className="w-full text-sm text-left">
-                  <thead className="bg-muted/50 text-xs uppercase text-muted-foreground font-bold">
-                    <tr>
-                      <th className="px-6 py-3">Username</th>
-                      <th className="px-6 py-3">Role</th>
-                      <th className="px-6 py-3">Institution</th>
-                      <th className="px-6 py-3">Status</th>
-                      <th className="px-6 py-3 text-right">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr className="border-b border-border">
-                      <td className="px-6 py-4 font-semibold">admin</td>
-                      <td className="px-6 py-4"><Badge className="bg-purple-500/10 text-purple-500 hover:bg-purple-500/20">Admin</Badge></td>
-                      <td className="px-6 py-4 text-muted-foreground">Central Hospital</td>
-                      <td className="px-6 py-4"><span className="flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-emerald-500"></span> Active</span></td>
-                      <td className="px-6 py-4 text-right"><button className="text-primary text-xs font-bold">Edit</button></td>
-                    </tr>
-                    <tr className="border-b border-border">
-                      <td className="px-6 py-4 font-semibold">reviewer</td>
-                      <td className="px-6 py-4"><Badge variant="outline">Radiologist</Badge></td>
-                      <td className="px-6 py-4 text-muted-foreground">Central Hospital</td>
-                      <td className="px-6 py-4"><span className="flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-emerald-500"></span> Active</span></td>
-                      <td className="px-6 py-4 text-right"><button className="text-primary text-xs font-bold">Edit</button></td>
-                    </tr>
-                    <tr>
-                      <td className="px-6 py-4 font-semibold">technician</td>
-                      <td className="px-6 py-4"><Badge variant="secondary">Technician</Badge></td>
-                      <td className="px-6 py-4 text-muted-foreground">Central Hospital</td>
-                      <td className="px-6 py-4"><span className="flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-emerald-500"></span> Active</span></td>
-                      <td className="px-6 py-4 text-right"><button className="text-primary text-xs font-bold">Edit</button></td>
-                    </tr>
-                  </tbody>
-                </table>
-              </CardContent>
-            </Card>
-          </div>
-        )}
+            {loading ? (
+              <div className="space-y-2">
+                <div className="h-4 w-3/4 bg-muted/50 animate-pulse rounded" />
+                <div className="h-4 w-1/2 bg-muted/50 animate-pulse rounded" />
+              </div>
+            ) : health ? (
+              <div className="space-y-2 text-xs">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Status</span>
+                  <span className="font-bold text-emerald-500 capitalize">{health.status}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Version</span>
+                  <span className="font-mono font-semibold">{health.version || "1.0.0"}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Uptime</span>
+                  <span className="font-mono font-semibold">{formatUptime(health.uptime_seconds || 0)}</span>
+                </div>
+              </div>
+            ) : (
+              <p className="text-xs text-destructive">Could not reach backend server.</p>
+            )}
+          </CardContent>
+        </Card>
 
-        {activeTab === 'apikeys' && (
-          <div className="space-y-4">
-            <div className="flex justify-between items-center">
-              <h3 className="text-lg font-bold">Developer API Keys</h3>
-              <button className="bg-primary text-primary-foreground px-4 py-2 rounded-lg text-xs font-bold">
-                Generate Key
-              </button>
+        <Card className="shadow-none border border-border bg-card">
+          <CardContent className="p-5 space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                <Activity className="w-4 h-4 text-primary" strokeWidth={1.5} />
+              </div>
+              <h4 className="font-bold text-sm">AI Model (DenseNet-121)</h4>
             </div>
-            <Card className="shadow-none border border-border">
-              <CardContent className="p-6 text-center space-y-3">
-                <Key className="w-8 h-8 mx-auto text-muted-foreground" />
-                <p className="text-sm font-semibold">No API Keys Generated</p>
-                <p className="text-xs text-muted-foreground">Create a key to authenticate third-party integrations with the prediction API.</p>
-              </CardContent>
-            </Card>
-          </div>
-        )}
+            {loading ? (
+              <div className="space-y-2">
+                <div className="h-4 w-3/4 bg-muted/50 animate-pulse rounded" />
+                <div className="h-4 w-1/2 bg-muted/50 animate-pulse rounded" />
+              </div>
+            ) : health ? (
+              <div className="space-y-2 text-xs">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Model Loaded</span>
+                  <span className={`font-bold ${health.model_loaded ? "text-emerald-500" : "text-destructive"}`}>
+                    {health.model_loaded ? "✓ Loaded" : "✗ Not Loaded"}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Architecture</span>
+                  <span className="font-mono font-semibold">DenseNet-121</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Input Shape</span>
+                  <span className="font-mono font-semibold">224 × 224 × 3</span>
+                </div>
+              </div>
+            ) : (
+              <p className="text-xs text-destructive">Status unavailable.</p>
+            )}
+          </CardContent>
+        </Card>
 
-        {activeTab === 'system' && (
-          <div className="grid grid-cols-2 gap-4">
-            <Card className="shadow-none border border-border bg-card">
-              <CardContent className="p-6 space-y-4">
-                <div className="flex items-center gap-3">
-                  <Database className="w-5 h-5 text-primary" />
-                  <h4 className="font-bold text-sm">Storage Health</h4>
+        <Card className="shadow-none border border-border bg-card">
+          <CardContent className="p-5 space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                <Database className="w-4 h-4 text-primary" strokeWidth={1.5} />
+              </div>
+              <h4 className="font-bold text-sm">Database (SQLite)</h4>
+            </div>
+            {loading ? (
+              <div className="space-y-2">
+                <div className="h-4 w-3/4 bg-muted/50 animate-pulse rounded" />
+              </div>
+            ) : health ? (
+              <div className="space-y-2 text-xs">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Connection</span>
+                  <span className={`font-bold ${health.database === "ok" ? "text-emerald-500" : "text-amber-500"}`}>
+                    {health.database === "ok" ? "✓ Connected" : health.database}
+                  </span>
                 </div>
-                <div className="space-y-2">
-                  <div className="flex justify-between text-xs font-semibold">
-                    <span>Database SQLite</span>
-                    <span className="text-emerald-500">Online</span>
-                  </div>
-                  <div className="flex justify-between text-xs font-semibold">
-                    <span>Redis Queue</span>
-                    <span className="text-amber-500">Warning (Local)</span>
-                  </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Engine</span>
+                  <span className="font-mono font-semibold">SQLite 3 (local)</span>
                 </div>
-              </CardContent>
-            </Card>
-            
-            <Card className="shadow-none border border-border bg-card">
-              <CardContent className="p-6 space-y-4">
-                <div className="flex items-center gap-3">
-                  <Shield className="w-5 h-5 text-primary" />
-                  <h4 className="font-bold text-sm">Security Audit</h4>
-                </div>
-                <div className="space-y-2 text-xs">
-                  <p>• 15 failed logins in last 24h</p>
-                  <p>• 3 new IP addresses detected</p>
-                  <p>• All endpoints secured with RBAC</p>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        )}
+              </div>
+            ) : (
+              <p className="text-xs text-destructive">Status unavailable.</p>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-none border border-border bg-card">
+          <CardContent className="p-5 space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                <Shield className="w-4 h-4 text-primary" strokeWidth={1.5} />
+              </div>
+              <h4 className="font-bold text-sm">Authentication</h4>
+            </div>
+            <div className="space-y-2 text-xs">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Method</span>
+                <span className="font-semibold">Session Cookie + CSRF</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Roles Available</span>
+                <span className="font-semibold">Admin, Reviewer</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">RBAC</span>
+                <span className="font-semibold text-emerald-500">Enforced</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

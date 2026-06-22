@@ -51,18 +51,24 @@ export default function AnnotationCanvas({
     if (!ctx) return;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Draw saved annotations
+    // Draw saved annotations using normalized coordinates scaled to current dimensions
     boxes.forEach(box => {
       const color = ZONE_COLORS[box.zone];
       ctx.strokeStyle = color;
       ctx.lineWidth = 2.5;
       ctx.setLineDash([]);
-      ctx.strokeRect(box.x, box.y, box.w, box.h);
+      
+      const rx = box.x * canvas.width;
+      const ry = box.y * canvas.height;
+      const rw = box.w * canvas.width;
+      const rh = box.h * canvas.height;
+      
+      ctx.strokeRect(rx, ry, rw, rh);
       ctx.fillStyle = color + "22";
-      ctx.fillRect(box.x, box.y, box.w, box.h);
+      ctx.fillRect(rx, ry, rw, rh);
       ctx.font = "bold 10px Inter, sans-serif";
       ctx.fillStyle = color;
-      ctx.fillText(box.zone, box.x + 4, box.y + 12);
+      ctx.fillText(box.zone, rx + 4, ry + 12);
     });
 
     // Draw active drawing box outline
@@ -107,15 +113,21 @@ export default function AnnotationCanvas({
 
   const handleMouseUp = (e: MouseEvent<HTMLCanvasElement>) => {
     if (!annotateMode || !drawing) return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
     const p = getPos(e);
+    
+    // Normalize coordinates relative to current display bounds
     const box: Box = {
-      x: Math.min(p.x, drawing.x),
-      y: Math.min(p.y, drawing.y),
-      w: Math.abs(p.x - drawing.x),
-      h: Math.abs(p.y - drawing.y),
+      x: Math.min(p.x, drawing.x) / canvas.width,
+      y: Math.min(p.y, drawing.y) / canvas.height,
+      w: Math.abs(p.x - drawing.x) / canvas.width,
+      h: Math.abs(p.y - drawing.y) / canvas.height,
       zone: activeZone
     };
-    if (box.w > 10 && box.h > 10) {
+    
+    // Check threshold (at least 10px sized bounding box)
+    if (box.w * canvas.width > 10 && box.h * canvas.height > 10) {
       setBoxes(prev => [...prev, box]);
     }
     setDrawing(null);

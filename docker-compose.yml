@@ -34,7 +34,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    command: celery -A app.celery worker --loglevel=info
+    command: celery -A worker.celery worker --loglevel=info
     environment:
       - REDIS_URL=redis://redis:6379/0
     depends_on:

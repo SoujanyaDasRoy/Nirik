@@ -17,6 +17,30 @@ export interface ClinicalReportPayload {
   reviewerName: string;
   notes: string;
   timestamp: string;
+  xai_results?: {
+    rois: {
+      id: string;
+      activation_score: number;
+      contribution_pct: number;
+      location: string;
+      bbox: [number, number, number, number];
+      circle: [number, number, number];
+      contour: [number, number][];
+      center: [number, number];
+    }[];
+    summary: string;
+    ranking: {
+      region_id: string;
+      location: string;
+      contribution_pct: number;
+    }[];
+    metrics: {
+      tb_probability: number;
+      calibrated_confidence: number;
+      reliability: string;
+      uncertainty: string;
+    };
+  };
 }
 
 export const reportService = {
@@ -28,7 +52,8 @@ export const reportService = {
     riskLevel: string,
     observations: ClinicalObservation[],
     review: { status: string; comments: string; signature: string },
-    notes: string
+    notes: string,
+    xai_results?: any
   ): ClinicalReportPayload {
     return {
       patientId: metadata?.patient_id || "UNKNOWN",
@@ -45,7 +70,8 @@ export const reportService = {
       reviewComments: review.comments || "",
       reviewerName: review.signature || "Not Signed",
       notes: notes,
-      timestamp: new Date().toLocaleString()
+      timestamp: new Date().toLocaleString(),
+      xai_results: xai_results
     };
   }
 };

@@ -1,0 +1,5 @@
+Filename,Prediction,Raw probability,Confidence,Processing time,Grad-CAM status,Errors,Warnings
+test_non_tb_1.jpg,Tuberculosis,0.9785,0.9790,3.4166,Success,None,None
+TEST_nx10.jpg,Normal,0.3366,0.6630,4.0489,Success,None,None
+TEST_px38.jpg,Tuberculosis,0.9998,1.0000,4.0777,Success,None,None
+test_tb_1.jpg,Tuberculosis,0.9987,0.9990,3.3261,Success,None,None

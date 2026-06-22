@@ -10,7 +10,15 @@ from datetime import datetime, timezone
 from contextlib import closing
 from werkzeug.security import generate_password_hash, check_password_hash
 
-DB_FILE = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "patients.db")
+if os.environ.get("DESKTOP_APP") == "true":
+    if os.name == "nt":
+        app_data_dir = os.path.join(os.environ.get("LOCALAPPDATA", os.path.expanduser("~")), "Nirikhshon")
+    else:
+        app_data_dir = os.path.join(os.path.expanduser("~"), ".nirikhshon")
+    os.makedirs(app_data_dir, exist_ok=True)
+    DB_FILE = os.path.join(app_data_dir, "patients.db")
+else:
+    DB_FILE = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "patients.db")
 logger = logging.getLogger("patient_db")
 
 def get_connection():
@@ -753,13 +761,40 @@ def get_study_audit_trail(study_id: str) -> list:
         """, (study_id,))
         return [dict(row) for row in cursor.fetchall()]
 
+def _get_image_histogram_from_b64(b64_str: str) -> np.ndarray:
+    try:
+        import base64
+        import cv2
+        import numpy as np
+        
+        if not b64_str:
+            return None
+        if "," in b64_str:
+            b64_str = b64_str.split(",")[1]
+            
+        img_bytes = base64.b64decode(b64_str)
+        nparr = np.frombuffer(img_bytes, np.uint8)
+        img = cv2.imdecode(nparr, cv2.IMREAD_GRAYSCALE)
+        if img is None:
+            return None
+            
+        # Resize to standardized size to ensure comparable histograms
+        img_resized = cv2.resize(img, (256, 256))
+        hist = cv2.calcHist([img_resized], [0], None, [256], [0, 256])
+        cv2.normalize(hist, hist, alpha=0, beta=1, norm_type=cv2.NORM_MINMAX)
+        return hist
+    except Exception:
+        return None
+
 def get_similar_cases(study_id: str) -> dict:
     """Retrieve up to 3 similar Tuberculosis cases and 3 similar Normal cases from the database."""
+    import numpy as np
+    import cv2
     with closing(get_connection()) as conn:
-        # Fetch base study characteristics
+        # Fetch base study characteristics including original image
         base_cursor = conn.execute("""
             SELECT s.id as study_id, s.patient_id, p_ref.age as patient_age, p_ref.sex as patient_sex,
-                   pr.confidence, pr.is_tb
+                   pr.confidence, pr.is_tb, s.original_image
             FROM studies s
             LEFT JOIN patients p_ref ON s.patient_id = p_ref.id
             LEFT JOIN predictions pr ON s.id = pr.study_id
@@ -772,6 +807,8 @@ def get_similar_cases(study_id: str) -> dict:
         base_age = str(base["patient_age"])
         base_sex = base["patient_sex"]
         base_conf = base["confidence"] if base["confidence"] is not None else 0.5
+        base_image = base["original_image"]
+        base_hist = _get_image_histogram_from_b64(base_image)
         
         # Query candidates (all other studies that have predictions from different patients)
         candidates_cursor = conn.execute("""
@@ -791,17 +828,23 @@ def get_similar_cases(study_id: str) -> dict:
             cand_age = str(cand["patient_age"])
             cand_sex = cand["patient_sex"]
             cand_conf = cand["confidence"] if cand["confidence"] is not None else 0.5
+            cand_image = cand["original_image"]
             
-            # Distance-based similarity calculation
+            # Hybrid image-histogram + prediction distance similarity calculation
             conf_diff = abs(base_conf - cand_conf)
-            try:
-                age_diff = abs(int(base_age) - int(cand_age)) if (base_age.isdigit() and cand_age.isdigit()) else 10
-            except ValueError:
-                age_diff = 10
-            sex_match = 1.0 if base_sex == cand_sex else 0.0
+            cand_hist = _get_image_histogram_from_b64(cand_image)
             
-            sim_score = 99.0 - (conf_diff * 30.0) - (0.1 * age_diff) - (0.0 if sex_match else 5.0)
-            sim_score = max(72.0, min(98.5, sim_score))
+            if base_hist is not None and cand_hist is not None:
+                # Calculate correlation coefficient between histograms
+                hist_corr = cv2.compareHist(base_hist, cand_hist, cv2.HISTCMP_CORREL)
+                img_sim = max(0.0, hist_corr) * 100.0
+                # Hybrid metric: 70% image histogram correlation, 30% prediction confidence similarity
+                sim_score = (0.7 * img_sim) + (0.3 * (100.0 - conf_diff * 100.0))
+            else:
+                # Fallback to confidence difference similarity
+                sim_score = 100.0 - conf_diff * 100.0
+                
+            sim_score = max(65.0, min(99.5, sim_score))
             
             cand_dict = {
                 "study_id": cand["study_id"],

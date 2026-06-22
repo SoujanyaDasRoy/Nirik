@@ -1,0 +1,17 @@
+Deployment Performance Metrics
+==============================
+
+Teacher (ResNet50)
+  Parameters:          23,589,761  (23.59 M)
+  Size on disk:            471.92 MB
+  Inference latency:        7.936 ms / image
+  Throughput:               126.0 images / sec
+
+Student (DenseNet121)
+  Parameters:           7,038,529  (7.04 M)
+  Size on disk:             29.66 MB
+  Inference latency:       16.150 ms / image
+  Throughput:                61.9 images / sec
+
+Speedup: 0.49x faster than teacher
+Compression: 3.35x fewer params
