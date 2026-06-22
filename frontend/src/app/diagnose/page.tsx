@@ -238,12 +238,12 @@ export default function WorkspacePage() {
       {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       {/* LEFT SIDEBAR (Pro Max Dimensional Layout) */}
       {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <aside className="fixed bottom-0 left-0 right-0 h-16 w-full border-t border-border/50 md:relative md:bottom-auto md:left-auto md:right-auto md:h-full md:w-[260px] flex flex-row md:flex-col items-center justify-around md:justify-start py-0 md:py-6 gap-2 bg-card/40 backdrop-blur-xl border-r-0 md:border-r md:border-border/50 z-40 shadow-[1px_0_15px_rgba(0,0,0,0.1)]">
+      <aside className="fixed bottom-0 left-0 right-0 h-16 w-full border-t border-border md:relative md:bottom-auto md:left-auto md:right-auto md:h-full md:w-[240px] flex flex-row md:flex-col items-center justify-around md:justify-start py-0 md:py-5 gap-1 bg-card border-r-0 md:border-r md:border-border z-40">
         {/* Logo Area */}
         <div className="w-full px-6 mb-6 hidden md:flex items-center gap-3">
           <div
             onClick={() => window.location.href = "/"}
-            className="w-10 h-10 rounded-xl bg-primary/20 border border-primary/30 flex items-center justify-center text-primary cursor-pointer transition-colors shadow-[0_0_15px_rgba(8,145,178,0.2)]"
+            className="w-9 h-9 rounded-lg bg-primary flex items-center justify-center text-white cursor-pointer transition-all hover:bg-primary/90 hover:shadow-md"
             title="Nirikhshon Home"
           >
             <Activity className="w-5 h-5" strokeWidth={2} />
@@ -268,18 +268,18 @@ export default function WorkspacePage() {
                 disabled={isDisabled}
                 className={`flex-1 md:flex-none h-12 md:h-10 md:w-full rounded-xl flex items-center justify-center md:justify-start md:px-4 gap-3 transition-all cursor-pointer relative ${
                   isActive
-                    ? "bg-primary text-primary-foreground shadow-md shadow-primary/20 font-semibold"
+                    ? "bg-primary/10 text-primary font-semibold"
                     : isDisabled
                     ? "text-muted-foreground/30 cursor-not-allowed"
-                    : "text-muted-foreground hover:bg-background/50 hover:text-foreground font-medium"
+                    : "text-muted-foreground hover:bg-muted hover:text-foreground font-medium"
                 }`}
                 title={item.label}
               >
                 {item.icon}
                 <span className="hidden md:block text-sm">{item.label}</span>
                 
-                {/* Active indicator edge line */}
-                {isActive && <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 rounded-r-md bg-primary-foreground hidden md:block opacity-50" />}
+                {/* Active indicator — electric blue left bar */}
+                {isActive && <div className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 rounded-r-full bg-primary hidden md:block" />}
                 
                 {/* File count badge on upload icon */}
                 {item.id === "upload" && files.length > 0 && (
@@ -304,7 +304,7 @@ export default function WorkspacePage() {
           {/* Theme toggle */}
           <button
             onClick={() => setTheme(mounted && theme === "dark" ? "light" : "dark")}
-            className="h-12 md:h-10 md:w-full rounded-xl text-muted-foreground hover:bg-background/50 hover:text-foreground flex items-center justify-center md:justify-start md:px-4 gap-3 transition-all cursor-pointer font-medium"
+            className="h-12 md:h-10 md:w-full rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground flex items-center justify-center md:justify-start md:px-3 gap-3 transition-all cursor-pointer text-sm"
           >
             {mounted && theme === "dark" ? <Sun className="w-5 h-5 md:w-4 md:h-4" /> : <Moon className="w-5 h-5 md:w-4 md:h-4" />}
             <span className="hidden md:block text-sm">Toggle Theme</span>
@@ -313,7 +313,7 @@ export default function WorkspacePage() {
           {/* Logout */}
           <button
             onClick={handleLogout}
-            className="h-12 md:h-10 md:w-full rounded-xl text-muted-foreground hover:bg-destructive/10 hover:text-destructive flex items-center justify-center md:justify-start md:px-4 gap-3 transition-all cursor-pointer font-medium"
+            className="h-12 md:h-10 md:w-full rounded-lg text-muted-foreground hover:bg-destructive/10 hover:text-destructive flex items-center justify-center md:justify-start md:px-3 gap-3 transition-all cursor-pointer text-sm"
           >
             <LogOut className="w-5 h-5 md:w-4 md:h-4" />
             <span className="hidden md:block text-sm">Logout</span>
@@ -327,7 +327,7 @@ export default function WorkspacePage() {
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden pb-14 md:pb-0">
 
         {/* ── TOP NAV BAR (Global Sticky Header) ─────────────────────────────────────────────── */}
-        <header className="h-16 border-b border-border/50 bg-background/80 backdrop-blur-xl flex items-center justify-between px-6 z-30 sticky top-0 shadow-sm">
+        <header className="h-14 border-b border-border bg-card flex items-center justify-between px-6 z-30 sticky top-0">
           {/* Breadcrumb */}
           <div className="flex items-center gap-2 text-sm">
             <span className="font-bold text-muted-foreground text-xs font-mono uppercase tracking-widest hidden md:inline-block">Workspace</span>
