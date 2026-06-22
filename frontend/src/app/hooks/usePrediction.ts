@@ -53,7 +53,10 @@ export function usePrediction(
           heatmap_image: data.heatmap_image,
           study_id: data.study_id,
           image_quality: data.image_quality,
-          heatmaps: data.heatmaps
+          heatmaps: data.heatmaps,
+          xai_results: data.xai_results,
+          demo_mode: data.demo_mode,
+          saliency_fallback: data.saliency_fallback
         };
         return next;
       });
