@@ -301,14 +301,6 @@ export default function WorkspacePage() {
         {/* Bottom Actions */}
         <div className="mt-0 md:mt-auto w-full md:px-3 flex flex-row md:flex-col gap-1 items-center md:items-stretch">
           <div className="hidden md:block px-3 mb-2 mt-4 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">System</div>
-          {/* Theme toggle */}
-          <button
-            onClick={() => setTheme(mounted && theme === "dark" ? "light" : "dark")}
-            className="h-12 md:h-10 md:w-full rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground flex items-center justify-center md:justify-start md:px-3 gap-3 transition-all cursor-pointer text-sm"
-          >
-            {mounted && theme === "dark" ? <Sun className="w-5 h-5 md:w-4 md:h-4" /> : <Moon className="w-5 h-5 md:w-4 md:h-4" />}
-            <span className="hidden md:block text-sm">Toggle Theme</span>
-          </button>
           
           {/* Logout */}
           <button

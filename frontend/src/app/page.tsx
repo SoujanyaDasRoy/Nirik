@@ -94,17 +94,7 @@ export default function AboutPage() {
               Get Started <ArrowRight className="w-3.5 h-3.5 ml-1" />
             </button>
 
-            <button
-              onClick={() => setTheme(mounted && theme === "dark" ? "light" : "dark")}
-              className="w-9 h-9 rounded-full bg-muted/40 hover:bg-muted/80 text-foreground flex items-center justify-center border border-border hover:border-primary/50 cursor-pointer transition-colors"
-              title={mounted && theme === "dark" ? "Light Mode" : "Dark Mode"}
-            >
-              {mounted && theme === "dark" ? (
-                <Sun className="w-4 h-4" strokeWidth={1.5} />
-              ) : (
-                <Moon className="w-4 h-4" strokeWidth={1.5} />
-              )}
-            </button>
+
           </div>
 
           {/* Mobile Menu Button */}
@@ -149,20 +139,7 @@ export default function AboutPage() {
                 Get Started <ArrowRight className="w-3.5 h-3.5 ml-1" />
               </button>
 
-              <button
-                onClick={() => setTheme(mounted && theme === "dark" ? "light" : "dark")}
-                className="h-10 w-full rounded-lg bg-muted/40 hover:bg-muted/80 text-foreground flex items-center justify-center gap-2 border border-border cursor-pointer transition-colors text-xs font-semibold"
-              >
-                {mounted && theme === "dark" ? (
-                  <>
-                    <Sun className="w-4 h-4" strokeWidth={1.5} /> Switch to Light Mode
-                  </>
-                ) : (
-                  <>
-                    <Moon className="w-4 h-4" strokeWidth={1.5} /> Switch to Dark Mode
-                  </>
-                )}
-              </button>
+
             </div>
           </div>
         )}
