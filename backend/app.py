@@ -229,7 +229,8 @@ def predict():
         iqa_results = analyze_image_quality(img)
 
         # Run deep learning inference
-        result_dict, heatmap_img = predict_image(img)
+        prior_image_b64 = request.form.get("prior_image_b64")
+        result_dict, heatmap_img = predict_image(img, prior_image_b64)
         
         original_base64 = image_to_base64(img)
         heatmap_base64 = image_to_base64(heatmap_img)
@@ -259,6 +260,9 @@ def predict():
             "heatmaps": result_dict.get("heatmaps", {}),
             "xai_results": result_dict.get("xai_results", {})
         }
+        
+        if "delta_heatmap_b64" in result_dict:
+            result_record["delta_heatmap_b64"] = result_dict["delta_heatmap_b64"]
 
         # Save prediction and update study status to 'ai_complete'
         save_prediction_record(study_id, result_record)
@@ -436,6 +440,21 @@ def get_model_metadata():
         return jsonify({"error": "Metadata file not found"}), 404
     except Exception as e:
         app.logger.error("Error reading model metadata", exc_info=True)
+        return jsonify({"error": "Internal server error"}), 500
+
+@app.route('/model/tsne', methods=['GET'])
+def get_tsne_embeddings():
+    if "username" not in session:
+        return jsonify({"error": "Authentication required"}), 401
+    try:
+        tsne_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "tsne_embeddings.json")
+        if os.path.exists(tsne_path):
+            with open(tsne_path, "r") as f:
+                data = json.load(f)
+            return jsonify(data)
+        return jsonify({"error": "t-SNE data not found"}), 404
+    except Exception as e:
+        app.logger.error("Error reading t-SNE data", exc_info=True)
         return jsonify({"error": "Internal server error"}), 500
 
 @app.route('/studies/<study_id>/similar', methods=['GET'])

@@ -28,11 +28,12 @@ interface LongitudinalTrackerProps {
     original_image: string;
     metadata: Record<string, string>;
   };
+  onCompare?: (priorRecord: HistoryRecord) => void;
 }
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
-export default function LongitudinalTracker({ patientId, patientName, currentResult }: LongitudinalTrackerProps) {
+export default function LongitudinalTracker({ patientId, patientName, currentResult, onCompare }: LongitudinalTrackerProps) {
   const [history, setHistory]     = useState<HistoryRecord[]>([]);
   const [isSaving, setIsSaving]   = useState(false);
   const [isSaved, setIsSaved]     = useState(false);
@@ -213,6 +214,16 @@ export default function LongitudinalTracker({ patientId, patientName, currentRes
                   <p className={`text-[10px] font-bold ${rec.is_tb ? "text-red-500" : "text-emerald-500"}`}>
                     {rec.prediction} · {(rec.confidence * 100).toFixed(0)}%
                   </p>
+                  {onCompare && (
+                    <Button 
+                      variant="secondary" 
+                      size="sm" 
+                      className="w-full mt-2 h-6 text-[10px]" 
+                      onClick={() => onCompare(rec)}
+                    >
+                      Compare
+                    </Button>
+                  )}
                 </div>
               </Card>
             ))}

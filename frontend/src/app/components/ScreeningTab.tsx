@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import TsnePlot from "./TsnePlot";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Textarea } from "@/components/ui/textarea";
@@ -235,13 +236,63 @@ export function ScreeningTab({
 }: ScreeningTabProps) {
   const activeResult = selectedIdx !== null ? results[selectedIdx] : null;
   const q = activeResult ? getQualityMetrics(activeResult) : null;
+  const [customThreshold, setCustomThreshold] = useState<number | null>(null);
+  
+  const currentThreshold = customThreshold ?? activeResult?.threshold_used ?? 0.5;
+  const isTbDerived = activeResult ? (activeResult.confidence || 0) >= currentThreshold : false;
+
   const activeDiagnosis = activeResult
-    ? predictionService.getDiagnosis(activeResult.prediction || "Normal", activeResult.confidence || 0.0, activeResult.threshold_used)
+    ? predictionService.getDiagnosis(isTbDerived ? "Tuberculosis" : "Normal", activeResult.confidence || 0.0, currentThreshold)
     : null;
 
   // ── WORKSTATION VIEWING STATES ──
-  const [viewMode, setViewMode] = useState<"original" | "heatmap" | "heatmap-only" | "side-by-side" | "split">("original");
+  const [viewMode, setViewMode] = useState<"original" | "heatmap" | "heatmap-only" | "side-by-side" | "split" | "longitudinal">("original");
   const [heatmapOpacity, setHeatmapOpacity] = useState(0.55);
+  const [priorImageSrc, setPriorImageSrc] = useState<string | undefined>();
+  const [deltaHeatmapSrc, setDeltaHeatmapSrc] = useState<string | undefined>();
+  const [isComparing, setIsComparing] = useState(false);
+
+  const handleCompare = async (priorRecord: any) => {
+    if (!activeResult || !activeResult.original_image) return;
+    setIsComparing(true);
+    try {
+      const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+      const fd = new FormData();
+      
+      let blob;
+      if (activeResult.original_image.startsWith("blob:")) {
+        blob = await fetch(activeResult.original_image).then(r => r.blob());
+      } else {
+        const b64Data = activeResult.original_image.split(',')[1] || activeResult.original_image;
+        const byteCharacters = atob(b64Data);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        blob = new Blob([new Uint8Array(byteNumbers)], {type: 'image/png'});
+      }
+      
+      fd.append("file", blob, "compare.png");
+      fd.append("prior_image_b64", priorRecord.original_b64);
+      
+      const res = await fetch(`${API}/predict`, {
+        method: "POST",
+        body: fd,
+        credentials: "include"
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Compare failed");
+      
+      setPriorImageSrc(priorRecord.original_b64);
+      setDeltaHeatmapSrc(data.delta_heatmap_b64);
+      setViewMode("longitudinal");
+    } catch (e) {
+      console.error("Compare error:", e);
+      alert("Failed to compute delta heatmap");
+    } finally {
+      setIsComparing(false);
+    }
+  };
 
   // Automatically switch to XAI mode when an image successfully finishes AI processing
   useEffect(() => {
@@ -269,6 +320,7 @@ export function ScreeningTab({
   const [reviewComments, setReviewComments] = useState("");
   const [reviewerName, setReviewerName] = useState("");
   const [clinicianNote, setClinicianNote] = useState("");
+  const [iqaAcknowledged, setIqaAcknowledged] = useState(false);
 
   const [xaiMethod, setXaiMethod] = useState<"gradcam_plusplus">("gradcam_plusplus");
   const [similarCases, setSimilarCases] = useState<{
@@ -485,6 +537,11 @@ export function ScreeningTab({
     setReviewerName(activeResult?.reviewer_name || "");
     setClinicianNote(activeResult?.clinician_note || "");
     setDbRegistered(false);
+    setIqaAcknowledged(false);
+    setCustomThreshold(null);
+    setPriorImageSrc(undefined);
+    setDeltaHeatmapSrc(undefined);
+    if (viewMode === "longitudinal") setViewMode("original");
 
     if (activeResult) {
       if (activeResult.study_id) {
@@ -789,6 +846,9 @@ export function ScreeningTab({
                         activeZone={activeZone}
                         annotateMode={annotateMode}
                         annotationCanvasRef={annotationCanvasRef}
+                        setActiveZone={setHighlightedAnatomicalZone}
+                        priorImageSrc={priorImageSrc}
+                        deltaHeatmapSrc={deltaHeatmapSrc}
                         observationFocusRegion={observationFocusRegion}
                         setViewMode={setViewMode}
                         setAnnotateMode={setAnnotateMode}
@@ -840,7 +900,13 @@ export function ScreeningTab({
 
                 {/* 2. RIGHT PANEL (30%): Steppers & RIS Records drawer */}
                 <div className="lg:col-span-4 space-y-6">
-                  {workstationMode === "clinical" ? (
+                  {workstationMode === "research" && (
+                    <div className="mb-6 animate-fadein">
+                      <TsnePlot />
+                    </div>
+                  )}
+
+                  {workstationMode === "clinical" || workstationMode === "research" ? (
                     <>
                       {/* WORKSPACE SELECTOR TABS */}
                       <div className="flex bg-muted/50 p-1 rounded-full border border-border/40 w-full">
@@ -935,6 +1001,21 @@ export function ScreeningTab({
                                           • {warn}
                                         </p>
                                       ))}
+                                      
+                                      {!q.suitableForAi && (
+                                        <div className="flex items-center gap-2 mt-2 pt-2 border-t border-amber-200 dark:border-amber-900/30">
+                                          <input 
+                                            type="checkbox" 
+                                            id="iqa-ack" 
+                                            className="h-3 w-3 accent-amber-600"
+                                            checked={iqaAcknowledged}
+                                            onChange={(e) => setIqaAcknowledged(e.target.checked)}
+                                          />
+                                          <label htmlFor="iqa-ack" className="text-[10px] font-bold text-amber-800 dark:text-amber-200 cursor-pointer select-none">
+                                            Acknowledge sub-optimal quality and proceed
+                                          </label>
+                                        </div>
+                                      )}
                                     </div>
                                   )}
                                 </>
@@ -974,7 +1055,7 @@ export function ScreeningTab({
                                       {activeResult.errorMsg || "Analysis failed"}
                                     </h3>
                                   ) : (
-                                    <h3 className={`text-sm font-bold ${activeResult.is_tb ? "text-amber-600 dark:text-amber-500" : "text-emerald-600 dark:text-emerald-500"}`}>
+                                    <h3 className={`text-sm font-bold ${isTbDerived ? "text-amber-600 dark:text-amber-500" : "text-emerald-600 dark:text-emerald-500"}`}>
                                       {activeDiagnosis?.condition}
                                     </h3>
                                   )}
@@ -995,7 +1076,7 @@ export function ScreeningTab({
                                   <Progress value={0} className="h-1.5 bg-destructive/20" />
                                 ) : (
                                   <>
-                                    <Progress value={(activeDiagnosis?.confidence || 0) * 100} className={`h-1.5 ${activeResult.is_tb ? "bg-amber-100 dark:bg-amber-950" : "bg-emerald-100 dark:bg-emerald-950"}`} />
+                                    <Progress value={(activeDiagnosis?.confidence || 0) * 100} className={`h-1.5 ${isTbDerived ? "bg-amber-100 dark:bg-amber-950" : "bg-emerald-100 dark:bg-emerald-950"}`} />
                                     
                                     {/* Clinical Uncertainty Warning Banner */}
                                     {activeDiagnosis?.isBorderline && (
@@ -1009,6 +1090,56 @@ export function ScreeningTab({
                                         </div>
                                       </div>
                                     )}
+
+                                    {/* Decision Curve / Threshold Slider */}
+                                    <div className="mt-5 p-4 border border-border bg-card/60 rounded-xl space-y-4">
+                                      <div className="flex justify-between items-center">
+                                        <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Decision Threshold</p>
+                                        <span className="text-xs font-mono font-bold text-foreground">{currentThreshold.toFixed(2)}</span>
+                                      </div>
+                                      <input 
+                                        type="range" 
+                                        min="0.1" 
+                                        max="0.9" 
+                                        step="0.01" 
+                                        value={currentThreshold} 
+                                        onChange={(e) => setCustomThreshold(parseFloat(e.target.value))}
+                                        className="w-full h-1.5 bg-muted rounded-full appearance-none [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary cursor-pointer"
+                                      />
+                                      
+                                      {/* Mock Trade-off Math */}
+                                      {(() => {
+                                        const t = currentThreshold;
+                                        // Mock ROC parameterization
+                                        const tpr = 1 - Math.pow(t, 6);
+                                        const fpr = Math.pow(1 - t, 3);
+                                        
+                                        const totalTb = 100;
+                                        const totalNormal = 500;
+                                        
+                                        const caught = Math.round(totalTb * tpr);
+                                        const missed = totalTb - caught;
+                                        const falsePos = Math.round(totalNormal * fpr);
+                                        
+                                        return (
+                                          <div className="text-[10px] text-muted-foreground leading-relaxed">
+                                            <p className="mb-2 italic border-l-2 border-primary/40 pl-2">
+                                              "At this threshold ({t.toFixed(2)}), you'll miss <strong className="text-destructive">{missed}</strong> TB cases per 100 to catch <strong className="text-emerald-500">{caught}</strong> — is that the trade-off you want?"
+                                            </p>
+                                            <div className="grid grid-cols-2 gap-2 mt-2 pt-2 border-t border-border/50">
+                                              <div className="flex flex-col">
+                                                <span className="uppercase text-[9px] font-bold">False Negatives (Missed)</span>
+                                                <span className="text-destructive font-mono font-bold">{missed} per 100</span>
+                                              </div>
+                                              <div className="flex flex-col">
+                                                <span className="uppercase text-[9px] font-bold">False Positives (Workup)</span>
+                                                <span className="text-amber-500 font-mono font-bold">{falsePos} per 500</span>
+                                              </div>
+                                            </div>
+                                          </div>
+                                        );
+                                      })()}
+                                    </div>
                                   </>
                                 )}
                               </div>
@@ -1154,7 +1285,12 @@ export function ScreeningTab({
                           </Card>
 
                           {/* LONGITUDINAL PATIENT TRACKER */}
-                          <LongitudinalTracker patientId={activeResult.metadata?.patient_id || ""} patientName={activeResult.metadata?.patient_name || ""} currentResult={activeResult as any} />
+                          <LongitudinalTracker 
+                            patientId={activeResult.metadata?.patient_id} 
+                            patientName={activeResult.metadata?.patient_name || "Unknown Patient"} 
+                            currentResult={activeResult}
+                            onCompare={handleCompare}
+                          />
                         </div>
                       )}
 
@@ -1234,13 +1370,30 @@ export function ScreeningTab({
                           {/* REPORT EXPORTS & METADATA */}
                           <div className="p-4 border border-border bg-card rounded-xl space-y-3">
                             <p className="text-xs font-bold uppercase tracking-wider text-foreground">Downstream Integrations &amp; Export</p>
+                            
+                            {activeResult.demo_mode && (
+                              <div className="p-2 mb-2 bg-red-500/10 border border-red-500/30 rounded-lg flex items-start gap-2">
+                                <AlertTriangle className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
+                                <p className="text-[11px] text-red-600 dark:text-red-400 font-medium">
+                                  Exporting is disabled in Demo Mode. Results are simulated.
+                                </p>
+                              </div>
+                            )}
+
+                            {!activeResult.demo_mode && (!reviewerName.trim() || (!q?.suitableForAi && !iqaAcknowledged)) && (
+                              <div className="p-2 mb-2 bg-amber-500/10 border border-amber-500/30 rounded-lg flex flex-col gap-1">
+                                <p className="text-[10px] font-bold text-amber-600 uppercase">Pre-flight Checklist Required:</p>
+                                {!reviewerName.trim() && <p className="text-[11px] text-amber-600">• Clinical Reviewer name is required</p>}
+                                {q && !q.suitableForAi && !iqaAcknowledged && <p className="text-[11px] text-amber-600">• Must acknowledge sub-optimal image quality</p>}
+                              </div>
+                            )}
 
                             {/* Exporters buttons row */}
                             <div className="flex gap-2">
                               <Button
                                 size="sm"
                                 onClick={handlePdfExport}
-                                disabled={isExporting || activeResult.status !== "success"}
+                                disabled={isExporting || activeResult.status !== "success" || activeResult.demo_mode || !reviewerName.trim() || (!q?.suitableForAi && !iqaAcknowledged)}
                                 className="flex-1 text-xs font-semibold h-9 gap-1.5 cursor-pointer"
                               >
                                 <FileText className="w-3.5 h-3.5" /> Export PDF
@@ -1249,7 +1402,7 @@ export function ScreeningTab({
                                 size="sm"
                                 variant="outline"
                                 onClick={handleJsonSR}
-                                disabled={activeResult.status !== "success"}
+                                disabled={activeResult.status !== "success" || activeResult.demo_mode}
                                 className="flex-1 text-xs font-semibold h-9 gap-1.5 cursor-pointer"
                               >
                                 <Download className="w-3.5 h-3.5" /> Export JSON
@@ -1258,7 +1411,7 @@ export function ScreeningTab({
                                 size="sm"
                                 variant={dbRegistered ? "secondary" : "outline"}
                                 onClick={handleRegisterDb}
-                                disabled={dbRegistered || activeResult.status !== "success"}
+                                disabled={dbRegistered || activeResult.status !== "success" || activeResult.demo_mode}
                                 className={`flex-1 text-xs font-semibold h-9 gap-1.5 cursor-pointer ${dbRegistered ? "text-emerald-500 border-emerald-500/20 bg-emerald-500/5" : ""
                                   }`}
                               >

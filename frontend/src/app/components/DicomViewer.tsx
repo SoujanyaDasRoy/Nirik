@@ -30,8 +30,10 @@ interface DicomViewerProps {
   label?: string;
   pixelSpacing?: number[] | null;
 
-  viewMode: "original" | "heatmap" | "heatmap-only" | "side-by-side" | "split";
+  viewMode: "original" | "heatmap" | "heatmap-only" | "side-by-side" | "split" | "longitudinal";
   heatmapOpacity: number;
+  priorImageSrc?: string;
+  deltaHeatmapSrc?: string;
 
   boxes: Box[];
   setBoxes: React.Dispatch<React.SetStateAction<Box[]>>;
@@ -80,6 +82,8 @@ export default function DicomViewer({
   observationFocusRegion,
   setHeatmapOpacity,
   setActiveZone,
+  priorImageSrc,
+  deltaHeatmapSrc
 }: DicomViewerProps) {
   const [brightness, setBrightness] = useState(1.0);
   const [contrast, setContrast]     = useState(1.0);
@@ -405,7 +409,7 @@ export default function DicomViewer({
           <div className="flex items-center gap-1.5 flex-wrap">
             <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mr-1">View Modes:</span>
             <div className="flex bg-muted/50 p-0.5 rounded-full border border-border/60">
-              {(["original", "heatmap", "heatmap-only", "side-by-side", "split"] as const).map(mode => (
+              {(["original", "heatmap", "heatmap-only", "side-by-side", "split", "longitudinal"] as const).map(mode => (
                 <Button
                   key={mode}
                   size="sm"
@@ -498,6 +502,42 @@ export default function DicomViewer({
                 />
                 <div className="absolute top-2 left-2 bg-black/60 px-1.5 py-0.5 rounded text-[8px] font-bold text-white border border-white/10 uppercase tracking-widest">
                   AI Attributions
+                </div>
+              </div>
+            </div>
+          ) : viewMode === "longitudinal" && priorImageSrc ? (
+            <div className="flex gap-4">
+              {/* Prior Image */}
+              <div className="relative">
+                <img
+                  src={priorImageSrc.startsWith("data:") ? priorImageSrc : `data:image/png;base64,${priorImageSrc}`}
+                  alt="Prior Scan"
+                  className="h-full object-contain rounded select-none block animate-fadein"
+                  style={{ filter: filterStyle + sharpenFilter }}
+                  draggable={false}
+                />
+                <div className="absolute top-2 left-2 bg-black/60 px-1.5 py-0.5 rounded text-[8px] font-bold text-white border border-white/10 uppercase tracking-widest">
+                  Prior Scan
+                </div>
+              </div>
+              {/* Current Image with Delta Heatmap */}
+              <div className="relative">
+                <img
+                  src={src}
+                  alt="Current Scan"
+                  className="h-full object-contain rounded select-none block animate-fadein"
+                  style={{ filter: filterStyle + sharpenFilter }}
+                  draggable={false}
+                />
+                {deltaHeatmapSrc && (
+                  <img
+                    src={deltaHeatmapSrc.startsWith("data:") ? deltaHeatmapSrc : `data:image/png;base64,${deltaHeatmapSrc}`}
+                    alt="Delta Heatmap"
+                    className="absolute top-0 left-0 w-full h-full object-contain rounded opacity-70 mix-blend-screen select-none pointer-events-none"
+                  />
+                )}
+                <div className="absolute top-2 left-2 bg-black/60 px-1.5 py-0.5 rounded text-[8px] font-bold text-amber-400 border border-amber-400/30 uppercase tracking-widest">
+                  Current (Delta Map)
                 </div>
               </div>
             </div>

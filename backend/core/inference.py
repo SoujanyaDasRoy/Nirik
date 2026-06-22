@@ -574,10 +574,12 @@ def get_mock_xai_payload(img_size: tuple, is_tb: bool, prob: float, quality_scor
 
 # ── Main Prediction Flow ─────────────────────────────────────
 
-def predict_image(img: Image.Image):
+def predict_image(img: Image.Image, prior_image_b64: str = None):
     model = get_model()
     # Import image_to_base64 here
     from utils.image_helpers import image_to_base64
+    import base64
+    from io import BytesIO
 
     if model is None:
         # Mock/Demo mode fallback to keep the application fully testable without the weight file
@@ -599,7 +601,7 @@ def predict_image(img: Image.Image):
         
         xai_payload = get_mock_xai_payload(img.size, is_tb, prob)
         
-        return {
+        result_dict = {
             "prediction": "Tuberculosis" if is_tb else "Normal",
             "confidence": float(prob),
             "threshold_used": OPTIMAL_THRESHOLD,
@@ -608,7 +610,27 @@ def predict_image(img: Image.Image):
             "saliency_fallback": False,
             "heatmaps": heatmaps_b64,
             "xai_results": xai_payload
-        }, gradcam_plusplus_cropped
+        }
+        
+        if prior_image_b64:
+            try:
+                prior_data = base64.b64decode(prior_image_b64.split(",")[1] if "," in prior_image_b64 else prior_image_b64)
+                prior_img = Image.open(BytesIO(prior_data)).convert('RGB')
+                prior_dict, prior_heatmap_img = predict_image(prior_img, None)
+                
+                curr_np = np.array(gradcam_plusplus_cropped.convert('RGB'))
+                prior_np = cv2.resize(np.array(prior_heatmap_img.convert('RGB')), (curr_np.shape[1], curr_np.shape[0]))
+                delta_np = cv2.absdiff(curr_np, prior_np)
+                
+                # Boost the delta signal slightly for visibility
+                delta_np = cv2.convertScaleAbs(delta_np, alpha=1.5, beta=0)
+                
+                result_dict["delta_heatmap_b64"] = image_to_base64(Image.fromarray(delta_np))
+            except Exception as e:
+                import logging
+                logging.error(f"Error computing delta heatmap: {e}")
+                
+        return result_dict, gradcam_plusplus_cropped
         
     # ── Preprocessing ─────────────────────────────────────────────────────────
     #
@@ -689,7 +711,7 @@ def predict_image(img: Image.Image):
     if is_fb:
         any_fallback = True
     
-    return {
+    result_dict = {
         "prediction": "Tuberculosis" if is_tb else "Normal",
         "confidence": float(prob),
         "threshold_used": OPTIMAL_THRESHOLD,
@@ -698,4 +720,22 @@ def predict_image(img: Image.Image):
         "saliency_fallback": any_fallback,
         "heatmaps": heatmaps_b64,
         "xai_results": xai_payload
-    }, gradcam_plusplus_cropped
+    }
+    
+    if prior_image_b64:
+        try:
+            prior_data = base64.b64decode(prior_image_b64.split(",")[1] if "," in prior_image_b64 else prior_image_b64)
+            prior_img = Image.open(BytesIO(prior_data)).convert('RGB')
+            prior_dict, prior_heatmap_img = predict_image(prior_img, None)
+            
+            curr_np = np.array(gradcam_plusplus_cropped.convert('RGB'))
+            prior_np = cv2.resize(np.array(prior_heatmap_img.convert('RGB')), (curr_np.shape[1], curr_np.shape[0]))
+            delta_np = cv2.absdiff(curr_np, prior_np)
+            delta_np = cv2.convertScaleAbs(delta_np, alpha=1.5, beta=0)
+            
+            result_dict["delta_heatmap_b64"] = image_to_base64(Image.fromarray(delta_np))
+        except Exception as e:
+            import logging
+            logging.error(f"Error computing delta heatmap: {e}")
+
+    return result_dict, gradcam_plusplus_cropped
