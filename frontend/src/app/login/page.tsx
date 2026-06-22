@@ -160,13 +160,13 @@ export default function LoginPage() {
       </div>
 
       {/* ── FOOTER ── */}
-      <footer className="bg-[#101010] text-[#a1a1aa] py-8 px-6 flex-shrink-0 text-xs border-t border-stone-900 transition-colors duration-200">
-        <div className="w-full max-w-6xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4 text-stone-500 font-sans text-xs">
+      <footer className="bg-card text-muted-foreground py-8 px-6 flex-shrink-0 text-xs border-t border-border transition-colors duration-200">
+        <div className="w-full max-w-6xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4 text-muted-foreground font-sans text-xs">
           <p className="text-center sm:text-left">
             &copy; {new Date().getFullYear()} Nirikhshon. Academic Final Year Project Prototype.
           </p>
           <div className="flex gap-4">
-            <span className="text-stone-600">Built with React, Next.js, and Flask</span>
+            <span className="text-muted-foreground/80">Built with React, Next.js, and Flask</span>
           </div>
         </div>
       </footer>

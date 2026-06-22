@@ -90,10 +90,10 @@ export default function XaiVisualization({ result, similarCases, loadingSimilar 
     const strokeDashoffset = circumference - (value / 100) * circumference;
 
     return (
-      <div className="flex flex-col items-center justify-center p-3 bg-white/[0.02] border border-white/5 rounded-2xl hover:bg-white/[0.04] transition-colors">
+      <div className="flex flex-col items-center justify-center p-3 bg-muted/40 dark:bg-white/[0.02] border border-border dark:border-white/5 rounded-2xl hover:bg-muted/60 dark:hover:bg-white/[0.04] transition-colors">
         <div className="relative w-20 h-20 flex items-center justify-center">
           <svg className="w-full h-full transform -rotate-90">
-            <circle cx="40" cy="40" r="30" stroke="currentColor" strokeWidth="6" fill="transparent" className="text-white/10" />
+            <circle cx="40" cy="40" r="30" stroke="currentColor" strokeWidth="6" fill="transparent" className="text-muted/60 dark:text-white/10" />
             <circle 
               cx="40" cy="40" r="30" 
               stroke={strokeColor} 
@@ -108,7 +108,7 @@ export default function XaiVisualization({ result, similarCases, loadingSimilar 
             {value}%
           </div>
         </div>
-        <span className="text-[10px] text-zinc-400 font-medium uppercase tracking-wider mt-2">{label}</span>
+        <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mt-2">{label}</span>
       </div>
     );
   };
@@ -246,16 +246,16 @@ export default function XaiVisualization({ result, similarCases, loadingSimilar 
                 </div>
 
                 {/* Floating Dock Tool Bar (macOS style) */}
-                <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-3 bg-zinc-900/80 backdrop-blur-2xl border border-white/10 p-2.5 rounded-2xl shadow-2xl opacity-90 group-hover:opacity-100 transition-opacity">
-                  <div className="flex items-center gap-2 px-3 border-r border-white/10">
-                    <Eye className={`w-4 h-4 ${showHeatmap ? 'text-teal-400' : 'text-zinc-500'}`} />
+                <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-3 bg-background/90 dark:bg-zinc-900/80 backdrop-blur-2xl border border-border dark:border-white/10 p-2.5 rounded-2xl shadow-2xl opacity-90 group-hover:opacity-100 transition-opacity">
+                  <div className="flex items-center gap-2 px-3 border-r border-border dark:border-white/10">
+                    <Eye className={`w-4 h-4 ${showHeatmap ? 'text-primary dark:text-teal-400' : 'text-muted-foreground'}`} />
                     <Slider
                       min={0}
                       max={100}
                       step={1}
                       value={[opacity]}
                       onValueChange={(val: any) => { setOpacity(val[0]); setShowHeatmap(val[0] > 0); }}
-                      className="w-24 bg-zinc-800"
+                      className="w-24 bg-muted dark:bg-zinc-800"
                     />
                   </div>
                   
@@ -263,24 +263,24 @@ export default function XaiVisualization({ result, similarCases, loadingSimilar 
                     <Button 
                       size="sm" variant="ghost" 
                       onClick={() => setShowBbox(!showBbox)}
-                      className={`h-8 px-3 rounded-lg text-xs font-medium transition-all ${showBbox ? 'bg-teal-500/20 text-teal-300 hover:bg-teal-500/30' : 'text-zinc-400 hover:text-white'}`}
+                      className={`h-8 px-3 rounded-lg text-xs font-medium transition-all ${showBbox ? 'bg-primary/10 text-primary hover:bg-primary/20 dark:bg-teal-500/20 dark:text-teal-300 dark:hover:bg-teal-500/30' : 'text-muted-foreground hover:text-foreground'}`}
                     >
                       Boxes
                     </Button>
                     <Button 
                       size="sm" variant="ghost" 
                       onClick={() => setShowContour(!showContour)}
-                      className={`h-8 px-3 rounded-lg text-xs font-medium transition-all ${showContour ? 'bg-amber-500/20 text-amber-300 hover:bg-amber-500/30' : 'text-zinc-400 hover:text-white'}`}
+                      className={`h-8 px-3 rounded-lg text-xs font-medium transition-all ${showContour ? 'bg-amber-500/10 text-amber-600 hover:bg-amber-500/20 dark:bg-amber-500/20 dark:text-amber-300 dark:hover:bg-amber-500/30' : 'text-muted-foreground hover:text-foreground'}`}
                     >
                       Contours
                     </Button>
                   </div>
 
-                  <div className="border-l border-white/10 pl-2">
+                  <div className="border-l border-border dark:border-white/10 pl-2">
                     <select
                       value={heatmapMode}
                       onChange={(e) => setHeatmapMode(e.target.value as any)}
-                      className="bg-black/50 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-zinc-300 focus:outline-none focus:border-teal-500/50 appearance-none cursor-pointer hover:bg-black/70 transition-colors"
+                      className="bg-muted/50 dark:bg-black/50 border border-border dark:border-white/10 rounded-lg px-3 py-1.5 text-xs text-foreground dark:text-zinc-300 focus:outline-none focus:border-primary/50 appearance-none cursor-pointer hover:bg-muted dark:hover:bg-black/70 transition-colors"
                     >
                       <option value="gradcam_plusplus">Grad-CAM++</option>
                       <option value="gradcam">Standard Grad-CAM</option>
@@ -327,7 +327,7 @@ export default function XaiVisualization({ result, similarCases, loadingSimilar 
                 <CircularProgress 
                   value={metrics?.calibrated_confidence !== undefined ? metrics.calibrated_confidence : 50} 
                   label="Calibrated Certainty" 
-                  colorClass="text-accent" 
+                  colorClass="text-foreground" 
                   strokeColor="hsl(142, 76%, 36%)" 
                 />
               </div>
@@ -336,8 +336,8 @@ export default function XaiVisualization({ result, similarCases, loadingSimilar 
                 <div className="bg-background/50 border border-border/50 rounded-2xl p-4 flex flex-col justify-center">
                   <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest mb-1">System Reliability</span>
                   <div className="flex items-center gap-2">
-                    <CheckCircle2 className={`w-4 h-4 ${metrics?.reliability === "High" ? "text-accent" : "text-amber-500"}`} />
-                    <span className={`text-sm font-bold font-mono ${metrics?.reliability === "High" ? "text-accent" : "text-amber-400"}`}>
+                    <CheckCircle2 className={`w-4 h-4 ${metrics?.reliability === "High" ? "text-emerald-500 dark:text-emerald-400" : "text-amber-500"}`} />
+                    <span className={`text-sm font-bold font-mono ${metrics?.reliability === "High" ? "text-emerald-600 dark:text-emerald-400" : "text-amber-500"}`}>
                       {metrics?.reliability || "High"}
                     </span>
                   </div>
@@ -345,8 +345,8 @@ export default function XaiVisualization({ result, similarCases, loadingSimilar 
                 <div className="bg-background/50 border border-border/50 rounded-2xl p-4 flex flex-col justify-center">
                   <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest mb-1">Decision Uncertainty</span>
                   <div className="flex items-center gap-2">
-                    <AlertCircle className={`w-4 h-4 ${metrics?.uncertainty === "Low" ? "text-accent" : "text-destructive"}`} />
-                    <span className={`text-sm font-bold font-mono ${metrics?.uncertainty === "Low" ? "text-accent" : "text-destructive"}`}>
+                    <AlertCircle className={`w-4 h-4 ${metrics?.uncertainty === "Low" ? "text-emerald-500 dark:text-emerald-400" : "text-destructive"}`} />
+                    <span className={`text-sm font-bold font-mono ${metrics?.uncertainty === "Low" ? "text-emerald-600 dark:text-emerald-400" : "text-destructive"}`}>
                       {metrics?.uncertainty || "Low"}
                     </span>
                   </div>
