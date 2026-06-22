@@ -336,34 +336,12 @@ export default function WorkspacePage() {
             )}
           </div>
 
-          {/* Workstation Mode Switcher (Visible only on Workbench tab when files exist) */}
-          {viewState === "workbench" && files.length > 0 && (
-            <div className="flex bg-muted/70 p-1 rounded-full border border-border/60">
-              {(["clinical", "research", "xai"] as const).map(mode => (
-                <button
-                  key={mode}
-                  onClick={() => setWorkstationMode(mode)}
-                  className={`px-3.5 py-1.5 rounded-full text-[11px] font-semibold transition-all duration-200 cursor-pointer ${
-                    workstationMode === mode
-                      ? "bg-card text-foreground shadow-sm font-bold border border-border/10"
-                      : "text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  {mode === "clinical" && "Clinical View"}
-                  {mode === "research" && "Research View"}
-                  {mode === "xai" && "Explainable AI (XAI)"}
-                </button>
-              ))}
-            </div>
-          )}
-
           {/* Right side tools */}
           <div className="flex items-center gap-4">
             {sessionUser && (
               <div className="flex items-center gap-3">
                 <div className="text-right hidden sm:block">
-                  <div className="text-xs font-bold text-foreground">{sessionUser.username}</div>
-                  <div className="text-[9px] text-muted-foreground uppercase tracking-wider font-bold font-sans">{sessionUser.role}</div>
+                  <div className="text-xs font-bold text-foreground capitalize">{sessionUser.username}</div>
                 </div>
                 <div className="w-8 h-8 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center text-primary font-bold text-xs uppercase shadow-[0_0_10px_rgba(8,145,178,0.2)]">
                   {sessionUser.username.charAt(0)}

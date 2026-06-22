@@ -676,6 +676,31 @@ export function ScreeningTab({
           {activeResult ? (
               /* ── 3-PANEL PACS WORKSPACE (SUCCESSFUL INFERENCE STATE) ── */
               <div className="flex flex-col space-y-6 w-full animate-fadein">
+                {/* Workstation Mode Switcher Banner */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl bg-card border border-border">
+                  <div className="space-y-0.5">
+                    <h3 className="text-sm font-bold text-foreground">Diagnostic Viewport Perspectives</h3>
+                    <p className="text-xs text-muted-foreground">Select a workstation perspective to examine the patient's radiograph analysis.</p>
+                  </div>
+                  <div className="flex bg-muted/65 p-1 rounded-xl border border-border/80">
+                    {(["clinical", "research", "xai"] as const).map(mode => (
+                      <button
+                        key={mode}
+                        onClick={() => setWorkstationMode(mode)}
+                        className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all duration-200 cursor-pointer ${
+                          workstationMode === mode
+                            ? "bg-background text-foreground shadow-sm font-bold border border-border/10"
+                            : "text-muted-foreground hover:text-foreground"
+                        }`}
+                      >
+                        {mode === "clinical" && "Clinical View"}
+                        {mode === "research" && "Research View"}
+                        {mode === "xai" && "Explainable AI (XAI)"}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
                 {activeResult && activeResult.demo_mode && (
                   <div className="p-4 border border-yellow-500/20 bg-yellow-500/5 text-yellow-600 dark:text-yellow-500 rounded-xl flex items-center gap-3 animate-fadein mb-4">
                     <ShieldAlert className="w-5 h-5 shrink-0 text-yellow-500" />

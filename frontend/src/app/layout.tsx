@@ -37,8 +37,8 @@ export default function RootLayout({
       <body className="min-h-full antialiased flex flex-col">
         <ThemeProvider
           attribute="class"
-          defaultTheme="light"
-          forcedTheme="light"
+          defaultTheme="dark"
+          forcedTheme="dark"
           enableSystem={false}
           disableTransitionOnChange={false}
         >
