@@ -255,7 +255,9 @@ def predict():
             "heatmap_image": heatmap_base64,
             "inference_time_ms": result_dict.get("inference_time_ms", 324.0),
             "attention_region": "right apical" if is_tb else "clear",
-            "heatmap_coverage": 15.2 if is_tb else 0.0
+            "heatmap_coverage": 15.2 if is_tb else 0.0,
+            "heatmaps": result_dict.get("heatmaps", {}),
+            "xai_results": result_dict.get("xai_results", {})
         }
 
         # Save prediction and update study status to 'ai_complete'
