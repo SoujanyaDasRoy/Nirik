@@ -163,6 +163,86 @@ export default function XaiVisualization({ result, similarCases, loadingSimilar 
           {/* LEFT: Massive Image Viewer (7 cols) */}
           <div className={`xl:col-span-7 ${isComparing ? "xl:col-span-8" : "xl:col-span-7"} flex flex-col gap-6`}>
             
+            {/* Dedicated High-Visibility XAI Control Panel */}
+            <div className="bg-card border border-border rounded-2xl p-4 flex flex-col gap-4 shadow-sm">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div className="space-y-0.5">
+                  <span className="text-[10px] font-bold text-primary uppercase tracking-wider block">Explainability Settings</span>
+                  <h4 className="text-xs font-bold text-foreground">Select XAI Model & Overlay Layers</h4>
+                </div>
+                
+                {/* Segmented Button Selector for Heatmap Mode */}
+                <div className="flex bg-muted p-1 rounded-xl border border-border/85 w-full sm:w-auto">
+                  {(["gradcam_plusplus", "gradcam", "attention", "coverage"] as const).map(mode => (
+                    <button
+                      key={mode}
+                      onClick={() => setHeatmapMode(mode)}
+                      className={`flex-1 sm:flex-none px-3.5 py-1.5 rounded-lg text-[11px] font-semibold transition-all duration-200 cursor-pointer ${
+                        heatmapMode === mode
+                          ? "bg-background text-foreground shadow-sm font-bold border border-border/10"
+                          : "text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      {mode === "gradcam_plusplus" && "Grad-CAM++"}
+                      {mode === "gradcam" && "Standard"}
+                      {mode === "attention" && "Attention"}
+                      {mode === "coverage" && "Coverage"}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 pt-3 border-t border-border/60">
+                {/* Layer Toggles */}
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setShowHeatmap(!showHeatmap)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border cursor-pointer ${
+                      showHeatmap
+                        ? "bg-primary/10 border-primary/30 text-primary"
+                        : "bg-background border-border text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    Heatmap Layer
+                  </button>
+                  <button
+                    onClick={() => setShowBbox(!showBbox)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border cursor-pointer ${
+                      showBbox
+                        ? "bg-teal-500/10 border-teal-500/30 text-teal-400"
+                        : "bg-background border-border text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    Bounding Boxes
+                  </button>
+                  <button
+                    onClick={() => setShowContour(!showContour)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border cursor-pointer ${
+                      showContour
+                        ? "bg-amber-500/10 border-amber-500/30 text-amber-400"
+                        : "bg-background border-border text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    Contours
+                  </button>
+                </div>
+
+                {/* Opacity Slider */}
+                <div className="flex items-center gap-3 bg-muted/40 px-3 py-1.5 rounded-xl border border-border/40 flex-1 sm:flex-none">
+                  <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider shrink-0">Overlay Opacity</span>
+                  <Slider
+                    min={0}
+                    max={100}
+                    step={1}
+                    value={[opacity]}
+                    onValueChange={(val: any) => { setOpacity(val[0]); setShowHeatmap(val[0] > 0); }}
+                    className="w-full sm:w-32"
+                  />
+                  <span className="text-[11px] font-mono font-bold text-foreground w-8 text-right shrink-0">{opacity}%</span>
+                </div>
+              </div>
+            </div>
+            
             <div className={`grid ${isComparing ? "grid-cols-1 md:grid-cols-2" : "grid-cols-1"} gap-6 h-full`}>
               
               {/* Primary Visualizer */}
@@ -244,52 +324,6 @@ export default function XaiVisualization({ result, similarCases, loadingSimilar 
                     })}
                   </svg>
                 </div>
-
-                {/* Floating Dock Tool Bar (macOS style) */}
-                <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-3 bg-background/90 dark:bg-zinc-900/80 backdrop-blur-2xl border border-border dark:border-white/10 p-2.5 rounded-2xl shadow-2xl opacity-90 group-hover:opacity-100 transition-opacity">
-                  <div className="flex items-center gap-2 px-3 border-r border-border dark:border-white/10">
-                    <Eye className={`w-4 h-4 ${showHeatmap ? 'text-primary dark:text-teal-400' : 'text-muted-foreground'}`} />
-                    <Slider
-                      min={0}
-                      max={100}
-                      step={1}
-                      value={[opacity]}
-                      onValueChange={(val: any) => { setOpacity(val[0]); setShowHeatmap(val[0] > 0); }}
-                      className="w-24 bg-muted dark:bg-zinc-800"
-                    />
-                  </div>
-                  
-                  <div className="flex items-center gap-1.5 px-2">
-                    <Button 
-                      size="sm" variant="ghost" 
-                      onClick={() => setShowBbox(!showBbox)}
-                      className={`h-8 px-3 rounded-lg text-xs font-medium transition-all ${showBbox ? 'bg-primary/10 text-primary hover:bg-primary/20 dark:bg-teal-500/20 dark:text-teal-300 dark:hover:bg-teal-500/30' : 'text-muted-foreground hover:text-foreground'}`}
-                    >
-                      Boxes
-                    </Button>
-                    <Button 
-                      size="sm" variant="ghost" 
-                      onClick={() => setShowContour(!showContour)}
-                      className={`h-8 px-3 rounded-lg text-xs font-medium transition-all ${showContour ? 'bg-amber-500/10 text-amber-600 hover:bg-amber-500/20 dark:bg-amber-500/20 dark:text-amber-300 dark:hover:bg-amber-500/30' : 'text-muted-foreground hover:text-foreground'}`}
-                    >
-                      Contours
-                    </Button>
-                  </div>
-
-                  <div className="border-l border-border dark:border-white/10 pl-2">
-                    <select
-                      value={heatmapMode}
-                      onChange={(e) => setHeatmapMode(e.target.value as any)}
-                      className="bg-muted/50 dark:bg-black/50 border border-border dark:border-white/10 rounded-lg px-3 py-1.5 text-xs text-foreground dark:text-zinc-300 focus:outline-none focus:border-primary/50 appearance-none cursor-pointer hover:bg-muted dark:hover:bg-black/70 transition-colors"
-                    >
-                      <option value="gradcam_plusplus">Grad-CAM++</option>
-                      <option value="gradcam">Standard Grad-CAM</option>
-                      <option value="attention">Attention Saliency</option>
-                      <option value="coverage">Spatial Coverage</option>
-                    </select>
-                  </div>
-                </div>
-
               </div>
 
               {/* Side-by-Side Compare */}
