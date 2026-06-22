@@ -65,6 +65,7 @@ export default function WorkspacePage() {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const [viewState, setViewState] = useState<ViewState>("upload");
+  const [workstationMode, setWorkstationMode] = useState<"clinical" | "research" | "xai">("xai");
   const [globalNote, setGlobalNote] = useState("");
   const [sessionUser, setSessionUser] = useState<{ username: string; role: string } | null>(null);
   const [checkingSession, setCheckingSession] = useState(true);
@@ -325,7 +326,36 @@ export default function WorkspacePage() {
             <span className="font-bold text-muted-foreground text-xs font-mono uppercase tracking-widest hidden md:inline-block">Workspace</span>
             <ChevronRight className="w-3.5 h-3.5 text-muted-foreground hidden md:block" strokeWidth={2} />
             <span className="font-bold text-foreground text-sm tracking-tight">{viewLabels[viewState]}</span>
+            {viewState === "workbench" && files.length > 0 && selectedIdx !== null && results[selectedIdx] && (
+              <>
+                <ChevronRight className="w-3.5 h-3.5 text-muted-foreground" strokeWidth={2} />
+                <span className="font-mono text-xs font-bold text-muted-foreground bg-muted px-2 py-1 rounded-md">
+                  {results[selectedIdx]?.study_id || "ST-TEMP"}
+                </span>
+              </>
+            )}
           </div>
+
+          {/* Workstation Mode Switcher (Visible only on Workbench tab when files exist) */}
+          {viewState === "workbench" && files.length > 0 && (
+            <div className="flex bg-muted/70 p-1 rounded-full border border-border/60">
+              {(["clinical", "research", "xai"] as const).map(mode => (
+                <button
+                  key={mode}
+                  onClick={() => setWorkstationMode(mode)}
+                  className={`px-3.5 py-1.5 rounded-full text-[11px] font-semibold transition-all duration-200 cursor-pointer ${
+                    workstationMode === mode
+                      ? "bg-card text-foreground shadow-sm font-bold border border-border/10"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {mode === "clinical" && "Clinical View"}
+                  {mode === "research" && "Research View"}
+                  {mode === "xai" && "Explainable AI (XAI)"}
+                </button>
+              ))}
+            </div>
+          )}
 
           {/* Right side tools */}
           <div className="flex items-center gap-4">
@@ -502,6 +532,8 @@ export default function WorkspacePage() {
                 reportRef={reportRef}
                 downloadReport={downloadReport}
                 handleFeedbackSaved={handleFeedbackSaved}
+                workstationMode={workstationMode}
+                setWorkstationMode={setWorkstationMode}
               />
             </div>
           )}

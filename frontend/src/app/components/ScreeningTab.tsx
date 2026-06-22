@@ -185,6 +185,8 @@ interface ScreeningTabProps {
     comments?: string,
     reviewer?: string
   ) => void;
+  workstationMode: "clinical" | "research" | "xai";
+  setWorkstationMode: (mode: "clinical" | "research" | "xai") => void;
 }
 
 const getQualityMetrics = (result: any) => {
@@ -227,7 +229,9 @@ export function ScreeningTab({
   setGlobalNote,
   reportRef,
   downloadReport,
-  handleFeedbackSaved
+  handleFeedbackSaved,
+  workstationMode,
+  setWorkstationMode
 }: ScreeningTabProps) {
   const activeResult = selectedIdx !== null ? results[selectedIdx] : null;
   const q = activeResult ? getQualityMetrics(activeResult) : null;
@@ -238,7 +242,6 @@ export function ScreeningTab({
   // ── WORKSTATION VIEWING STATES ──
   const [viewMode, setViewMode] = useState<"original" | "heatmap" | "heatmap-only" | "side-by-side" | "split">("original");
   const [heatmapOpacity, setHeatmapOpacity] = useState(0.55);
-  const [workstationMode, setWorkstationMode] = useState<"clinical" | "research" | "xai">("xai"); // Default to XAI view for better UX
 
   // Automatically switch to XAI mode when an image successfully finishes AI processing
   useEffect(() => {
@@ -672,49 +675,7 @@ export function ScreeningTab({
         <div className="w-full">
           {activeResult ? (
               /* ── 3-PANEL PACS WORKSPACE (SUCCESSFUL INFERENCE STATE) ── */
-              <div className="flex flex-col space-y-6 w-full">
-                {/* Right Top Header Info */}
-                <div className="flex flex-wrap items-center justify-between gap-4 p-4 border border-border/50 bg-card/40 backdrop-blur-xl rounded-2xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]">
-                  <div className="flex items-center gap-3">
-                    <Activity className="w-5 h-5 text-primary animate-pulse" strokeWidth={2} />
-                    <div>
-                      <h3 className="text-sm font-bold text-foreground leading-none">Diagnostic Workbench</h3>
-                      <p className="text-[10px] text-muted-foreground mt-1">Study ID: {activeResult.study_id || "ST-TEMP"}</p>
-                    </div>
-                  </div>
-                  
-                  {/* Premium double-pill mode switcher */}
-                  <div className="flex bg-muted/70 p-1 rounded-full border border-border/60">
-                    <button
-                      onClick={() => {
-                        setWorkstationMode("clinical");
-                        addAuditLog("Swapped workstation mode to clinical");
-                      }}
-                      className={`px-3 py-1.5 rounded-full text-[11px] font-semibold transition-all duration-200 cursor-pointer ${workstationMode === "clinical" ? "bg-white text-black shadow-sm font-bold border border-border/10" : "text-muted-foreground hover:text-foreground"}`}
-                    >
-                      Clinical View
-                    </button>
-                    <button
-                      onClick={() => {
-                        setWorkstationMode("research");
-                        addAuditLog("Swapped workstation mode to research");
-                      }}
-                      className={`px-3 py-1.5 rounded-full text-[11px] font-semibold transition-all duration-200 cursor-pointer ${workstationMode === "research" ? "bg-white text-black shadow-sm font-bold border border-border/10" : "text-muted-foreground hover:text-foreground"}`}
-                    >
-                      Research View
-                    </button>
-                    <button
-                      onClick={() => {
-                        setWorkstationMode("xai");
-                        addAuditLog("Swapped workstation mode to XAI Explainability");
-                      }}
-                      className={`px-3 py-1.5 rounded-full text-[11px] font-semibold transition-all duration-200 cursor-pointer ${workstationMode === "xai" ? "bg-white text-black shadow-sm font-bold border border-border/10" : "text-muted-foreground hover:text-foreground"}`}
-                    >
-                      Explainable AI (XAI)
-                    </button>
-                  </div>
-                </div>
-
+              <div className="flex flex-col space-y-6 w-full animate-fadein">
                 {activeResult && activeResult.demo_mode && (
                   <div className="p-4 border border-yellow-500/20 bg-yellow-500/5 text-yellow-600 dark:text-yellow-500 rounded-xl flex items-center gap-3 animate-fadein mb-4">
                     <ShieldAlert className="w-5 h-5 shrink-0 text-yellow-500" />
