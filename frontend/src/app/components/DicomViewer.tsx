@@ -404,7 +404,7 @@ export default function DicomViewer({
       {/* ── VIEWPORT TOOLBAR ── */}
       <div className="flex flex-col gap-3">
         {/* Row 1: Viewing Modes & Presets */}
-        <div className="flex flex-wrap items-center justify-between gap-3 glass-panel p-2.5 rounded-xl text-xs">
+        <div className="flex flex-wrap items-center justify-between gap-3 glass-panel p-3 rounded-xl text-xs">
           {/* Segmented Viewing Modes */}
           <div className="flex items-center gap-1.5 flex-wrap">
             <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mr-1">View Modes:</span>
@@ -451,7 +451,7 @@ export default function DicomViewer({
       <div
         ref={containerRef}
         onContextMenu={e => e.preventDefault()}
-        className="relative border border-border rounded-lg bg-black overflow-hidden flex items-center justify-center flex-1"
+        className="relative border border-border/50 rounded-xl bg-black overflow-hidden flex items-center justify-center flex-1 p-2"
         style={{
           height: 600,
           cursor: annotateMode ? "default" : measureMode !== "off" ? "crosshair" : isWindowing ? "ns-resize" : isDragging ? "grabbing" : zoomModeActive ? "zoom-in" : windowLevelModeActive ? "ns-resize" : "grab",
