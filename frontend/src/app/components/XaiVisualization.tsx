@@ -117,7 +117,7 @@ export default function XaiVisualization({ result, similarCases, loadingSimilar 
     <div className="bg-background rounded-3xl overflow-hidden text-foreground shadow-2xl font-sans border border-border/50">
       
       {/* Sleek Top Header */}
-      <div className="px-8 py-5 border-b border-border/50 bg-card/40 backdrop-blur-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+      <div className="px-8 py-5 glass-panel flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b-0 border-x-0 border-t-0">
         <div className="flex items-center gap-4">
           <div className="w-10 h-10 rounded-xl bg-primary/20 border border-primary/30 flex items-center justify-center shadow-[0_0_15px_rgba(8,145,178,0.2)]">
             <Activity className="w-5 h-5 text-primary" />
@@ -164,7 +164,7 @@ export default function XaiVisualization({ result, similarCases, loadingSimilar 
           <div className={`xl:col-span-7 ${isComparing ? "xl:col-span-8" : "xl:col-span-7"} flex flex-col gap-6`}>
             
             {/* Dedicated High-Visibility XAI Control Panel */}
-            <div className="bg-card border border-border rounded-2xl p-4 flex flex-col gap-4 shadow-sm">
+            <div className="glass-panel rounded-2xl p-4 flex flex-col gap-4 shadow-sm">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div className="space-y-0.5">
                   <span className="text-[10px] font-bold text-primary uppercase tracking-wider block">Explainability Settings</span>
@@ -172,15 +172,15 @@ export default function XaiVisualization({ result, similarCases, loadingSimilar 
                 </div>
                 
                 {/* Segmented Button Selector for Heatmap Mode */}
-                <div className="flex bg-muted p-1 rounded-xl border border-border/85 w-full sm:w-auto">
+                <div className="flex bg-black/20 dark:bg-black/40 p-1 rounded-xl border border-white/5 backdrop-blur-md w-full sm:w-auto">
                   {(["gradcam_plusplus", "gradcam", "attention", "coverage"] as const).map(mode => (
                     <button
                       key={mode}
                       onClick={() => setHeatmapMode(mode)}
-                      className={`flex-1 sm:flex-none px-3.5 py-1.5 rounded-lg text-[11px] font-semibold transition-all duration-200 cursor-pointer ${
+                      className={`flex-1 sm:flex-none px-3.5 py-1.5 rounded-lg text-[11px] font-semibold transition-all duration-300 cursor-pointer ${
                         heatmapMode === mode
-                          ? "bg-background text-foreground shadow-sm font-bold border border-border/10"
-                          : "text-muted-foreground hover:text-foreground"
+                          ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20 font-bold"
+                          : "text-muted-foreground hover:text-foreground hover:bg-white/5"
                       }`}
                     >
                       {mode === "gradcam_plusplus" && "Grad-CAM++"}

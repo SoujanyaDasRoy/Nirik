@@ -734,20 +734,20 @@ export function ScreeningTab({
               /* ── 3-PANEL PACS WORKSPACE (SUCCESSFUL INFERENCE STATE) ── */
               <div className="flex flex-col space-y-6 w-full animate-fadein">
                 {/* Workstation Mode Switcher Banner */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl bg-card border border-border">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl glass-panel">
                   <div className="space-y-0.5">
                     <h3 className="text-sm font-bold text-foreground">Diagnostic Viewport Perspectives</h3>
                     <p className="text-xs text-muted-foreground">Select a workstation perspective to examine the patient's radiograph analysis.</p>
                   </div>
-                  <div className="flex bg-muted/65 p-1 rounded-xl border border-border/80">
+                  <div className="flex bg-black/20 dark:bg-black/40 p-1 rounded-xl border border-white/5 backdrop-blur-md">
                     {(["clinical", "research", "xai"] as const).map(mode => (
                       <button
                         key={mode}
                         onClick={() => setWorkstationMode(mode)}
-                        className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all duration-200 cursor-pointer ${
+                        className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all duration-300 cursor-pointer ${
                           workstationMode === mode
-                            ? "bg-background text-foreground shadow-sm font-bold border border-border/10"
-                            : "text-muted-foreground hover:text-foreground"
+                            ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20"
+                            : "text-muted-foreground hover:text-foreground hover:bg-white/5"
                         }`}
                       >
                         {mode === "clinical" && "Clinical View"}
@@ -832,7 +832,7 @@ export function ScreeningTab({
                     )}
 
                     {/* Primary Viewport Card container */}
-                    <Card className="border border-border/50 bg-background/30 backdrop-blur-md rounded-2xl overflow-hidden shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]">
+                    <Card className="glass-panel rounded-2xl overflow-hidden">
                       <DicomViewer
                         imageBase64={activeResult.original_image || ""}
                         heatmapBase64={activeResult.heatmaps?.[xaiMethod] || activeResult.heatmap_image}
@@ -865,7 +865,7 @@ export function ScreeningTab({
 
                   {/* Redraw list of active markups drawn on top of the X-ray */}
                   {boxes.length > 0 && (
-                    <div className="flex flex-wrap items-center gap-2 p-3 border border-border/50 bg-card/40 backdrop-blur-xl rounded-2xl">
+                    <div className="flex flex-wrap items-center gap-2 p-3 glass-panel rounded-2xl">
                       <span className="text-xs font-bold text-foreground mr-1">Marked Zones:</span>
                       <div className="flex flex-wrap gap-1.5 items-center flex-1">
                         {boxes.map((b, idx) => (
@@ -909,7 +909,7 @@ export function ScreeningTab({
                   {workstationMode === "clinical" || workstationMode === "research" ? (
                     <>
                       {/* WORKSPACE SELECTOR TABS */}
-                      <div className="flex bg-muted/50 p-1 rounded-full border border-border/40 w-full">
+                      <div className="flex bg-black/20 dark:bg-black/40 p-1 rounded-full border border-white/5 backdrop-blur-md w-full">
                         {(["findings", "review", "report"] as const).map(tab => (
                           <button
                             key={tab}
@@ -917,9 +917,9 @@ export function ScreeningTab({
                               setActiveRightTab(tab);
                               addAuditLog(`Swapped right panel to ${tab} tab`);
                             }}
-                            className={`flex-1 py-1.5 rounded-full text-[10px] sm:text-xs font-semibold capitalize transition-all duration-200 cursor-pointer text-center ${activeRightTab === tab
-                                ? "bg-background text-foreground shadow-sm border border-border/10 font-bold"
-                                : "text-muted-foreground hover:text-foreground"
+                            className={`flex-1 py-1.5 rounded-full text-[10px] sm:text-xs font-semibold capitalize transition-all duration-300 cursor-pointer text-center ${activeRightTab === tab
+                                ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20 font-bold"
+                                : "text-muted-foreground hover:text-foreground hover:bg-white/5"
                               }`}
                           >
                             {tab === "findings" && "Findings"}
@@ -935,7 +935,7 @@ export function ScreeningTab({
 
 
                           {/* WORKFLOW STATUS STEPPER */}
-                          <div className="p-4 border border-border/50 bg-card/40 backdrop-blur-xl rounded-2xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] space-y-3">
+                          <div className="p-4 glass-panel rounded-2xl space-y-3">
                             <p className="text-xs font-bold uppercase tracking-wider text-foreground">Workflow Checklist</p>
                             <div className="space-y-2">
                               {getStepperStatus().map((step, idx) => (
@@ -958,7 +958,7 @@ export function ScreeningTab({
                           </div>
 
                           {/* IMAGE QUALITY ASSESSMENT (IQA) */}
-                          <Card className="border border-border/50 bg-card/40 backdrop-blur-xl rounded-2xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]">
+                          <Card className="glass-panel rounded-2xl">
                             <CardContent className="p-5 space-y-3">
                               <div className="flex items-center justify-between">
                                 <p className="text-xs font-bold uppercase tracking-wider text-foreground">Image Quality (IQA)</p>
@@ -1024,7 +1024,7 @@ export function ScreeningTab({
                           </Card>
 
                           {/* AI DIAGNOSTICS CARD */}
-                          <Card className="border border-border/50 bg-card/40 backdrop-blur-xl rounded-2xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]">
+                          <Card className="glass-panel rounded-2xl">
                             <CardContent className="p-5 space-y-4">
                               <div className="flex justify-between items-center">
                                 <p className="text-xs font-bold uppercase tracking-wider text-foreground">AI Diagnostics Output</p>
@@ -1092,7 +1092,7 @@ export function ScreeningTab({
                                     )}
 
                                     {/* Decision Curve / Threshold Slider */}
-                                    <div className="mt-5 p-4 border border-border bg-card/60 rounded-xl space-y-4">
+                                    <div className="mt-5 p-4 glass-panel rounded-xl space-y-4">
                                       <div className="flex justify-between items-center">
                                         <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Decision Threshold</p>
                                         <span className="text-xs font-mono font-bold text-foreground">{currentThreshold.toFixed(2)}</span>
@@ -1148,7 +1148,7 @@ export function ScreeningTab({
                           
                           {/* IMAGE QUALITY CHECKER CARD */}
                           {activeResult.status === "success" && activeResult.image_quality && (
-                            <Card className="border border-border/50 bg-card/40 backdrop-blur-xl rounded-2xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] mt-4 animate-fadein">
+                            <Card className="glass-panel mt-4 animate-fadein">
                               <CardContent className="p-5 space-y-4">
                                 <div className="flex justify-between items-center">
                                   <p className="text-xs font-bold uppercase tracking-wider text-foreground">Image Quality Checker</p>
@@ -1210,7 +1210,7 @@ export function ScreeningTab({
                       {activeRightTab === "review" && (
                         <div className="space-y-6 animate-fadein">
                           {/* CLINICAL AUDIT / OVERRIDE INPUTS */}
-                          <Card className="border border-border/50 bg-card/40 backdrop-blur-xl rounded-2xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]">
+                          <Card className="glass-panel">
                             <CardContent className="p-5 space-y-4">
                               <p className="text-xs font-bold uppercase tracking-wider text-foreground">Clinical Sign-Off</p>
                               <Separator />
@@ -1299,7 +1299,7 @@ export function ScreeningTab({
                       {activeRightTab === "report" && (
                         <div className="space-y-6 animate-fadein">
                           {/* REPORT SUMMARY CARD */}
-                          <Card className="border border-border/50 bg-card/40 backdrop-blur-xl rounded-2xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]">
+                          <Card className="glass-panel">
                             <CardContent className="p-5 space-y-4">
                               <div className="flex justify-between items-center border-b border-border pb-3">
                                 <div>
@@ -1368,7 +1368,7 @@ export function ScreeningTab({
                           </Card>
 
                           {/* REPORT EXPORTS & METADATA */}
-                          <div className="p-4 border border-border bg-card rounded-xl space-y-3">
+                          <div className="p-4 glass-panel space-y-3">
                             <p className="text-xs font-bold uppercase tracking-wider text-foreground">Downstream Integrations &amp; Export</p>
                             
                             {activeResult.demo_mode && (

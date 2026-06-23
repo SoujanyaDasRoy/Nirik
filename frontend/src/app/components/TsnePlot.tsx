@@ -71,7 +71,7 @@ export default function TsnePlot() {
   };
 
   return (
-    <Card className="border border-border/50 bg-card/40 backdrop-blur-xl rounded-2xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] overflow-hidden">
+    <Card className="glass-panel overflow-hidden">
       <CardContent className="p-5 space-y-4">
         <div className="flex justify-between items-center border-b border-border/40 pb-3">
           <div>

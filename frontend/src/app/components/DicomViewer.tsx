@@ -404,17 +404,17 @@ export default function DicomViewer({
       {/* ── VIEWPORT TOOLBAR ── */}
       <div className="flex flex-col gap-3">
         {/* Row 1: Viewing Modes & Presets */}
-        <div className="flex flex-wrap items-center justify-between gap-3 border border-border/80 bg-muted/20 p-2.5 rounded-xl text-xs">
+        <div className="flex flex-wrap items-center justify-between gap-3 glass-panel p-2.5 rounded-xl text-xs">
           {/* Segmented Viewing Modes */}
           <div className="flex items-center gap-1.5 flex-wrap">
             <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mr-1">View Modes:</span>
-            <div className="flex bg-muted/50 p-0.5 rounded-full border border-border/60">
+            <div className="flex bg-black/20 dark:bg-black/40 p-0.5 rounded-full border border-white/5 backdrop-blur-md">
               {(["original", "heatmap", "heatmap-only", "side-by-side", "split", "longitudinal"] as const).map(mode => (
                 <Button
                   key={mode}
                   size="sm"
                   variant={viewMode === mode ? "default" : "ghost"}
-                  className={`h-8 px-3.5 rounded-full text-xs capitalize cursor-pointer transition-all duration-200 ${viewMode === mode ? "bg-primary text-primary-foreground font-semibold shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
+                  className={`h-8 px-3.5 rounded-full text-xs capitalize cursor-pointer transition-all duration-300 ${viewMode === mode ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20 font-semibold" : "text-muted-foreground hover:text-foreground hover:bg-white/5"}`}
                   onClick={() => setViewMode?.(mode)}
                 >
                   {mode.replace("-", " ")}
@@ -425,7 +425,7 @@ export default function DicomViewer({
           </div>
 
           {/* Reset All */}
-          <Button size="sm" variant="ghost" className="h-8 px-3.5 rounded-full text-xs cursor-pointer text-muted-foreground hover:text-foreground" onClick={resetView}>
+          <Button size="sm" variant="ghost" className="h-8 px-3.5 rounded-full text-xs cursor-pointer text-muted-foreground hover:text-foreground hover:bg-white/5" onClick={resetView}>
             <RotateCcw className="w-3.5 h-3.5 mr-1" /> Reset All
           </Button>
         </div>
