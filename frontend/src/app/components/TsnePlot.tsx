@@ -106,16 +106,16 @@ export default function TsnePlot() {
   return (
     <Card className="glass-panel overflow-hidden">
       <CardContent className="p-5 space-y-4">
-        <div className="flex justify-between items-center border-b border-border/40 pb-3">
+        <div className="flex flex-col gap-2 border-b border-border/40 pb-3">
           <div>
             <h4 className="text-xs font-bold uppercase tracking-wider text-foreground">Feature Embedding Manifold</h4>
             <p className="text-[10px] text-muted-foreground mt-0.5">t-SNE projection of DenseNet-121 penultimate layer</p>
           </div>
-          <div className="flex gap-2 text-[9px] font-bold uppercase">
+          <div className="flex flex-wrap gap-x-3 gap-y-1.5 text-[9px] font-bold uppercase pt-1">
             {Object.entries(datasetColors).map(([ds, color]) => (
-              <div key={ds} className="flex items-center gap-1">
-                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: color }} />
-                <span className="text-muted-foreground">{ds}</span>
+              <div key={ds} className="flex items-center gap-1.5 bg-black/15 px-2 py-1 rounded-md border border-white/5">
+                <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: color }} />
+                <span className="text-[#949BA4]">{ds}</span>
               </div>
             ))}
           </div>
