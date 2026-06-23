@@ -748,7 +748,7 @@ export function ScreeningTab({
         <div className="w-full">
           {activeResult ? (
               /* ── 3-PANEL PACS WORKSPACE (SUCCESSFUL INFERENCE STATE) ── */
-              <div className="flex flex-col space-y-6 w-full animate-fadein">
+              <div className="flex flex-col space-y-6 w-full animate-fadein p-6">
                 <div className="px-6 py-4 bg-background border border-border/50 rounded-3xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shadow-lg">
                   <div className="flex items-center gap-3">
                     {(["clinical", "research", "xai"] as const).map(mode => {
