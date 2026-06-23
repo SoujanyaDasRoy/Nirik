@@ -40,6 +40,7 @@ export default function LoginPage() {
       const data = await response.json();
 
       if (response.ok && data.success) {
+        localStorage.setItem("nirikshon_user", JSON.stringify({ username: data.username, role: data.role }));
         // Redirect to Workbench
         router.push("/diagnose");
       } else {

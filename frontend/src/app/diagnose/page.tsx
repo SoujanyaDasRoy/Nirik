@@ -185,8 +185,14 @@ export default function WorkspacePage() {
   const handleLogout = async () => {
     try {
       const res = await fetch(`${API_BASE}/logout`, { method: "POST", credentials: "include" });
-      if (res.ok) router.push("/login");
-    } catch {}
+      if (res.ok) {
+        localStorage.removeItem("nirikshon_user");
+        router.push("/login");
+      }
+    } catch {
+      localStorage.removeItem("nirikshon_user");
+      router.push("/login");
+    }
   };
 
   const handleFeedbackSaved = (override: string | null, note: string, annotatedB64: string, comments?: string, reviewer?: string) => {

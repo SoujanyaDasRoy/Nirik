@@ -3,6 +3,7 @@ import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import FetchInterceptor from "./components/FetchInterceptor";
 
 const sansFont = Inter({
   variable: "--font-sans",
@@ -43,6 +44,7 @@ export default function RootLayout({
           disableTransitionOnChange={false}
         >
           <TooltipProvider delay={300}>
+            <FetchInterceptor />
             {children}
           </TooltipProvider>
         </ThemeProvider>
