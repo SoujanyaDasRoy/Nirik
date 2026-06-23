@@ -31,7 +31,7 @@ interface DicomViewerProps {
   label?: string;
   pixelSpacing?: number[] | null;
 
-  viewMode: "original" | "heatmap" | "heatmap-only" | "side-by-side" | "split" | "longitudinal";
+  viewMode: "original" | "heatmap" | "side-by-side" | "split" | "longitudinal";
   heatmapOpacity: number;
   priorImageSrc?: string;
   deltaHeatmapSrc?: string;
@@ -41,7 +41,7 @@ interface DicomViewerProps {
   activeZone: LungZone;
   annotateMode: boolean;
   annotationCanvasRef: React.RefObject<HTMLCanvasElement | null>;
-  setViewMode?: (mode: "original" | "heatmap" | "heatmap-only" | "side-by-side" | "split" | "longitudinal") => void;
+  setViewMode?: (mode: "original" | "heatmap" | "side-by-side" | "split" | "longitudinal") => void;
   setAnnotateMode?: (active: boolean) => void;
   setHeatmapOpacity?: (opacity: number) => void;
   setActiveZone?: (zone: LungZone) => void;
@@ -408,12 +408,18 @@ export default function DicomViewer({
         {/* Row 1: Viewing Modes & Presets */}
         <div className="flex flex-wrap items-center justify-between gap-3 glass-panel p-3 rounded-xl text-xs">
           {/* Segmented Viewing Modes */}
-          <div className="flex items-center gap-1.5 flex-wrap">
+          <div className="flex items-center gap-2 flex-wrap">
             <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mr-1">View Modes:</span>
             <div className="flex bg-black/20 dark:bg-black/40 p-0.5 rounded-full border border-white/5 backdrop-blur-md">
-              {(["original", "heatmap", "heatmap-only", "side-by-side", "split", "longitudinal"] as const).map(mode => {
-                const requiresHeatmap = ["heatmap", "heatmap-only", "side-by-side", "split", "longitudinal"].includes(mode);
+              {(["original", "heatmap", "side-by-side", "split", "longitudinal"] as const).map(mode => {
+                const requiresHeatmap = ["heatmap", "side-by-side", "split", "longitudinal"].includes(mode);
                 const isDisabled = requiresHeatmap && !hasHeatmap;
+                
+                let label = mode.replace("-", " ");
+                if (mode === "original") label = "Radiograph";
+                if (mode === "heatmap") label = "AI Overlay";
+                if (mode === "split") label = "Split View";
+                
                 return (
                   <Button
                     key={mode}
@@ -429,12 +435,28 @@ export default function DicomViewer({
                     }`}
                     onClick={() => !isDisabled && setViewMode?.(mode)}
                   >
-                    {mode.replace("-", " ")}
+                    {label}
                   </Button>
                 );
               })}
             </div>
-            {/* Heatmap Transparency Overlay Slider removed per user request */}
+
+            {/* Contextual Heatmap Opacity Slider */}
+            {viewMode === "heatmap" && setHeatmapOpacity && (
+              <div className="flex items-center gap-2 pl-3 border-l border-white/10 animate-fadein">
+                <span className="text-[10px] font-bold text-muted-foreground uppercase">Opacity:</span>
+                <input
+                  type="range"
+                  min="0.1"
+                  max="1.0"
+                  step="0.05"
+                  value={heatmapOpacity}
+                  onChange={(e) => setHeatmapOpacity(parseFloat(e.target.value))}
+                  className="w-20 h-1 bg-white/20 rounded-full appearance-none [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-2.5 [&::-webkit-slider-thumb]:h-2.5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[#5865F2] cursor-pointer"
+                />
+                <span className="text-[10px] font-mono text-muted-foreground">{Math.round(heatmapOpacity * 100)}%</span>
+              </div>
+            )}
           </div>
 
           {/* Reset All */}
@@ -573,14 +595,14 @@ export default function DicomViewer({
               />
 
               {/* Heatmap Overlay Mode */}
-              {(viewMode === "heatmap" || viewMode === "heatmap-only") && heatmapSrc && (
+              {viewMode === "heatmap" && heatmapSrc && (
                 <img
                   src={heatmapSrc}
                   alt="Heatmap Overlay"
                   className="h-full object-contain rounded select-none block absolute inset-0 w-full h-full animate-fadein"
                   style={{ 
                     filter: filterStyle,
-                    opacity: viewMode === "heatmap-only" ? 1.0 : heatmapOpacity 
+                    opacity: heatmapOpacity 
                   }}
                   draggable={false}
                 />

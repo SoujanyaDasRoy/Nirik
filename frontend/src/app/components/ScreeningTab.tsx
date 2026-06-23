@@ -276,7 +276,7 @@ export function ScreeningTab({
     : null;
 
   // ── WORKSTATION VIEWING STATES ──
-  const [viewMode, setViewMode] = useState<"original" | "heatmap" | "heatmap-only" | "side-by-side" | "split" | "longitudinal">("original");
+  const [viewMode, setViewMode] = useState<"original" | "heatmap" | "side-by-side" | "split" | "longitudinal">("original");
   const [heatmapOpacity, setHeatmapOpacity] = useState(0.55);
   const [priorImageSrc, setPriorImageSrc] = useState<string | undefined>();
   const [deltaHeatmapSrc, setDeltaHeatmapSrc] = useState<string | undefined>();
