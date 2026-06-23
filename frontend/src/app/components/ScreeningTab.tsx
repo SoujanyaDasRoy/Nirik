@@ -50,6 +50,17 @@ import XaiVisualization from "./XaiVisualization";
 const DicomViewer = dynamic(() => import("./DicomViewer"), { ssr: false });
 
 const getEvidenceCards = (result: AnalysisResult | null) => {
+  if (result?.status === "error") {
+    return [
+      {
+        title: "Diagnostic Inference Failed",
+        description: `Evidence analysis cannot be populated because the AI processing failed. Error: ${result.errorMsg || "Internal server error"}.`,
+        confidence: 0.0,
+        region: null,
+        anatomicalZone: "global"
+      }
+    ];
+  }
   if (!result || result.status !== "success") {
     return [
       {
@@ -785,10 +796,11 @@ export function ScreeningTab({
                     <>
                       {/* 1. LEFT PANEL (70%): Unified Primary Viewport */}
                   <div className="lg:col-span-8 space-y-4">
-                    <Card className="glass-panel rounded-2xl overflow-hidden">
+                    <Card className="glass-panel rounded-2xl p-5 space-y-4 overflow-hidden">
                       <DicomViewer
                         imageBase64={activeResult.original_image || ""}
                         heatmapBase64={activeResult.heatmaps?.[xaiMethod] || activeResult.heatmap_image}
+                        hasHeatmap={activeResult.status === "success" && !!(activeResult.heatmaps?.[xaiMethod] || activeResult.heatmap_image)}
                         label="Nirikshon Enterprise Viewport"
                         pixelSpacing={activeResult.metadata?.pixel_spacing}
                         viewMode={viewMode}
@@ -868,27 +880,41 @@ export function ScreeningTab({
                       
                       <div className="flex flex-col gap-4 relative z-10">
                         <div className="flex justify-between items-start">
-                          <div>
+                          <div className="w-full">
                             <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1">
                               AI Classification
                             </p>
-                            <h3 className={`text-xl font-extrabold tracking-tight ${
-                              activeResult.status === "loading" || activeResult.status === "pending"
-                                ? "text-muted-foreground animate-pulse"
-                                : activeResult.status === "error"
-                                ? "text-destructive"
-                                : activeResult.is_tb
-                                ? "text-amber-500"
-                                : "text-emerald-500"
-                            }`}>
-                              {activeResult.status === "loading" || activeResult.status === "pending" ? (
-                                "Calculating..."
-                              ) : activeResult.status === "error" ? (
-                                activeResult.errorMsg || "Analysis Failed"
-                              ) : (
-                                activeDiagnosis?.condition || "Normal"
-                              )}
-                            </h3>
+                            {activeResult.status === "error" ? (
+                              <div className="space-y-3 mt-2 bg-destructive/10 border border-destructive/25 p-4 rounded-xl">
+                                <div className="flex items-center gap-2 text-destructive font-semibold text-sm">
+                                  <AlertCircle className="w-4 h-4 shrink-0" />
+                                  <span>{activeResult.errorMsg || "Internal server error"}</span>
+                                </div>
+                                <p className="text-xs text-muted-foreground">
+                                  Failed to complete radiograph processing. Please verify server connection and try again.
+                                </p>
+                                <button
+                                  onClick={() => selectedIdx !== null && analyzeFile(selectedIdx)}
+                                  className="px-3.5 py-1.5 rounded-lg text-xs font-bold bg-destructive/20 hover:bg-destructive/30 text-destructive border border-destructive/30 transition-all cursor-pointer"
+                                >
+                                  Retry Inference
+                                </button>
+                              </div>
+                            ) : (
+                              <h3 className={`text-xl font-extrabold tracking-tight ${
+                                activeResult.status === "loading" || activeResult.status === "pending"
+                                  ? "text-muted-foreground animate-pulse"
+                                  : activeResult.is_tb
+                                  ? "text-amber-500"
+                                  : "text-emerald-500"
+                              }`}>
+                                {activeResult.status === "loading" || activeResult.status === "pending" ? (
+                                  "Calculating..."
+                                ) : (
+                                  activeDiagnosis?.condition || "Normal"
+                                )}
+                              </h3>
+                            )}
                           </div>
                           
                           {/* Minimalist Risk Badge */}
@@ -1017,7 +1043,9 @@ export function ScreeningTab({
                                   <div key={idx} className="glass-panel p-4 rounded-xl border-l-2 border-l-primary/50 hover:border-l-primary transition-all group">
                                     <div className="flex justify-between items-start mb-1.5">
                                       <h4 className="text-xs font-bold text-foreground group-hover:text-primary transition-colors">{ec.title}</h4>
-                                      <span className="text-[10px] font-mono text-muted-foreground">{(ec.confidence * 100).toFixed(0)}%</span>
+                                      {ec.confidence > 0 && (
+                                        <span className="text-[10px] font-mono text-muted-foreground">{(ec.confidence * 100).toFixed(0)}%</span>
+                                      )}
                                     </div>
                                     <p className="text-[11px] text-muted-foreground leading-relaxed">{ec.description}</p>
                                   </div>
