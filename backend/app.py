@@ -34,11 +34,10 @@ app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET", "Nirikshon-clinical-key-9281")
 
 # Configure cross-site cookies for Vercel -> Hugging Face production deployments
-if (os.environ.get("FLASK_ENV") == "production" or os.environ.get("PORT")) and os.environ.get("DESKTOP_APP") != "true":
-    app.config.update(
-        SESSION_COOKIE_SAMESITE="None",
-        SESSION_COOKIE_SECURE=True,
-    )
+app.config.update(
+    SESSION_COOKIE_SAMESITE="None",
+    SESSION_COOKIE_SECURE=True,
+)
 
 socketio = SocketIO(app, cors_allowed_origins="*", async_mode="threading", logger=True, engineio_logger=True)
 
@@ -49,6 +48,8 @@ ALLOWED_ORIGINS_ENV = os.environ.get("ALLOWED_ORIGIN", "http://localhost:3000,ht
 ALLOWED_ORIGINS = [o.strip() for o in ALLOWED_ORIGINS_ENV.split(",")]
 # Support any vercel.app subdomain dynamically for preview/production urls
 ALLOWED_ORIGINS.append(re.compile(r"^https://.*\.vercel\.app$"))
+# Support all dynamic HTTP/HTTPS hosts for local network and multi-device showcase testing
+ALLOWED_ORIGINS.append(re.compile(r"^https?://.*$"))
 if os.environ.get("DESKTOP_APP") == "true":
     ALLOWED_ORIGINS.append(re.compile(r"^http://(127\.0\.0\.1|localhost)(:\d+)?$"))
 
@@ -83,11 +84,14 @@ def csrf_protect():
 def set_csrf_cookie(response):
     if not request.cookies.get('csrf_token'):
         token = secrets.token_hex(16)
+        # Determine SameSite/Secure dynamically based on connection protocol
+        is_secure = request.is_secure or request.headers.get("X-Forwarded-Proto", "").lower() == "https" or request.host.startswith("localhost") or request.host.startswith("127.0.0.1")
+        samesite_val = 'None' if is_secure else 'Lax'
         response.set_cookie(
             'csrf_token', 
             token, 
-            samesite='Lax', 
-            secure=False, 
+            samesite=samesite_val, 
+            secure=is_secure, 
             httponly=False  # Must be False so JavaScript can read it for double-submit
         )
     return response
