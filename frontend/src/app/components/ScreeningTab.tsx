@@ -1008,7 +1008,7 @@ export function ScreeningTab({
                         </div>
                       </div>
                     </div>
-                  ) : workstationMode === "clinical" || workstationMode === "research" ? (
+                  ) : workstationMode === "clinical" ? (
                     <>
                       {/* MINIMALIST BORDERLESS TABS */}
                       <div className="flex w-full mt-2 border-b border-border/40">
