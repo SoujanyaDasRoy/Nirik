@@ -1,11 +1,11 @@
 {
-    "optimal_threshold": 0.50,
+    "optimal_threshold": 0.87,
     "metrics": {
-        "accuracy": 0.945,
+        "accuracy": 0.934,
         "precision": 0.938,
         "recall": 0.952,
-        "f1": 0.945,
-        "auc": 0.9899,
+        "f1": 0.8436,
+        "auc": 0.9410,
         "sensitivity": 0.952,
         "specificity": 0.938,
         "calibration_score": 0.045
@@ -13,7 +13,7 @@
     "dataset_tracking": {
         "training_dataset_version": "Shenzhen-Montgomery-v2.1",
         "validation_dataset_version": "Kaggle-TB-v1.4",
-        "training_date": "2026-05-18",
-        "model_version": "DenseNet121-Student-v2.4.1"
+        "training_date": "2026-06-23",
+        "model_version": "DenseNet121-Student-v4.0.0"
     }
 }
