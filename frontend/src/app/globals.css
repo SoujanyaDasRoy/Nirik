@@ -257,13 +257,17 @@
     @apply border-border outline-ring/50; 
   }
   body {
-    @apply bg-background text-foreground;
-    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    -webkit-font-smoothing: antialiased;
-    min-height: 100vh;
+    @apply bg-background text-foreground antialiased selection:bg-primary/30 selection:text-primary min-h-screen;
+    background-image: none;
   }
-  html { 
-    @apply font-sans; 
+  
+  .dark body {
+    background-color: hsl(var(--background));
+    /* A deep mesh gradient to give the glass panels something to blur */
+    background-image: 
+      radial-gradient(circle at 15% 50%, rgba(0, 82, 255, 0.08), transparent 25%),
+      radial-gradient(circle at 85% 30%, rgba(16, 185, 129, 0.05), transparent 25%);
+    background-attachment: fixed;
   }
 
   /* Typography Scale rules */
@@ -486,15 +490,18 @@ input[type="range"]::-webkit-slider-thumb:hover {
   .rounded-2xl { border-radius: var(--radius-2xl); }
 
   .glass-panel {
-    background-color: rgba(255, 255, 255, 0.03);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.05);
+    background-color: rgba(255, 255, 255, 0.4);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.1);
   }
   .dark .glass-panel {
-    background-color: rgba(15, 23, 42, 0.4);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    background-color: rgba(255, 255, 255, 0.02);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.02);
   }
 }
 
