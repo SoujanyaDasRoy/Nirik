@@ -27,6 +27,14 @@ export function SettingsTab() {
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [logsLoading, setLogsLoading] = useState(true);
 
+  // Load threshold from localStorage on mount
+  useEffect(() => {
+    const val = localStorage.getItem("nirikshon_threshold");
+    if (val) {
+      setThreshold(parseFloat(val));
+    }
+  }, []);
+
   // Fetch real audit logs from backend
   useEffect(() => {
     const fetchLogs = async () => {
@@ -44,8 +52,8 @@ export function SettingsTab() {
   }, []);
 
   const saveSettings = () => {
-    // The threshold is used client-side in the prediction hook to override
-    // display classification. In a production system this would POST to backend.
+    localStorage.setItem("nirikshon_threshold", threshold.toString());
+    window.dispatchEvent(new Event("nirikshon_threshold_changed"));
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
   };
@@ -72,30 +80,35 @@ export function SettingsTab() {
               </div>
               <Separator />
               <div className="space-y-4">
-                <div className="space-y-1.5">
-                  <div className="flex justify-between text-xs font-mono">
-                    <span className="text-muted-foreground font-sans">Classification Threshold</span>
-                    <span className="font-bold text-primary">{threshold.toFixed(2)}</span>
-                  </div>
-                  <div className="py-3 flex items-center min-h-[44px]">
-                    <input
-                      type="range"
-                      min={0.10}
-                      max={0.90}
-                      step={0.05}
-                      value={threshold}
-                      onChange={(e) => setThreshold(parseFloat(e.target.value))}
-                      className="w-full h-1.5 bg-muted rounded-lg appearance-none cursor-pointer accent-primary outline-none focus:ring-1 focus:ring-primary focus:ring-offset-1"
-                    />
-                  </div>
-                  <div className="flex justify-between text-[10px] text-muted-foreground">
-                    <span>High Sensitivity (0.10)</span>
-                    <span>High Specificity (0.90)</span>
+                <div className="space-y-3">
+                  <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Calibration Presets</span>
+                  <div className="grid grid-cols-3 gap-3">
+                    {[
+                      { name: "High Sensitivity", value: 0.35, desc: "Fewer False Negatives" },
+                      { name: "Standard (Balanced)", value: 0.50, desc: "Optimal Baseline" },
+                      { name: "High Specificity", value: 0.65, desc: "Fewer False Positives" }
+                    ].map((mode) => (
+                      <button
+                        key={mode.value}
+                        type="button"
+                        onClick={() => setThreshold(mode.value)}
+                        className={`p-3 rounded-xl border flex flex-col text-left justify-between h-20 transition-all cursor-pointer select-none ${
+                          threshold === mode.value
+                            ? "border-primary bg-primary/10 text-foreground ring-1 ring-primary"
+                            : "border-border bg-muted/10 text-muted-foreground hover:bg-muted/20"
+                        }`}
+                      >
+                        <span className="text-xs font-bold text-foreground">{mode.name}</span>
+                        <div>
+                          <p className="text-[10px] font-mono text-muted-foreground">Val: {mode.value.toFixed(2)}</p>
+                          <p className="text-[9px] text-muted-foreground/80 leading-none mt-0.5">{mode.desc}</p>
+                        </div>
+                      </button>
+                    ))}
                   </div>
                 </div>
-                <p className="text-xs text-muted-foreground leading-relaxed">
-                  Lowering the threshold increases sensitivity (Recall), flagging subtle consolidations at the cost of
-                  more false positives. The balanced clinical baseline is <strong>0.50</strong>.
+                <p className="text-xs text-muted-foreground leading-relaxed mt-2">
+                  Selecting a preset calibrates the AI decision logic. **High Sensitivity** reduces the chances of missing subtle tuberculosis indicators, while **High Specificity** avoids false flags. The recommended standard is **0.50**.
                 </p>
 
                 {/* Session-only warning */}

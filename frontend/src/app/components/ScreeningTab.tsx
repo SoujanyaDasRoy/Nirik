@@ -251,6 +251,23 @@ export function ScreeningTab({
   const q = activeResult ? getQualityMetrics(activeResult) : null;
   const [customThreshold, setCustomThreshold] = useState<number | null>(null);
   
+  useEffect(() => {
+    const val = localStorage.getItem("nirikshon_threshold");
+    if (val) {
+      setCustomThreshold(parseFloat(val));
+    }
+    const handleThresholdChange = () => {
+      const newVal = localStorage.getItem("nirikshon_threshold");
+      if (newVal) {
+        setCustomThreshold(parseFloat(newVal));
+      }
+    };
+    window.addEventListener("nirikshon_threshold_changed", handleThresholdChange);
+    return () => {
+      window.removeEventListener("nirikshon_threshold_changed", handleThresholdChange);
+    };
+  }, []);
+  
   const currentThreshold = customThreshold ?? activeResult?.threshold_used ?? 0.5;
   const isTbDerived = activeResult ? (activeResult.confidence || 0) >= currentThreshold : false;
 
@@ -984,21 +1001,6 @@ export function ScreeningTab({
                                 "[&>div]:bg-emerald-500"
                               }`} 
                             />
-                            
-                            {/* Decision Threshold Slider */}
-                            <div className="pt-3 mt-3 border-t border-white/5 flex items-center justify-between gap-3">
-                              <span className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground">Threshold</span>
-                              <input 
-                                type="range" 
-                                min="0.1" 
-                                max="0.9" 
-                                step="0.05"
-                                value={currentThreshold}
-                                onChange={(e) => setCustomThreshold(parseFloat(e.target.value))}
-                                className="flex-1 h-1 bg-muted/30 rounded-full appearance-none [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary cursor-pointer"
-                              />
-                              <span className="text-[10px] font-mono text-muted-foreground">{currentThreshold.toFixed(2)}</span>
-                            </div>
                           </div>
                         )}
                       </div>
