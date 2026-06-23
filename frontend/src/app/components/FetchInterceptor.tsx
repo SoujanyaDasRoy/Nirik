@@ -8,33 +8,45 @@ export default function FetchInterceptor() {
 
     const originalFetch = window.fetch;
     window.fetch = async function (input, init) {
+      // Safe clone to prevent modifying read-only/frozen objects
+      const clonedInit = init ? { ...init } : {};
+      
+      // Override credentials: "include" with "same-origin" to bypass CORS preflight credentials block on Hugging Face Spaces
+      if (clonedInit.credentials === "include") {
+        clonedInit.credentials = "same-origin";
+      }
+
       const userStr = localStorage.getItem("nirikshon_user");
       if (userStr) {
         try {
           const user = JSON.parse(userStr);
           if (user && user.username && user.role) {
-            init = init || {};
-            init.headers = init.headers || {};
-            if (init.headers instanceof Headers) {
-              if (!init.headers.has("Authorization")) {
-                init.headers.set("Authorization", `Bearer ${user.username}:${user.role}`);
+            if (clonedInit.headers instanceof Headers) {
+              const newHeaders = new Headers(clonedInit.headers);
+              if (!newHeaders.has("Authorization")) {
+                newHeaders.set("Authorization", `Bearer ${user.username}:${user.role}`);
               }
-            } else if (Array.isArray(init.headers)) {
-              const hasAuth = init.headers.some(h => h[0].toLowerCase() === "authorization");
+              clonedInit.headers = newHeaders;
+            } else if (Array.isArray(clonedInit.headers)) {
+              const newHeaders = [...clonedInit.headers];
+              const hasAuth = newHeaders.some(h => h[0].toLowerCase() === "authorization");
               if (!hasAuth) {
-                init.headers.push(["Authorization", `Bearer ${user.username}:${user.role}`]);
+                newHeaders.push(["Authorization", `Bearer ${user.username}:${user.role}`]);
               }
+              clonedInit.headers = newHeaders;
             } else {
-              if (!init.headers["Authorization"]) {
-                init.headers["Authorization"] = `Bearer ${user.username}:${user.role}`;
+              const newHeaders = clonedInit.headers ? { ...clonedInit.headers } : {};
+              if (!newHeaders["Authorization"]) {
+                newHeaders["Authorization"] = `Bearer ${user.username}:${user.role}`;
               }
+              clonedInit.headers = newHeaders as HeadersInit;
             }
           }
         } catch (e) {
           console.error("Error patching fetch headers:", e);
         }
       }
-      return originalFetch.call(this, input, init);
+      return originalFetch.call(this, input, clonedInit);
     };
   }, []);
 

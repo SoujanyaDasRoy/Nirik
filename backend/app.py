@@ -83,8 +83,8 @@ def csrf_protect():
     if app.config.get("CSRF_DISABLED"):
         return
     if request.method in ['POST', 'PUT', 'DELETE', 'PATCH']:
-        # Exclude stateless third-party blueprint routes and login
-        if request.path.startswith('/api/v1/') or request.path == '/login':
+        # Exclude stateless third-party blueprint routes, login, and bearer authenticated requests
+        if request.path.startswith('/api/v1/') or request.path == '/login' or request.headers.get("Authorization"):
             return
             
         csrf_cookie = request.cookies.get('csrf_token')
