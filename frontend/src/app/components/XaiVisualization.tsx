@@ -247,7 +247,7 @@ export default function XaiVisualization({
                     <img
                       src={getHeatmapSrc()}
                       alt="Saliency Overlay"
-                      className="absolute inset-0 w-full h-full object-contain pointer-events-none transition-opacity duration-300 mix-blend-screen"
+                      className="absolute inset-0 w-full h-full object-contain pointer-events-none transition-opacity duration-300"
                       style={{ opacity: opacity / 100 }}
                     />
                   )}
