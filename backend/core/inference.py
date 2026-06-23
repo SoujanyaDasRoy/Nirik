@@ -192,7 +192,7 @@ def generate_saliency_heatmap(model, tensor, original_img: Image.Image, is_tb: b
             # Targeting "conv5_block16_2_conv" would explain only 32 of those 1024
             # channels — the pre-normalization slice from the final layer alone.
             import keras
-            import tensorflow as tf  # Keras 3 w/ PyTorch backend still exposes tf.GradientTape
+            import torch
 
             # Resolve and validate the target layer once; log it for auditability
             TARGET_LAYER = "relu"
@@ -217,29 +217,22 @@ def generate_saliency_heatmap(model, tensor, original_img: Image.Image, is_tb: b
                 inputs=model.inputs,
                 outputs=[last_conv_layer.output, model.output]
             )
+            grad_model.eval()
 
-            # Convert PyTorch tensor → NumPy → Keras tensor (channels-last: NHWC)
+            # Convert PyTorch tensor → NumPy → PyTorch tensor for autograd tracking
             np_input = tensor.detach().cpu().numpy()
-            # If input came in NCHW (PyTorch default), transpose to NHWC for Keras
             if np_input.ndim == 4 and np_input.shape[1] in (1, 3):
                 np_input = np_input.transpose(0, 2, 3, 1)
-            keras_input = tf.constant(np_input, dtype=tf.float32)
+            torch_input = torch.tensor(np_input, dtype=torch.float32, device=DEVICE, requires_grad=True)
 
-            with tf.GradientTape() as tape:
-                tape.watch(keras_input)
-                act, logit = grad_model(keras_input, training=False)
-                # Squeeze to scalar for single-output sigmoid head
-                score = tf.reduce_mean(logit)
+            act, logit = grad_model(torch_input)
+            score = torch.mean(logit)
 
-            grads = tape.gradient(score, act)  # shape: (1, H, W, C)
+            grads = torch.autograd.grad(score, act)[0]
 
             # Convert to float32 numpy for consistent downstream processing
-            act_np   = act.numpy().astype(np.float32)    # (1, H, W, C)
-            grads_np = grads.numpy().astype(np.float32)  # (1, H, W, C)
-
-            # Squeeze batch dimension
-            act_np   = act_np[0]    # (H, W, C)
-            grads_np = grads_np[0]  # (H, W, C)
+            act_np   = act.detach().cpu().numpy()[0].astype(np.float32)    # (H, W, C)
+            grads_np = grads.detach().cpu().numpy()[0].astype(np.float32)  # (H, W, C)
 
             if method == "gradcam":
                 # Standard Grad-CAM: global-average-pool the gradients → per-channel weights
