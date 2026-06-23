@@ -78,9 +78,17 @@ export default function XaiVisualization({ result, similarCases, loadingSimilar 
     return [dcx, dcy, dr];
   };
 
+  const toImageSrc = (raw: string | undefined): string | undefined => {
+    if (!raw) return undefined;
+    if (raw.startsWith("data:") || raw.startsWith("blob:") || raw.startsWith("http")) {
+      return raw;
+    }
+    return `data:image/png;base64,${raw}`;
+  };
+
   const getHeatmapSrc = () => {
-    if (!result.heatmaps) return result.heatmap_image;
-    return result.heatmaps[heatmapMode] || result.heatmap_image;
+    if (!result.heatmaps) return toImageSrc(result.heatmap_image);
+    return toImageSrc(result.heatmaps[heatmapMode] || result.heatmap_image);
   };
 
   // Modern circular progress bar component
@@ -255,7 +263,7 @@ export default function XaiVisualization({ result, similarCases, loadingSimilar 
                 >
                   <img
                     ref={imgRef}
-                    src={result.original_image}
+                    src={toImageSrc(result.original_image)}
                     alt="Original Chest X-Ray"
                     onLoad={handleImageLoad}
                     className="max-h-[600px] w-auto block object-contain"
@@ -330,7 +338,7 @@ export default function XaiVisualization({ result, similarCases, loadingSimilar 
               {isComparing && (
                 <div className="relative border border-white/10 bg-black/40 rounded-3xl overflow-hidden flex items-center justify-center min-h-[550px] shadow-inner">
                   <div className="relative transition-transform duration-500" style={{ transform: `scale(${zoomLevel})` }}>
-                    <img src={result.original_image} alt="Original Reference" className="max-h-[600px] w-auto block object-contain" />
+                    <img src={toImageSrc(result.original_image)} alt="Original Reference" className="max-h-[600px] w-auto block object-contain" />
                   </div>
                   <Badge className="absolute top-4 left-4 bg-zinc-900/80 backdrop-blur border-white/10 text-zinc-300 font-medium px-3 py-1.5 rounded-lg">
                     Original Unaltered View
