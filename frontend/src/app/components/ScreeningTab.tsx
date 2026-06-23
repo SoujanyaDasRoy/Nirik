@@ -732,19 +732,23 @@ export function ScreeningTab({
         <div className="w-full">
           {activeResult ? (
               /* ── 3-PANEL PACS WORKSPACE (SUCCESSFUL INFERENCE STATE) ── */
-              <div className="flex flex-col space-y-6 w-full animate-fadein">
-                {/* Workstation Mode Switcher Banner */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl glass-panel">
-                  <div className="space-y-0.5">
-                    <h3 className="text-sm font-bold text-foreground">Diagnostic Viewport Perspectives</h3>
-                    <p className="text-xs text-muted-foreground">Select a workstation perspective to examine the patient's radiograph analysis.</p>
+              <div className="flex flex-col spa                <div className="flex justify-between items-end mb-2 px-2">
+                  <div className="space-y-1">
+                    <h2 className="text-xl font-semibold tracking-tight text-foreground flex items-center gap-2">
+                      Diagnostic Workbench
+                    </h2>
+                    <p className="text-sm text-muted-foreground">
+                      Study ID: <span className="font-mono text-foreground/80">{activeResult.study_id || "N/A"}</span>
+                    </p>
                   </div>
-                  <div className="flex bg-black/20 dark:bg-black/40 p-1 rounded-xl border border-white/5 backdrop-blur-md">
+                  
+                  {/* Floating Compact Workstation Mode Switcher */}
+                  <div className="flex bg-black/20 dark:bg-black/40 p-1 rounded-xl border border-white/5 backdrop-blur-md self-center">
                     {(["clinical", "research", "xai"] as const).map(mode => (
                       <button
                         key={mode}
                         onClick={() => setWorkstationMode(mode)}
-                        className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all duration-300 cursor-pointer ${
+                        className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-all duration-300 cursor-pointer ${
                           workstationMode === mode
                             ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20"
                             : "text-muted-foreground hover:text-foreground hover:bg-white/5"
@@ -759,13 +763,10 @@ export function ScreeningTab({
                 </div>
 
                 {activeResult && activeResult.demo_mode && (
-                  <div className="p-4 border border-yellow-500/20 bg-yellow-500/5 text-yellow-600 dark:text-yellow-500 rounded-xl flex items-center gap-3 animate-fadein mb-4">
-                    <ShieldAlert className="w-5 h-5 shrink-0 text-yellow-500" />
+                  <div className="p-3 border border-yellow-500/20 bg-yellow-500/5 text-yellow-600 dark:text-yellow-500 rounded-xl flex items-center gap-3 animate-fadein">
+                    <ShieldAlert className="w-4 h-4 shrink-0 text-yellow-500" />
                     <div>
                       <p className="text-xs font-bold uppercase tracking-wider">Demo / Fallback Mode Active</p>
-                      <p className="text-[11px] text-muted-foreground mt-0.5 font-normal leading-normal">
-                        The neural network model weights file is offline or failed to load. Displaying simulated diagnostic classifications and heatmaps for testing and preview purposes.
-                      </p>
                     </div>
                   </div>
                 )}
@@ -782,56 +783,7 @@ export function ScreeningTab({
                   ) : (
                     <>
                       {/* 1. LEFT PANEL (70%): Unified Primary Viewport */}
-                  <div className="lg:col-span-8 space-y-6">
-                    {/* PROMINENT AI DIAGNOSTIC STATUS BANNER */}
-                    {activeResult && workstationMode === "clinical" && (
-                      <div className={`p-5 rounded-xl border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm transition-all duration-300 ${
-                        activeResult.status === "loading" || activeResult.status === "pending"
-                          ? "bg-muted/15 border-border"
-                          : activeResult.status === "error"
-                          ? "bg-destructive/10 border-destructive/25 text-destructive-foreground dark:text-red-400"
-                          : activeResult.is_tb
-                          ? "bg-amber-500/10 border-amber-500/25 text-amber-900 dark:text-amber-400"
-                          : "bg-emerald-500/10 border-emerald-500/25 text-emerald-900 dark:text-emerald-400"
-                      }`}>
-                        <div className="flex items-center gap-3">
-                          <Activity className={`w-5 h-5 ${activeResult.status === "loading" || activeResult.status === "pending" ? "animate-pulse text-primary" : activeResult.status === "error" ? "text-destructive" : activeResult.is_tb ? "text-amber-500 animate-pulse" : "text-emerald-500"}`} />
-                          <div>
-                            <span className="text-[10px] font-bold uppercase tracking-wider block opacity-70">
-                              AI Classification Verdict
-                            </span>
-                            <span className="text-base font-extrabold tracking-tight">
-                              {activeResult.status === "loading" || activeResult.status === "pending" ? (
-                                "Calculating Pulmonary Tuberculosis Risk..."
-                              ) : activeResult.status === "error" ? (
-                                activeResult.errorMsg || "Analysis Failed"
-                              ) : activeResult.is_tb ? (
-                                `Pulmonary Tuberculosis Detected (${((activeDiagnosis?.confidence || 0) * 100).toFixed(1)}% Confidence)`
-                              ) : (
-                                `Normal Chest Radiograph (${((activeDiagnosis?.confidence || 0) * 100).toFixed(1)}% Confidence)`
-                              )}
-                            </span>
-                          </div>
-                        </div>
-                        <div>
-                          {activeResult.status === "loading" || activeResult.status === "pending" ? (
-                            <Badge variant="outline" className="animate-pulse bg-muted/40 text-muted-foreground uppercase font-bold text-[10px] py-1 px-3 rounded-full">
-                              Risk Calculating
-                            </Badge>
-                          ) : activeResult.status === "error" ? (
-                            <Badge variant="destructive" className="uppercase font-bold text-[10px] py-1 px-3 rounded-full">
-                              Error Warning
-                            </Badge>
-                          ) : (
-                            <Badge className={`uppercase font-bold text-[10px] py-1 px-3 rounded-full ${activeResult.is_tb ? "bg-amber-500 hover:bg-amber-600 text-white" : "bg-emerald-500 hover:bg-emerald-600 text-white"}`}>
-                              {activeResult.is_tb ? "High Risk" : "Low Risk"}
-                            </Badge>
-                          )}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Primary Viewport Card container */}
+                  <div className="lg:col-span-8 space-y-4">
                     <Card className="glass-panel rounded-2xl overflow-hidden">
                       <DicomViewer
                         imageBase64={activeResult.original_image || ""}
@@ -899,17 +851,94 @@ export function ScreeningTab({
                 </div>
 
                 {/* 2. RIGHT PANEL (30%): Steppers & RIS Records drawer */}
-                <div className="lg:col-span-4 space-y-6">
+                <div className="lg:col-span-4 space-y-4">
                   {workstationMode === "research" && (
-                    <div className="mb-6 animate-fadein">
+                    <div className="mb-4 animate-fadein">
                       <TsnePlot />
+                    </div>
+                  )}
+
+                  {/* UNIFIED VERDICT CARD (Always visible) */}
+                  {workstationMode === "clinical" && activeResult && (
+                    <div className="glass-panel rounded-2xl p-6 relative overflow-hidden">
+                      {/* Subtle background glow based on risk */}
+                      <div className={`absolute -top-10 -right-10 w-32 h-32 blur-3xl opacity-20 rounded-full pointer-events-none ${
+                        activeResult.is_tb ? "bg-amber-500" : "bg-emerald-500"
+                      }`} />
+                      
+                      <div className="flex flex-col gap-4 relative z-10">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1">
+                              AI Classification
+                            </p>
+                            <h3 className={`text-xl font-extrabold tracking-tight ${
+                              activeResult.status === "loading" || activeResult.status === "pending"
+                                ? "text-muted-foreground animate-pulse"
+                                : activeResult.status === "error"
+                                ? "text-destructive"
+                                : activeResult.is_tb
+                                ? "text-amber-500"
+                                : "text-emerald-500"
+                            }`}>
+                              {activeResult.status === "loading" || activeResult.status === "pending" ? (
+                                "Calculating..."
+                              ) : activeResult.status === "error" ? (
+                                activeResult.errorMsg || "Analysis Failed"
+                              ) : (
+                                activeDiagnosis?.condition || "Normal"
+                              )}
+                            </h3>
+                          </div>
+                          
+                          {/* Minimalist Risk Badge */}
+                          {activeResult.status === "success" && (
+                            <Badge className={`uppercase font-bold text-[10px] py-1 px-3 rounded-full border-0 ${
+                              activeResult.is_tb ? "bg-amber-500/20 text-amber-500" : "bg-emerald-500/20 text-emerald-500"
+                            }`}>
+                              {activeResult.is_tb ? "High Risk" : "Low Risk"}
+                            </Badge>
+                          )}
+                        </div>
+
+                        {/* Minimalist Confidence Bar */}
+                        {activeResult.status === "success" && (
+                          <div className="space-y-1.5 mt-2">
+                            <div className="flex justify-between items-center text-xs">
+                              <span className="text-muted-foreground font-medium">Confidence Score</span>
+                              <span className="font-mono font-bold text-foreground">
+                                {((activeDiagnosis?.confidence || 0) * 100).toFixed(1)}%
+                              </span>
+                            </div>
+                            <Progress 
+                              value={(activeDiagnosis?.confidence || 0) * 100} 
+                              className={`h-1.5 bg-muted/30 ${activeResult.is_tb ? "[&>div]:bg-amber-500" : "[&>div]:bg-emerald-500"}`} 
+                            />
+                            
+                            {/* Decision Threshold Slider */}
+                            <div className="pt-3 mt-3 border-t border-white/5 flex items-center justify-between gap-3">
+                              <span className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground">Threshold</span>
+                              <input 
+                                type="range" 
+                                min="0.1" 
+                                max="0.9" 
+                                step="0.05"
+                                value={currentThreshold}
+                                onChange={(e) => setCustomThreshold(parseFloat(e.target.value))}
+                                className="flex-1 h-1 bg-muted/30 rounded-full appearance-none [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary cursor-pointer"
+                              />
+                              <span className="text-[10px] font-mono text-muted-foreground">{currentThreshold.toFixed(2)}</span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   )}
 
                   {workstationMode === "clinical" || workstationMode === "research" ? (
                     <>
-                      {/* WORKSPACE SELECTOR TABS */}
-                      <div className="flex bg-black/20 dark:bg-black/40 p-1 rounded-full border border-white/5 backdrop-blur-md w-full">
+                      {/* MINIMALIST BORDERLESS TABS */}
+                      <div className="flex w-full mt-2 border-b border-border/40">
                         {(["findings", "review", "report"] as const).map(tab => (
                           <button
                             key={tab}
@@ -917,198 +946,32 @@ export function ScreeningTab({
                               setActiveRightTab(tab);
                               addAuditLog(`Swapped right panel to ${tab} tab`);
                             }}
-                            className={`flex-1 py-1.5 rounded-full text-[10px] sm:text-xs font-semibold capitalize transition-all duration-300 cursor-pointer text-center ${activeRightTab === tab
-                                ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20 font-bold"
-                                : "text-muted-foreground hover:text-foreground hover:bg-white/5"
-                              }`}
+                            className={`flex-1 py-3 text-xs font-semibold capitalize transition-all duration-300 relative ${
+                              activeRightTab === tab
+                                ? "text-primary"
+                                : "text-muted-foreground hover:text-foreground"
+                            }`}
                           >
                             {tab === "findings" && "Findings"}
                             {tab === "review" && "Review"}
                             {tab === "report" && "Report"}
-                          </button>
+                            {activeRightTab === tab && (
+                              <div className="absolute bottom-0 left-0 w-full h-[2px] bg-primary rounded-t-full" />
+                            )}
+                  </button>
                         ))}
                       </div>
 
                       {/* ───────────────── TAB 1: FINDINGS ───────────────── */}
                       {activeRightTab === "findings" && (
-                        <div className="space-y-6 animate-fadein">
+                        <div className="space-y-4 animate-fadein mt-4">
 
-
-                          {/* WORKFLOW STATUS STEPPER */}
-                          <div className="p-4 glass-panel rounded-2xl space-y-3">
-                            <p className="text-xs font-bold uppercase tracking-wider text-foreground">Workflow Checklist</p>
-                            <div className="space-y-2">
-                              {getStepperStatus().map((step, idx) => (
-                                <div key={idx} className="flex items-center gap-2 text-xs font-medium">
-                                  <span className={step.done ? "text-emerald-500 font-bold" : step.loading ? "text-primary" : "text-muted-foreground animate-pulse"}>
-                                    {step.done ? (
-                                      "✓"
-                                    ) : step.loading ? (
-                                      <Loader2 className="w-3.5 h-3.5 animate-spin text-primary" />
-                                    ) : (
-                                      "⏳"
-                                    )}
-                                  </span>
-                                  <span className={step.done ? "text-foreground font-semibold" : step.loading ? "text-primary font-semibold" : "text-muted-foreground"}>
-                                    {step.text} {step.loading && <span className="text-[10px] text-muted-foreground font-normal">(AI calculating...)</span>}
-                                  </span>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-
-                          {/* IMAGE QUALITY ASSESSMENT (IQA) */}
-                          <Card className="glass-panel rounded-2xl">
-                            <CardContent className="p-5 space-y-3">
+                          {/* IMAGE QUALITY ASSESSMENT (IQA) - Minimal Inline Layout */}
+                          {q && (
+                            <div className="glass-panel rounded-xl p-4 flex flex-col gap-3">
                               <div className="flex items-center justify-between">
-                                <p className="text-xs font-bold uppercase tracking-wider text-foreground">Image Quality (IQA)</p>
+                                <p className="text-[10px] font-bold uppercase tracking-wider text-foreground">Image Quality</p>
                                 <div className="flex gap-2">
-                                  {q && (
-                                    <>
-                                      <Badge variant={q.suitableForAi ? "default" : "destructive"} className="rounded-full font-bold uppercase text-[9px] px-2 py-0.5">
-                                        {q.suitableForAi ? "Suitable" : "Unsuitable"}
-                                      </Badge>
-                                      <Badge className="badge-normal rounded-full font-bold text-[9px] px-2 py-0.5">
-                                        Score: {q.qualityScore}%
-                                      </Badge>
-                                    </>
-                                  )}
-                                </div>
-                              </div>
-                              <Separator />
-                              {q && (
-                                <>
-                                  <div className="grid grid-cols-2 gap-2 text-xs font-medium">
-                                    {[
-                                      { label: "Exposure", val: q.exposure, pass: q.exposure === "Adequate Exposure" },
-                                      { label: "Rotation", val: q.rotation, pass: q.rotation === "No Rotation" },
-                                      { label: "Coverage", val: q.coverage, pass: q.coverage === "Full Lung Coverage" },
-                                      { label: "Resolution", val: q.resolution, pass: !q.resolution.toLowerCase().includes("low") }
-                                    ].map((iqa, idx) => (
-                                      <div key={idx} className="flex flex-col">
-                                        <span className="text-muted-foreground text-[10px] uppercase font-bold">{iqa.label}</span>
-                                        <span className={`font-semibold text-xs ${iqa.pass ? "text-emerald-500" : "text-amber-500"}`}>
-                                          {iqa.val}
-                                        </span>
-                                      </div>
-                                    ))}
-                                  </div>
-                                  {q.warnings && q.warnings.length > 0 && (
-                                    <div className="mt-3 p-3 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/30 rounded-lg space-y-1">
-                                      <p className="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider">Quality Warnings</p>
-                                      {q.warnings.map((warn: string, wIdx: number) => (
-                                        <p key={wIdx} className="text-[11px] text-amber-700 dark:text-amber-300 font-medium">
-                                          • {warn}
-                                        </p>
-                                      ))}
-                                      
-                                      {!q.suitableForAi && (
-                                        <div className="flex items-center gap-2 mt-2 pt-2 border-t border-amber-200 dark:border-amber-900/30">
-                                          <input 
-                                            type="checkbox" 
-                                            id="iqa-ack" 
-                                            className="h-3 w-3 accent-amber-600"
-                                            checked={iqaAcknowledged}
-                                            onChange={(e) => setIqaAcknowledged(e.target.checked)}
-                                          />
-                                          <label htmlFor="iqa-ack" className="text-[10px] font-bold text-amber-800 dark:text-amber-200 cursor-pointer select-none">
-                                            Acknowledge sub-optimal quality and proceed
-                                          </label>
-                                        </div>
-                                      )}
-                                    </div>
-                                  )}
-                                </>
-                              )}
-                            </CardContent>
-                          </Card>
-
-                          {/* AI DIAGNOSTICS CARD */}
-                          <Card className="glass-panel rounded-2xl">
-                            <CardContent className="p-5 space-y-4">
-                              <div className="flex justify-between items-center">
-                                <p className="text-xs font-bold uppercase tracking-wider text-foreground">AI Diagnostics Output</p>
-                                {activeResult.status === "loading" || activeResult.status === "pending" ? (
-                                  <Badge variant="outline" className="badge-normal rounded-full font-bold uppercase animate-pulse bg-muted/30 border-muted/50 text-muted-foreground">
-                                    Risk Calculating
-                                  </Badge>
-                                ) : activeResult.status === "error" ? (
-                                  <Badge variant="destructive" className="rounded-full font-bold uppercase">
-                                    Analysis Error
-                                  </Badge>
-                                ) : (
-                                  <Badge variant="outline" className={`${activeDiagnosis?.riskLevel === "High" ? "badge-tb" : "badge-normal"} rounded-full font-bold uppercase`}>
-                                    {activeDiagnosis?.riskLevel} RISK
-                                  </Badge>
-                                )}
-                              </div>
-                              <Separator />
-                              <div className="space-y-3">
-                                <div className="flex justify-between items-center">
-                                  <span className="text-xs text-muted-foreground">Primary Condition:</span>
-                                  {activeResult.status === "loading" || activeResult.status === "pending" ? (
-                                    <h3 className="text-sm font-bold text-muted-foreground animate-pulse">
-                                      Calculating...
-                                    </h3>
-                                  ) : activeResult.status === "error" ? (
-                                    <h3 className="text-sm font-bold text-destructive">
-                                      {activeResult.errorMsg || "Analysis failed"}
-                                    </h3>
-                                  ) : (
-                                    <h3 className={`text-sm font-bold ${isTbDerived ? "text-amber-600 dark:text-amber-500" : "text-emerald-600 dark:text-emerald-500"}`}>
-                                      {activeDiagnosis?.condition}
-                                    </h3>
-                                  )}
-                                </div>
-                                <div className="flex justify-between items-center">
-                                  <span className="text-xs text-muted-foreground">Model Confidence:</span>
-                                  {activeResult.status === "loading" || activeResult.status === "pending" ? (
-                                    <span className="text-xs font-bold font-mono text-muted-foreground animate-pulse">Calculating...</span>
-                                  ) : activeResult.status === "error" ? (
-                                    <span className="text-xs font-bold font-mono text-destructive">0.0%</span>
-                                  ) : (
-                                    <span className="text-xs font-bold font-mono text-foreground">{((activeDiagnosis?.confidence || 0) * 100).toFixed(1)}%</span>
-                                  )}
-                                </div>
-                                {activeResult.status === "loading" || activeResult.status === "pending" ? (
-                                  <Progress value={null} className="h-1.5 bg-muted/40 animate-pulse" />
-                                ) : activeResult.status === "error" ? (
-                                  <Progress value={0} className="h-1.5 bg-destructive/20" />
-                                ) : (
-                                  <>
-                                    <Progress value={(activeDiagnosis?.confidence || 0) * 100} className={`h-1.5 ${isTbDerived ? "bg-amber-100 dark:bg-amber-950" : "bg-emerald-100 dark:bg-emerald-950"}`} />
-                                    
-                                    {/* Clinical Uncertainty Warning Banner */}
-                                    {activeDiagnosis?.isBorderline && (
-                                      <div className="mt-3 p-3.5 border border-amber-500/20 bg-amber-500/5 text-amber-600 dark:text-amber-500 rounded-lg flex items-start gap-2.5 text-[11px] font-medium leading-relaxed animate-fadein">
-                                        <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5 text-amber-500" />
-                                        <div>
-                                          <p className="font-bold text-amber-700 dark:text-amber-400">Clinical Uncertainty Warning</p>
-                                          <p className="mt-0.5 text-muted-foreground text-[10px] leading-normal font-normal">
-                                            AI confidence is in the borderline zone ({((activeDiagnosis?.confidence || 0) * 100).toFixed(1)}%). Direct human radiologist review is strongly recommended to verify this screening output.
-                                          </p>
-                                        </div>
-                                      </div>
-                                    )}
-
-                                    {/* Decision Curve / Threshold Slider */}
-                                    <div className="mt-5 p-4 glass-panel rounded-xl space-y-4">
-                                      <div className="flex justify-between items-center">
-                                        <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Decision Threshold</p>
-                                        <span className="text-xs font-mono font-bold text-foreground">{currentThreshold.toFixed(2)}</span>
-                                      </div>
-                                      <input 
-                                        type="range" 
-                                        min="0.1" 
-                                        max="0.9" 
-                                        step="0.01" 
-                                        value={currentThreshold} 
-                                        onChange={(e) => setCustomThreshold(parseFloat(e.target.value))}
-                                        className="w-full h-1.5 bg-muted rounded-full appearance-none [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary cursor-pointer"
-                                      />
-                                      
-                                      {/* Mock Trade-off Math */}
-                                      {(() => {
                                         const t = currentThreshold;
                                         // Mock ROC parameterization
                                         const tpr = 1 - Math.pow(t, 6);
@@ -1146,63 +1009,6 @@ export function ScreeningTab({
                             </CardContent>
                           </Card>
                           
-                          {/* IMAGE QUALITY CHECKER CARD */}
-                          {activeResult.status === "success" && activeResult.image_quality && (
-                            <Card className="glass-panel mt-4 animate-fadein">
-                              <CardContent className="p-5 space-y-4">
-                                <div className="flex justify-between items-center">
-                                  <p className="text-xs font-bold uppercase tracking-wider text-foreground">Image Quality Checker</p>
-                                  <Badge 
-                                    variant="outline" 
-                                    className={activeResult.image_quality.suitable_for_ai 
-                                      ? "rounded-full font-bold uppercase border-emerald-500/20 bg-emerald-500/5 text-emerald-600 dark:text-emerald-500" 
-                                      : "rounded-full font-bold uppercase border-amber-500/20 bg-amber-500/5 text-amber-600 dark:text-amber-500"
-                                    }
-                                  >
-                                    {activeResult.image_quality.suitable_for_ai ? "SUITABLE FOR AI" : "SUB-OPTIMAL QUALITY"}
-                                  </Badge>
-                                </div>
-                                <Separator />
-                                <div className="space-y-3">
-                                  <div className="flex justify-between items-center">
-                                    <span className="text-xs text-muted-foreground">Quality Score:</span>
-                                    <span className="text-xs font-bold font-mono text-foreground">{activeResult.image_quality.quality_score}%</span>
-                                  </div>
-                                  <Progress 
-                                    value={activeResult.image_quality.quality_score} 
-                                    className={`h-1.5 ${activeResult.image_quality.suitable_for_ai ? "bg-emerald-100 dark:bg-emerald-950" : "bg-amber-100 dark:bg-amber-950"}`} 
-                                  />
-                                  
-                                  <div className="grid grid-cols-2 gap-2.5 pt-2 text-[10px] uppercase font-bold text-muted-foreground">
-                                    <div className="p-2 border border-border bg-muted/20 rounded-lg">
-                                      <p className="text-[9px] text-muted-foreground font-semibold">Exposure</p>
-                                      <p className="text-[11px] font-bold text-foreground mt-0.5">{activeResult.image_quality.exposure}</p>
-                                    </div>
-                                    <div className="p-2 border border-border bg-muted/20 rounded-lg">
-                                      <p className="text-[9px] text-muted-foreground font-semibold">Rotation</p>
-                                      <p className="text-[11px] font-bold text-foreground mt-0.5">{activeResult.image_quality.rotation}</p>
-                                    </div>
-                                    <div className="p-2 border border-border bg-muted/20 rounded-lg col-span-2">
-                                      <p className="text-[9px] text-muted-foreground font-semibold">Anatomical Coverage</p>
-                                      <p className="text-[11px] font-bold text-foreground mt-0.5">{activeResult.image_quality.coverage} · {activeResult.image_quality.resolution}</p>
-                                    </div>
-                                  </div>
-
-                                  {activeResult.image_quality.warnings && activeResult.image_quality.warnings.length > 0 && (
-                                    <div className="pt-2 space-y-1">
-                                      <p className="text-[9px] text-amber-600 dark:text-amber-500 uppercase font-bold tracking-wider">Quality Advisories</p>
-                                      <ul className="text-[10px] text-muted-foreground list-disc pl-4 space-y-0.5 leading-normal font-normal">
-                                        {activeResult.image_quality.warnings.map((warn, idx) => (
-                                          <li key={idx} className="text-muted-foreground">{warn}</li>
-                                        ))}
-                                      </ul>
-                                    </div>
-                                  )}
-                                </div>
-                              </CardContent>
-                            </Card>
-                          )}
-
                         </div>
                       )}
 
