@@ -43,7 +43,7 @@ const NAV_ITEMS: { id: ViewState; icon: React.ReactNode; label: string; category
   { id: "dashboard", icon: <LayoutDashboard className="w-4 h-4" />,  label: "Dashboard",        category: "workspace" },
   { id: "patients",  icon: <Users className="w-4 h-4" />,            label: "Patients",         category: "workspace" },
   { id: "admin",     icon: <ShieldAlert className="w-4 h-4" />,      label: "Admin Console",    category: "admin", adminOnly: true },
-  { id: "settings",  icon: <Settings className="w-4 h-4" />,         label: "Settings",         category: "admin", adminOnly: true },
+  { id: "settings",  icon: <Settings className="w-4 h-4" />,         label: "Settings",         category: "settings" },
 ];
 
 const VIEW_LABELS: Record<ViewState, string> = {
@@ -339,6 +339,20 @@ export default function WorkspacePage() {
               ))}
             </div>
 
+            {/* Settings section (Visible to all users) */}
+            <div className="space-y-0.5">
+              <p className="px-2 pb-1 text-[10px] font-bold uppercase tracking-widest" style={{ color: "#5C5F66" }}>System</p>
+              {NAV_ITEMS.filter(i => i.category === "settings").map(item => (
+                <NavItem
+                  key={item.id}
+                  item={item}
+                  isActive={viewState === item.id}
+                  isDisabled={false}
+                  onClick={() => handleNavigate(item.id)}
+                />
+              ))}
+            </div>
+
             {/* Admin section */}
             {isAdmin && (
               <div className="space-y-0.5">
@@ -625,7 +639,7 @@ export default function WorkspacePage() {
           )}
 
           {/* ── SETTINGS ── */}
-          {viewState === "settings" && isAdmin && (
+          {viewState === "settings" && (
             <div className="animate-fadein space-y-5">
               <div>
                 <h1 className="text-xl font-bold text-white">System Settings</h1>
