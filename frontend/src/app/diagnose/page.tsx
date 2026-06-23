@@ -2,29 +2,24 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useTheme } from "next-themes";
 import {
   Activity,
   AlertTriangle,
   UploadCloud,
-  Play,
-  Download,
-  Sun,
-  Moon,
-  Settings,
-  Eye,
-  Users,
-  LayoutDashboard,
-  ShieldAlert,
   ChevronRight,
   X,
   LogOut,
   Trash2,
+  LayoutDashboard,
+  Eye,
+  Users,
+  ShieldAlert,
+  Settings,
+  Hash,
 } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 
 // Hooks
 import { useFileUpload } from "../hooks/useFileUpload";
@@ -41,28 +36,76 @@ type ViewState = "upload" | "workbench" | "dashboard" | "patients" | "admin" | "
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
-// ── Sidebar nav items ──────────────────────────────────────────
-const navItems: { id: ViewState; icon: React.ReactNode; label: string; adminOnly?: boolean }[] = [
-  { id: "upload",    icon: <UploadCloud className="w-5 h-5" />,      label: "Upload" },
-  { id: "workbench", icon: <Eye className="w-5 h-5" />,              label: "Workbench" },
-  { id: "dashboard", icon: <LayoutDashboard className="w-5 h-5" />,  label: "Dashboard" },
-  { id: "patients",  icon: <Users className="w-5 h-5" />,            label: "Patients" },
-  { id: "admin",     icon: <ShieldAlert className="w-5 h-5" />,      label: "Admin", adminOnly: true },
-  { id: "settings",  icon: <Settings className="w-5 h-5" />,         label: "Settings", adminOnly: true },
+// ── Sidebar nav items ─────────────────────────────────────
+const NAV_ITEMS: { id: ViewState; icon: React.ReactNode; label: string; category: string; adminOnly?: boolean }[] = [
+  { id: "upload",    icon: <UploadCloud className="w-4 h-4" />,      label: "Upload X-Ray",    category: "workspace" },
+  { id: "workbench", icon: <Eye className="w-4 h-4" />,              label: "Workbench",        category: "workspace" },
+  { id: "dashboard", icon: <LayoutDashboard className="w-4 h-4" />,  label: "Dashboard",        category: "workspace" },
+  { id: "patients",  icon: <Users className="w-4 h-4" />,            label: "Patients",         category: "workspace" },
+  { id: "admin",     icon: <ShieldAlert className="w-4 h-4" />,      label: "Admin Console",    category: "admin", adminOnly: true },
+  { id: "settings",  icon: <Settings className="w-4 h-4" />,         label: "Settings",         category: "admin", adminOnly: true },
 ];
 
-// ── Breadcrumb labels ──────────────────────────────────────────
-const viewLabels: Record<ViewState, string> = {
-  upload:    "Upload Radiograph",
+const VIEW_LABELS: Record<ViewState, string> = {
+  upload: "Upload X-Ray",
   workbench: "Diagnostic Workbench",
   dashboard: "Analytics Dashboard",
-  patients:  "Patient Registry",
-  admin:     "Administration",
-  settings:  "Settings",
+  patients: "Patient Registry",
+  admin: "Administration",
+  settings: "Settings",
 };
 
+// Discord-style nav item
+function NavItem({
+  item, isActive, isDisabled, badge, onClick,
+}: {
+  item: typeof NAV_ITEMS[0];
+  isActive: boolean;
+  isDisabled: boolean;
+  badge?: number;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      disabled={isDisabled}
+      title={item.label}
+      className="w-full flex items-center gap-2.5 px-2 py-1.5 rounded text-sm transition-all cursor-pointer relative group"
+      style={{
+        background: isActive ? "rgba(88,101,242,0.15)" : "transparent",
+        color: isActive ? "#FFFFFF" : isDisabled ? "#4E5058" : "#949BA4",
+        cursor: isDisabled ? "not-allowed" : "pointer",
+        fontWeight: isActive ? 600 : 500,
+      }}
+      onMouseEnter={e => {
+        if (!isActive && !isDisabled) {
+          (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,255,255,0.06)";
+          (e.currentTarget as HTMLButtonElement).style.color = "#DBDEE1";
+        }
+      }}
+      onMouseLeave={e => {
+        if (!isActive && !isDisabled) {
+          (e.currentTarget as HTMLButtonElement).style.background = "transparent";
+          (e.currentTarget as HTMLButtonElement).style.color = "#949BA4";
+        }
+      }}
+    >
+      {/* Active indicator bar */}
+      {isActive && (
+        <div className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-4 rounded-r-full" style={{ background: "#5865F2" }} />
+      )}
+      <span style={{ color: isActive ? "#5865F2" : "inherit", opacity: isDisabled ? 0.4 : 1 }}>{item.icon}</span>
+      <span className="flex-1 text-left truncate">{item.label}</span>
+      {badge !== undefined && badge > 0 && (
+        <span className="w-4 h-4 rounded-full text-[10px] font-bold flex items-center justify-center" style={{ background: isActive ? "#5865F2" : "rgba(88,101,242,0.3)", color: "#FFFFFF" }}>
+          {badge}
+        </span>
+      )}
+    </button>
+  );
+}
+
 export default function WorkspacePage() {
-  const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const [viewState, setViewState] = useState<ViewState>("upload");
   const [workstationMode, setWorkstationMode] = useState<"clinical" | "research" | "xai">("xai");
@@ -84,47 +127,39 @@ export default function WorkspacePage() {
 
   const reportRef = useRef<HTMLDivElement>(null);
 
-  // ── Sync URL query parameter on load & popstate ──────────────────────────
+  // ── URL sync ───────────────────────────────────────────
   useEffect(() => {
     setMounted(true);
-    
-    // Parse tab from URL on mount
     const params = new URLSearchParams(window.location.search);
     const tab = params.get("tab") as ViewState | null;
     if (tab && ["upload", "workbench", "dashboard", "patients", "admin", "settings"].includes(tab)) {
       setViewState(tab);
     } else {
-      // Initialize URL if no tab is present
-      const newUrl = `${window.location.pathname}?tab=upload`;
-      window.history.replaceState({ viewState: "upload" }, "", newUrl);
+      window.history.replaceState({ viewState: "upload" }, "", `${window.location.pathname}?tab=upload`);
     }
 
-    const handlePopState = (event: PopStateEvent) => {
-      const currentParams = new URLSearchParams(window.location.search);
-      const currentTab = currentParams.get("tab") as ViewState | null;
-      if (currentTab && ["upload", "workbench", "dashboard", "patients", "admin", "settings"].includes(currentTab)) {
-        setViewState(currentTab);
+    const handlePopState = (e: PopStateEvent) => {
+      const p = new URLSearchParams(window.location.search);
+      const t = p.get("tab") as ViewState | null;
+      if (t && ["upload", "workbench", "dashboard", "patients", "admin", "settings"].includes(t)) {
+        setViewState(t);
       } else {
         setViewState("upload");
       }
     };
-
     window.addEventListener("popstate", handlePopState);
     return () => window.removeEventListener("popstate", handlePopState);
   }, []);
 
-  // Synchronize viewState changes to URL history
   useEffect(() => {
     if (!mounted) return;
     const params = new URLSearchParams(window.location.search);
-    const currentTab = params.get("tab");
-    if (currentTab !== viewState) {
-      const newUrl = `${window.location.pathname}?tab=${viewState}`;
-      window.history.pushState({ viewState }, "", newUrl);
+    if (params.get("tab") !== viewState) {
+      window.history.pushState({ viewState }, "", `${window.location.pathname}?tab=${viewState}`);
     }
   }, [viewState, mounted]);
 
-  // ── Session check ──────────────────────────────────────────
+  // ── Session check ─────────────────────────────────────
   useEffect(() => {
     const checkUserSession = async () => {
       try {
@@ -151,7 +186,7 @@ export default function WorkspacePage() {
     try {
       const res = await fetch(`${API_BASE}/logout`, { method: "POST", credentials: "include" });
       if (res.ok) router.push("/login");
-    } catch { /* silent */ }
+    } catch {}
   };
 
   const handleFeedbackSaved = (override: string | null, note: string, annotatedB64: string, comments?: string, reviewer?: string) => {
@@ -164,7 +199,7 @@ export default function WorkspacePage() {
   };
 
   const handleSelectHistoryStudy = (record: any) => {
-    const mappedResult = {
+    setResults([{
       filename: `Study: ${record.study_id}`,
       status: "success" as const,
       prediction: record.prediction,
@@ -188,19 +223,13 @@ export default function WorkspacePage() {
       study_id: record.study_id,
       image_quality: record.image_quality,
       xai_results: record.xai_results || record.xai || null,
-    };
-    setResults([mappedResult]);
+    }]);
     setSelectedIdx(0);
     setViewState("workbench");
   };
 
-  const downloadReport = async () => {};
-
   const handleNavigate = (view: ViewState) => {
-    if (view === "workbench" && files.length === 0) {
-      setViewState("upload");
-      return;
-    }
+    if (view === "workbench" && files.length === 0) { setViewState("upload"); return; }
     setViewState(view);
   };
 
@@ -220,13 +249,15 @@ export default function WorkspacePage() {
     a.click();
   };
 
-  // ── Loading screen ──────────────────────────────────────────
+  // ── Loading screen ────────────────────────────────────
   if (checkingSession) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center font-sans">
+      <div className="min-h-screen flex items-center justify-center" style={{ background: "#313338" }}>
         <div className="flex flex-col items-center gap-4">
-          <Activity className="w-8 h-8 text-primary animate-pulse" strokeWidth={1.5} />
-          <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">Verifying session...</p>
+          <div className="w-12 h-12 rounded-full flex items-center justify-center animate-pulse" style={{ background: "#5865F2" }}>
+            <Activity className="w-6 h-6 text-white" />
+          </div>
+          <p className="text-xs font-bold uppercase tracking-widest" style={{ color: "#949BA4" }}>Verifying session…</p>
         </div>
       </div>
     );
@@ -235,32 +266,22 @@ export default function WorkspacePage() {
   const isAdmin = sessionUser?.role === "admin";
 
   return (
-    <div className="min-h-screen bg-background flex flex-col md:flex-row font-sans overflow-hidden" style={{ height: "100vh" }}>
+    <div className="flex h-screen overflow-hidden" style={{ background: "#313338", fontFamily: "Inter, sans-serif" }}>
 
-      {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      {/* LEFT SIDEBAR (Pro Max Dimensional Layout) */}
-      {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <aside className="fixed bottom-0 left-0 right-0 h-16 w-full border-t border-border md:relative md:bottom-auto md:left-auto md:right-auto md:h-full md:w-[240px] flex flex-row md:flex-col items-center justify-around md:justify-start py-0 md:py-0 gap-1 bg-card border-r-0 md:border-r md:border-border z-40">
-        {/* Logo Area */}
-        <div className="w-full h-14 border-b border-border px-6 hidden md:flex items-center gap-3 flex-shrink-0">
-          <div
-            onClick={() => window.location.href = "/"}
-            className="w-9 h-9 rounded-lg bg-primary flex items-center justify-center text-white cursor-pointer transition-all hover:bg-primary/90 hover:shadow-md"
-            title="Nirikhshon Home"
-          >
-            <Activity className="w-5 h-5" strokeWidth={2} />
-          </div>
-          <div>
-            <h1 className="text-sm font-bold text-foreground tracking-tight leading-tight">Nirikhshon</h1>
-            <p className="text-[9px] text-muted-foreground/80 font-bold uppercase tracking-wider font-sans">Workspace</p>
-          </div>
-        </div>
-
-        {/* Nav items */}
-        <div className="w-full flex flex-row md:flex-col md:px-3 gap-1 md:mt-4">
-          <div className="hidden md:block px-3 mb-2 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Main Menu</div>
-          {navItems.map(item => {
-            if (item.adminOnly && !isAdmin) return null;
+      {/* ── DISCORD SIDEBAR ── */}
+      <aside
+        className="fixed bottom-0 left-0 right-0 z-40 md:relative md:bottom-auto md:left-auto md:right-auto flex flex-row md:flex-col"
+        style={{
+          width: undefined,
+          minHeight: undefined,
+          background: "#2B2D31",
+          borderRight: "1px solid rgba(255,255,255,0.04)",
+          borderTop: "1px solid rgba(255,255,255,0.04)",
+        }}
+      >
+        {/* Mobile: bottom bar | Desktop: 240px sidebar */}
+        <div className="md:hidden h-16 w-full flex flex-row items-center justify-around px-2">
+          {NAV_ITEMS.filter(i => !i.adminOnly || isAdmin).slice(0, 5).map(item => {
             const isActive = viewState === item.id;
             const isDisabled = item.id === "workbench" && files.length === 0;
             return (
@@ -268,188 +289,249 @@ export default function WorkspacePage() {
                 key={item.id}
                 onClick={() => handleNavigate(item.id)}
                 disabled={isDisabled}
-                className={`flex-1 md:flex-none h-12 md:h-10 md:w-full rounded-xl flex items-center justify-center md:justify-start md:px-4 gap-3 transition-all cursor-pointer relative ${
-                  isActive
-                    ? "bg-primary/10 text-primary font-semibold"
-                    : isDisabled
-                    ? "text-muted-foreground/30 cursor-not-allowed"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground font-medium"
-                }`}
-                title={item.label}
+                className="flex flex-col items-center gap-0.5 px-3 py-2 rounded-lg transition-all cursor-pointer"
+                style={{ color: isActive ? "#5865F2" : "#949BA4" }}
               >
                 {item.icon}
-                <span className="hidden md:block text-sm">{item.label}</span>
-                
-                {/* Active indicator — electric blue left bar */}
-                {isActive && <div className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 rounded-r-full bg-primary hidden md:block" />}
-                
-                {/* File count badge on upload icon */}
-                {item.id === "upload" && files.length > 0 && (
-                  <span className={`ml-auto hidden md:flex w-5 h-5 rounded-full text-[10px] font-bold items-center justify-center ${isActive ? 'bg-primary-foreground text-primary' : 'bg-primary/20 text-primary'}`}>
-                    {files.length}
-                  </span>
-                )}
-                {/* Mobile file count badge */}
-                {item.id === "upload" && files.length > 0 && (
-                  <span className="absolute top-1 right-2 md:hidden w-4 h-4 rounded-full bg-primary text-primary-foreground text-[9px] font-bold flex items-center justify-center">
-                    {files.length}
-                  </span>
-                )}
+                <span className="text-[9px] font-semibold">{item.label.split(" ")[0]}</span>
               </button>
             );
           })}
         </div>
 
-        {/* Bottom Actions */}
-        <div className="mt-0 md:mt-auto w-full md:px-3 flex flex-row md:flex-col gap-1 items-center md:items-stretch md:mb-5">
-          <div className="hidden md:block px-3 mb-2 mt-4 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">System</div>
-          
-          {/* Logout */}
-          <button
-            onClick={handleLogout}
-            className="h-12 md:h-10 md:w-full rounded-lg text-muted-foreground hover:bg-destructive/10 hover:text-destructive flex items-center justify-center md:justify-start md:px-3 gap-3 transition-all cursor-pointer text-sm"
+        {/* Desktop Sidebar */}
+        <div className="hidden md:flex flex-col h-full" style={{ width: 240 }}>
+          {/* Logo */}
+          <div
+            className="h-14 flex items-center gap-3 px-4 cursor-pointer flex-shrink-0"
+            style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}
+            onClick={() => router.push("/")}
           >
-            <LogOut className="w-5 h-5 md:w-4 md:h-4" />
-            <span className="hidden md:block text-sm">Logout</span>
-          </button>
+            <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "#5865F2" }}>
+              <Activity className="w-4 h-4 text-white" />
+            </div>
+            <div>
+              <p className="text-sm font-bold text-white leading-tight">Nirikhshon</p>
+              <p className="text-[9px] font-bold uppercase tracking-widest" style={{ color: "#949BA4" }}>Workspace</p>
+            </div>
+          </div>
+
+          {/* Nav sections */}
+          <div className="flex-1 overflow-y-auto py-3 px-2 space-y-4">
+            {/* Workspace section */}
+            <div className="space-y-0.5">
+              <p className="px-2 pb-1 text-[10px] font-bold uppercase tracking-widest" style={{ color: "#5C5F66" }}>Workspace</p>
+              {NAV_ITEMS.filter(i => i.category === "workspace").map(item => (
+                <NavItem
+                  key={item.id}
+                  item={item}
+                  isActive={viewState === item.id}
+                  isDisabled={item.id === "workbench" && files.length === 0}
+                  badge={item.id === "upload" ? (files.length > 0 ? files.length : undefined) : undefined}
+                  onClick={() => handleNavigate(item.id)}
+                />
+              ))}
+            </div>
+
+            {/* Admin section */}
+            {isAdmin && (
+              <div className="space-y-0.5">
+                <p className="px-2 pb-1 text-[10px] font-bold uppercase tracking-widest" style={{ color: "#5C5F66" }}>Administration</p>
+                {NAV_ITEMS.filter(i => i.category === "admin" && i.adminOnly).map(item => (
+                  <NavItem
+                    key={item.id}
+                    item={item}
+                    isActive={viewState === item.id}
+                    isDisabled={false}
+                    onClick={() => handleNavigate(item.id)}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* User area at bottom */}
+          <div
+            className="px-3 py-3 flex items-center gap-2.5"
+            style={{ borderTop: "1px solid rgba(255,255,255,0.04)", background: "#232428" }}
+          >
+            <div
+              className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white uppercase flex-shrink-0"
+              style={{ background: "#5865F2" }}
+            >
+              {sessionUser?.username.charAt(0)}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-bold text-white truncate capitalize">{sessionUser?.username}</p>
+              <p className="text-[9px] font-semibold capitalize" style={{ color: "#949BA4" }}>{sessionUser?.role}</p>
+            </div>
+            <button
+              onClick={handleLogout}
+              className="w-7 h-7 rounded flex items-center justify-center transition-colors cursor-pointer"
+              title="Logout"
+              style={{ color: "#949BA4" }}
+              onMouseEnter={e => {
+                (e.currentTarget as HTMLButtonElement).style.background = "rgba(237,66,69,0.15)";
+                (e.currentTarget as HTMLButtonElement).style.color = "#ED4245";
+              }}
+              onMouseLeave={e => {
+                (e.currentTarget as HTMLButtonElement).style.background = "transparent";
+                (e.currentTarget as HTMLButtonElement).style.color = "#949BA4";
+              }}
+            >
+              <LogOut className="w-3.5 h-3.5" />
+            </button>
+          </div>
         </div>
       </aside>
 
-      {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      {/* MAIN AREA */}
-      {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden pb-14 md:pb-0">
+      {/* ── MAIN AREA ── */}
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden pb-16 md:pb-0" style={{ background: "#313338" }}>
 
-        {/* ── TOP NAV BAR (Global Sticky Header) ─────────────────────────────────────────────── */}
-        <header className="h-14 border-b border-border bg-card flex items-center justify-between px-6 z-30 sticky top-0">
-          {/* Breadcrumb */}
-          <div className="flex items-center gap-2 text-sm">
-            <span className="font-bold text-muted-foreground/80 text-[10px] uppercase tracking-wider hidden md:inline-block font-sans">Workspace</span>
-            <ChevronRight className="w-3.5 h-3.5 text-muted-foreground hidden md:block" strokeWidth={2} />
-            <span className="font-bold text-foreground text-sm tracking-tight">{viewLabels[viewState]}</span>
+        {/* Discord-style top bar */}
+        <header
+          className="h-12 flex items-center justify-between px-4 flex-shrink-0"
+          style={{ borderBottom: "1px solid rgba(255,255,255,0.06)", background: "#313338" }}
+        >
+          <div className="flex items-center gap-2">
+            <Hash className="w-4 h-4" style={{ color: "#5C5F66" }} />
+            <span className="font-bold text-sm text-white">{VIEW_LABELS[viewState]}</span>
             {viewState === "workbench" && files.length > 0 && selectedIdx !== null && results[selectedIdx] && (
               <>
-                <ChevronRight className="w-3.5 h-3.5 text-muted-foreground" strokeWidth={2} />
-                <span className="font-mono text-xs font-bold text-muted-foreground bg-muted px-2 py-1 rounded-md">
+                <ChevronRight className="w-3 h-3" style={{ color: "#5C5F66" }} />
+                <span className="text-xs font-mono px-2 py-0.5 rounded" style={{ background: "#2B2D31", color: "#949BA4" }}>
                   {results[selectedIdx]?.study_id || "ST-TEMP"}
                 </span>
               </>
             )}
           </div>
 
-          {/* Right side tools */}
-          <div className="flex items-center gap-4">
-            {sessionUser && (
-              <div className="flex items-center gap-3">
-                <div className="text-right hidden sm:block">
-                  <div className="text-xs font-bold text-foreground capitalize">{sessionUser.username}</div>
-                </div>
-                <div className="w-8 h-8 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center text-primary font-bold text-xs uppercase shadow-[0_0_10px_rgba(8,145,178,0.2)]">
-                  {sessionUser.username.charAt(0)}
-                </div>
+          {/* Right — user chip */}
+          {sessionUser && (
+            <div className="flex items-center gap-2">
+              <span className="text-xs hidden sm:block" style={{ color: "#949BA4" }}>{sessionUser.username}</span>
+              <div
+                className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white uppercase"
+                style={{ background: "#5865F2" }}
+              >
+                {sessionUser.username.charAt(0)}
               </div>
-            )}
-          </div>
+            </div>
+          )}
         </header>
 
-        {/* ── CONTENT AREA ────────────────────────────────────────── */}
-        <main className={`flex-1 overflow-y-auto ${viewState === "workbench" ? "p-4" : "p-6 max-w-6xl mx-auto w-full"}`}>
+        {/* Content */}
+        <main className={`flex-1 overflow-y-auto ${viewState === "workbench" ? "p-0" : "p-5"}`}>
 
-          {/* ─────────────────────────────── UPLOAD VIEW ─────────────────────────────── */}
+          {/* ── UPLOAD VIEW ── */}
           {viewState === "upload" && (
-            <div className="max-w-2xl mx-auto space-y-6 py-8 animate-fadein">
-              <div className="space-y-1">
-                <h1 className="text-2xl font-bold tracking-tight text-foreground">Upload Radiograph</h1>
-                <p className="text-sm text-muted-foreground">
-                  Drop a chest X-ray (DICOM, PNG, or JPEG) to begin AI screening.
-                </p>
+            <div className="max-w-2xl mx-auto space-y-5 py-6 animate-fadein">
+              <div>
+                <h1 className="text-xl font-bold text-white">Upload Radiograph</h1>
+                <p className="text-sm mt-0.5" style={{ color: "#949BA4" }}>Drop a chest X-ray (DICOM, PNG, or JPEG) to begin AI screening.</p>
               </div>
 
               {/* Drop zone */}
               <div
-                onDragEnter={handleDrag}
-                onDragOver={handleDrag}
-                onDragLeave={handleDrag}
-                onDrop={handleDrop}
+                onDragEnter={handleDrag} onDragOver={handleDrag} onDragLeave={handleDrag} onDrop={handleDrop}
                 onClick={() => fileInputRef.current?.click()}
-                className={`w-full py-16 border-2 border-dashed rounded-2xl flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-200 ${
-                  isDragActive
-                    ? "border-primary bg-primary/5 scale-[1.01]"
-                    : "border-border hover:border-primary/50 hover:bg-muted/20"
-                }`}
+                className="w-full py-16 rounded-lg flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-200"
+                style={{
+                  border: `2px dashed ${isDragActive ? "#5865F2" : "rgba(255,255,255,0.12)"}`,
+                  background: isDragActive ? "rgba(88,101,242,0.08)" : "rgba(255,255,255,0.02)",
+                }}
+                onMouseEnter={e => {
+                  if (!isDragActive) {
+                    (e.currentTarget as HTMLDivElement).style.borderColor = "rgba(88,101,242,0.5)";
+                    (e.currentTarget as HTMLDivElement).style.background = "rgba(88,101,242,0.04)";
+                  }
+                }}
+                onMouseLeave={e => {
+                  if (!isDragActive) {
+                    (e.currentTarget as HTMLDivElement).style.borderColor = "rgba(255,255,255,0.12)";
+                    (e.currentTarget as HTMLDivElement).style.background = "rgba(255,255,255,0.02)";
+                  }
+                }}
               >
                 <input type="file" ref={fileInputRef} onChange={handleFileInput} multiple className="hidden" accept=".dcm,.png,.jpg,.jpeg" />
-                <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-4 transition-colors ${isDragActive ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>
-                  <UploadCloud className="w-7 h-7" strokeWidth={1.5} />
+                <div className="w-14 h-14 rounded-xl flex items-center justify-center mb-4 transition-colors"
+                  style={{ background: isDragActive ? "#5865F2" : "rgba(255,255,255,0.06)" }}>
+                  <UploadCloud className="w-7 h-7" style={{ color: isDragActive ? "#FFFFFF" : "#949BA4" }} strokeWidth={1.5} />
                 </div>
-                <p className="text-sm font-semibold text-foreground">
-                  {isDragActive ? "Release to upload" : "Drag & drop X-ray files here"}
-                </p>
-                <p className="text-xs text-muted-foreground mt-1.5">or <span className="text-primary font-semibold">click to browse</span></p>
-                <p className="text-[11px] text-muted-foreground/60 mt-3">Supports DICOM (.dcm), PNG, and JPEG · Max 15MB per file</p>
+                <p className="text-sm font-semibold text-white">{isDragActive ? "Release to upload" : "Drag & drop X-ray files here"}</p>
+                <p className="text-xs mt-1.5" style={{ color: "#949BA4" }}>or <span style={{ color: "#5865F2", fontWeight: 600 }}>click to browse</span></p>
+                <p className="text-[11px] mt-3" style={{ color: "#5C5F66" }}>Supports DICOM (.dcm), PNG, and JPEG · Max 15 MB per file</p>
               </div>
 
-              {/* Post-upload warning */}
+              {/* Medical disclaimer bar */}
               {files.length > 0 && (
-                <div className="border border-amber-500/30 bg-amber-500/5 rounded-xl p-4 flex items-start gap-3 animate-fadein">
-                  <AlertTriangle className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" strokeWidth={1.5} />
-                  <p className="text-xs text-amber-700 dark:text-amber-400 leading-relaxed font-medium">
-                    <strong>AI results are not a final diagnosis.</strong> Please consult a licensed radiologist or physician before taking any medical action.
+                <div className="flex items-start gap-3 p-3.5 rounded-lg animate-fadein"
+                  style={{ background: "rgba(254,231,92,0.06)", border: "1px solid rgba(254,231,92,0.2)" }}>
+                  <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: "#FEE75C" }} />
+                  <p className="text-xs leading-relaxed" style={{ color: "#FEE75C" }}>
+                    <strong>AI results are not a final diagnosis.</strong> Please consult a licensed radiologist before taking any medical action.
                   </p>
                 </div>
               )}
 
-              {/* Uploaded files list */}
+              {/* Files list */}
               {files.length > 0 && (
-                <div className="border border-border rounded-2xl overflow-hidden bg-card animate-fadein">
-                  <div className="px-5 py-3.5 border-b border-border flex items-center justify-between bg-muted/30">
+                <div className="rounded-lg overflow-hidden animate-fadein" style={{ background: "#2B2D31", border: "1px solid rgba(255,255,255,0.06)" }}>
+                  <div className="px-4 py-3 flex items-center justify-between" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-bold text-foreground">Uploaded Files</span>
-                      <Badge variant="secondary" className="rounded-full font-bold text-xs h-5 px-2">{files.length}</Badge>
+                      <span className="text-sm font-bold text-white">Uploaded Files</span>
+                      <span className="w-5 h-5 rounded-full text-[10px] font-bold flex items-center justify-center" style={{ background: "#5865F2", color: "#FFFFFF" }}>
+                        {files.length}
+                      </span>
                     </div>
-                    <button onClick={clearAll} className="text-xs text-destructive font-semibold hover:underline flex items-center gap-1 cursor-pointer">
-                      <Trash2 className="w-3.5 h-3.5" /> Clear all
+                    <button onClick={clearAll} className="flex items-center gap-1 text-xs font-semibold cursor-pointer transition-colors" style={{ color: "#ED4245" }}>
+                      <Trash2 className="w-3.5 h-3.5" />Clear all
                     </button>
                   </div>
 
-                  <div className="divide-y divide-border">
+                  <div className="divide-y" style={{ borderColor: "rgba(255,255,255,0.04)" }}>
                     {files.map((file, idx) => {
                       const res = results[idx];
                       const ext = file.name.split(".").pop()?.toUpperCase() || "?";
                       const sizeMB = (file.size / 1024 / 1024).toFixed(1);
                       return (
-                        <div key={idx} className="px-5 py-3.5 flex items-center gap-4 hover:bg-muted/20 transition-colors">
-                          {/* Format badge */}
-                          <div className="w-10 h-10 rounded-lg bg-primary/5 border border-border flex items-center justify-center flex-shrink-0">
-                            <span className="text-[9px] font-bold text-primary font-mono">{ext}</span>
+                        <div key={idx} className="px-4 py-3 flex items-center gap-3 transition-colors"
+                          style={{ borderTop: idx > 0 ? "1px solid rgba(255,255,255,0.04)" : "none" }}
+                          onMouseEnter={e => (e.currentTarget as HTMLDivElement).style.background = "rgba(255,255,255,0.02)"}
+                          onMouseLeave={e => (e.currentTarget as HTMLDivElement).style.background = "transparent"}
+                        >
+                          <div className="w-9 h-9 rounded flex items-center justify-center flex-shrink-0" style={{ background: "rgba(88,101,242,0.12)", border: "1px solid rgba(88,101,242,0.2)" }}>
+                            <span className="text-[9px] font-bold font-mono" style={{ color: "#5865F2" }}>{ext}</span>
                           </div>
-
-                          {/* File info */}
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-semibold text-foreground truncate">{file.name}</p>
-                            <p className="text-[11px] text-muted-foreground">
-                              {sizeMB} MB
-                              {res?.metadata?.patient_id && <span className="ml-2">· ID: {res.metadata.patient_id}</span>}
+                            <p className="text-sm font-semibold text-white truncate">{file.name}</p>
+                            <p className="text-[11px]" style={{ color: "#949BA4" }}>
+                              {sizeMB} MB{res?.metadata?.patient_id && <span> · ID: {res.metadata.patient_id}</span>}
                             </p>
                           </div>
-
-                          {/* Status badge */}
                           <div className="flex-shrink-0">
                             {res?.status === "success" ? (
-                              <Badge className={res.is_tb ? "rounded-full font-bold bg-amber-500/10 text-amber-600 border-amber-500/20 hover:bg-amber-500/20" : "rounded-full font-bold bg-emerald-500/10 text-emerald-600 border-emerald-500/20 hover:bg-emerald-500/20"}>
+                              <span className="px-2 py-0.5 rounded text-[11px] font-bold" style={res.is_tb
+                                ? { background: "rgba(237,66,69,0.15)", color: "#ED4245", border: "1px solid rgba(237,66,69,0.3)" }
+                                : { background: "rgba(87,242,135,0.1)", color: "#57F287", border: "1px solid rgba(87,242,135,0.25)" }}>
                                 {res.is_tb ? "TB Detected" : "Normal"}
-                              </Badge>
+                              </span>
                             ) : res?.status === "loading" ? (
-                              <Badge variant="secondary" className="animate-pulse rounded-full">Analyzing…</Badge>
+                              <span className="px-2 py-0.5 rounded text-[11px] font-bold animate-pulse" style={{ background: "rgba(88,101,242,0.15)", color: "#5865F2" }}>
+                                Analyzing…
+                              </span>
                             ) : (
-                              <Badge variant="outline" className="rounded-full">Pending</Badge>
+                              <span className="px-2 py-0.5 rounded text-[11px] font-bold" style={{ background: "rgba(255,255,255,0.06)", color: "#949BA4" }}>
+                                Pending
+                              </span>
                             )}
                           </div>
-
-                          {/* Remove */}
                           <button
                             onClick={e => { e.stopPropagation(); removeFile(idx); }}
-                            className="w-7 h-7 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive flex items-center justify-center transition-colors cursor-pointer flex-shrink-0"
+                            className="w-7 h-7 rounded flex items-center justify-center cursor-pointer transition-colors flex-shrink-0"
+                            style={{ color: "#4E5058" }}
+                            onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = "rgba(237,66,69,0.1)"; (e.currentTarget as HTMLButtonElement).style.color = "#ED4245"; }}
+                            onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = "transparent"; (e.currentTarget as HTMLButtonElement).style.color = "#4E5058"; }}
                           >
                             <X className="w-3.5 h-3.5" strokeWidth={1.5} />
                           </button>
@@ -458,31 +540,30 @@ export default function WorkspacePage() {
                     })}
                   </div>
 
-                  {/* Action row */}
-                  <div className="px-5 py-4 border-t border-border bg-muted/10 flex items-center justify-end gap-3">
-                    <Button
-                      size="sm"
-                      className="text-xs gap-1.5 cursor-pointer ml-auto"
+                  <div className="px-4 py-3 flex justify-end" style={{ borderTop: "1px solid rgba(255,255,255,0.06)", background: "rgba(0,0,0,0.1)" }}>
+                    <button
                       onClick={() => {
-                        // Auto-analyze any pending files before entering workbench
                         const hasPending = results.some(r => r.status === "pending");
                         if (hasPending) analyzeAll();
                         setSelectedIdx(0);
                         setViewState("workbench");
                       }}
+                      className="flex items-center gap-2 px-4 py-2 rounded text-sm font-semibold text-white cursor-pointer transition-all"
+                      style={{ background: "#5865F2" }}
+                      onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = "#4752C4"; }}
+                      onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = "#5865F2"; }}
                     >
-                      Start Scanning
-                      <ChevronRight className="w-3.5 h-3.5" strokeWidth={2} />
-                    </Button>
+                      Open Workbench <ChevronRight className="w-4 h-4" strokeWidth={2} />
+                    </button>
                   </div>
                 </div>
               )}
             </div>
           )}
 
-          {/* ─────────────────────────────── WORKBENCH VIEW ─────────────────────────────── */}
+          {/* ── WORKBENCH ── */}
           {viewState === "workbench" && (
-            <div className="animate-fadein w-full">
+            <div className="animate-fadein h-full">
               <ScreeningTab
                 files={files}
                 results={results}
@@ -501,7 +582,7 @@ export default function WorkspacePage() {
                 globalNote={globalNote}
                 setGlobalNote={setGlobalNote}
                 reportRef={reportRef}
-                downloadReport={downloadReport}
+                downloadReport={async () => {}}
                 handleFeedbackSaved={handleFeedbackSaved}
                 workstationMode={workstationMode}
                 setWorkstationMode={setWorkstationMode}
@@ -509,44 +590,42 @@ export default function WorkspacePage() {
             </div>
           )}
 
-          {/* ─────────────────────────────── DASHBOARD ─────────────────────────────── */}
+          {/* ── DASHBOARD ── */}
           {viewState === "dashboard" && (
             <div className="animate-fadein">
               <Dashboard
-                onNavigate={(v) => setViewState(v as ViewState)}
+                onNavigate={v => setViewState(v as ViewState)}
                 onOpenWorkbench={() => { if (files.length > 0) { setViewState("workbench"); setSelectedIdx(0); } }}
                 hasFiles={files.length > 0}
               />
             </div>
           )}
 
-          {/* ─────────────────────────────── PATIENTS ─────────────────────────────── */}
+          {/* ── PATIENTS ── */}
           {viewState === "patients" && (
-            <div className="animate-fadein space-y-6">
+            <div className="animate-fadein space-y-5">
               <div>
-                <h1 className="text-2xl font-bold tracking-tight text-foreground">Patient Registry</h1>
-                <p className="text-sm text-muted-foreground mt-1">Search and manage patient records and study history.</p>
+                <h1 className="text-xl font-bold text-white">Patient Registry</h1>
+                <p className="text-sm mt-0.5" style={{ color: "#949BA4" }}>Search and manage patient records and study history.</p>
               </div>
-              <Separator />
+              <Separator style={{ borderColor: "rgba(255,255,255,0.06)" }} />
               <PatientsTab onSelectStudy={handleSelectHistoryStudy} />
             </div>
           )}
 
-          {/* ─────────────────────────────── ADMIN ─────────────────────────────── */}
+          {/* ── ADMIN ── */}
           {viewState === "admin" && isAdmin && (
-            <div className="animate-fadein">
-              <AdminConsole />
-            </div>
+            <div className="animate-fadein"><AdminConsole /></div>
           )}
 
-          {/* ─────────────────────────────── SETTINGS ─────────────────────────────── */}
+          {/* ── SETTINGS ── */}
           {viewState === "settings" && isAdmin && (
-            <div className="animate-fadein space-y-6">
+            <div className="animate-fadein space-y-5">
               <div>
-                <h1 className="text-2xl font-bold tracking-tight text-foreground">System Settings</h1>
-                <p className="text-sm text-muted-foreground mt-1">Configure model parameters, thresholds, and system preferences.</p>
+                <h1 className="text-xl font-bold text-white">System Settings</h1>
+                <p className="text-sm mt-0.5" style={{ color: "#949BA4" }}>Configure model parameters, thresholds, and system preferences.</p>
               </div>
-              <Separator />
+              <Separator style={{ borderColor: "rgba(255,255,255,0.06)" }} />
               <SettingsTab />
             </div>
           )}

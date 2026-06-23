@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Fira+Code:wght@400;500;600&display=swap');
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
@@ -6,534 +6,418 @@
 @custom-variant dark (&:is(.dark *));
 
 /* ─────────────────────────────────────────────────────
-   LIGHT MODE — Fintech SaaS (Stripe / Mercury / Coinbase)
-   Canvas:  Warm off-white #FAFAFA
-   Cards:   Pure white #FFFFFF with Slate-200 borders
-   Primary: Electric Blue #0052FF → #4D7CFF
-   Text:    Deep navy #0F172A
-   Font:    Inter (body) · JetBrains Mono (data)
+   DISCORD DESIGN SYSTEM — Dark Mode Only
+   Background:   #313338  (content area)
+   Sidebar:      #2B2D31  (left nav)
+   Surface:      #383A40  (elevated panels/cards)
+   Input BG:     #1E1F22  (deepest layer)
+   Primary:      #5865F2  (blurple)
+   Success:      #57F287  (green)
+   Danger:       #ED4245  (red)
+   Warning:      #FEE75C  (yellow)
+   Text Primary: #F2F3F5
+   Text Muted:   #949BA4
+   Border:       rgba(255,255,255,0.06)
  ───────────────────────────────────────────────────── */
+
 :root {
-  --spacing-xxs: 0.25rem;
-  --spacing-xs: 0.5rem;
-  --spacing-sm: 0.75rem;
-  --spacing-md: 1rem;
-  --spacing-lg: 1.5rem;
-  --spacing-xl: 2rem;
-  --spacing-xxl: 3rem;
-  --spacing-section: 6rem;
+  /* Discord dark is the only theme */
+  --background:         220 8.9% 20%;     /* #313338 */
+  --foreground:         220 9% 95%;       /* #F2F3F5 */
+  --card:               220 8% 23%;       /* #383A40 */
+  --card-foreground:    220 9% 95%;
+  --popover:            220 8% 18%;       /* #2B2D31 */
+  --popover-foreground: 220 9% 95%;
 
-  --font-size-xs: 0.75rem;    /* 12px */
-  --font-size-sm: 0.8125rem;  /* 13px */
-  --font-size-base: 0.875rem; /* 14px */
-  --font-size-lg: 1rem;       /* 16px */
-  --font-size-xl: 1.125rem;   /* 18px */
-  --font-size-xxl: 1.375rem;  /* 22px */
+  /* Blurple primary */
+  --primary:            235 86% 65%;      /* #5865F2 */
+  --primary-foreground: 0 0% 100%;
 
-  --radius-xs: 0.25rem;
-  --radius-sm: 0.375rem;
-  --radius-md: 0.5rem;
-  --radius-lg: 0.75rem;
-  --radius-xl: 1rem;
-  --radius-pill: 9999px;
-  --radius-full: 9999px;
+  --secondary:          220 8% 23%;       /* #383A40 */
+  --secondary-foreground: 220 9% 95%;
+  --muted:              220 8% 18%;       /* #2B2D31 */
+  --muted-foreground:   220 5% 58%;       /* #949BA4 */
+  --accent:             235 86% 65%;
+  --accent-foreground:  0 0% 100%;
 
-  /* ── Core Surfaces ── */
-  --background:        0 0% 98%;         /* #FAFAFA warm canvas */
-  --foreground:        222 47% 11%;      /* #0F172A deep navy */
-  --card:              0 0% 100%;        /* #FFFFFF pure white */
-  --card-foreground:   222 47% 11%;
-  --popover:           0 0% 100%;
-  --popover-foreground:222 47% 11%;
-
-  /* ── Electric Blue Primary (Coinbase/Stripe style) ── */
-  --primary:           224 100% 50%;     /* #0052FF electric blue */
-  --primary-foreground:0 0% 100%;
-
-  /* ── Neutrals ── */
-  --secondary:         214 32% 91%;      /* #E2E8F0 slate-200 */
-  --secondary-foreground: 222 47% 11%;
-  --muted:             210 40% 96.1%;    /* #F1F5F9 slate-100 */
-  --muted-foreground:  215 16% 47%;      /* #64748B slate-500 */
-  --accent:            214 32% 91%;
-  --accent-foreground: 222 47% 11%;
-
-  /* ── Semantic ── */
-  --destructive:       0 72% 51%;        /* #DC2626 */
+  /* Semantic */
+  --destructive:        359 82% 59%;      /* #ED4245 */
   --destructive-foreground: 0 0% 100%;
 
-  /* ── Borders & Inputs ── */
-  --border:            214 32% 91%;      /* #E2E8F0 slate-200 */
-  --input:             214 32% 91%;
-  --ring:              224 100% 50%;     /* electric blue focus ring */
-  --radius:            0.625rem;
+  /* Borders - very subtle like Discord */
+  --border:             220 8% 26%;       /* rgba(255,255,255,0.06) equivalent */
+  --input:              220 8% 15%;       /* #232428 deep input */
+  --ring:               235 86% 65%;
+  --radius:             0.5rem;           /* 8px — Discord's card radius */
 
-  /* ── Charts ── */
-  --chart-1: 224 100% 50%;    /* electric blue */
-  --chart-2: 142 71% 45%;     /* emerald green */
-  --chart-3: 25 95% 53%;      /* orange */
-  --chart-4: 271 91% 65%;     /* violet */
-  --chart-5: 0 72% 51%;       /* red */
+  /* Charts */
+  --chart-1: 235 86% 65%;   /* blurple */
+  --chart-2: 142 69% 64%;   /* discord green #57F287 */
+  --chart-3: 38 92% 50%;    /* amber */
+  --chart-4: 271 91% 65%;   /* violet */
+  --chart-5: 359 82% 59%;   /* discord red */
 
-  /* ── Sidebar ── */
-  --sidebar:            0 0% 100%;
-  --sidebar-foreground: 222 47% 11%;
-  --sidebar-primary:    224 100% 50%;
+  /* Sidebar — Discord's #2B2D31 */
+  --sidebar:            220 8% 18%;
+  --sidebar-foreground: 220 9% 95%;
+  --sidebar-primary:    235 86% 65%;
   --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent:     214 32% 91%;
-  --sidebar-accent-foreground: 222 47% 11%;
-  --sidebar-border:     214 32% 91%;
-  --sidebar-ring:       224 100% 50%;
+  --sidebar-accent:     220 8% 23%;
+  --sidebar-accent-foreground: 220 9% 95%;
+  --sidebar-border:     220 8% 15%;
+  --sidebar-ring:       235 86% 65%;
 
-  /* ── Warning / Amber ── */
-  --warning-50:  48 100% 96%;
-  --warning-100: 48 96%  89%;
-  --warning-200: 48 97%  77%;
-  --warning-500: 38 92%  50%;  /* #F59E0B */
-  --warning-600: 32 95%  44%;
-  --warning-700: 26 90%  37%;
-  --warning-800: 23 83%  28%;
-  --warning-950: 20 50%  10%;
+  /* Discord semantic colors */
+  --discord-bg:         #313338;
+  --discord-sidebar:    #2B2D31;
+  --discord-surface:    #383A40;
+  --discord-deep:       #1E1F22;
+  --discord-blurple:    #5865F2;
+  --discord-green:      #57F287;
+  --discord-red:        #ED4245;
+  --discord-yellow:     #FEE75C;
+  --discord-text:       #F2F3F5;
+  --discord-muted:      #949BA4;
+  --discord-border:     rgba(255,255,255,0.06);
+
+  /* Warning tokens */
+  --warning-500: 38 92% 50%;
+  --warning-600: 32 95% 44%;
 }
 
-/* ─────────────────────────────────────────────────────
-   DARK MODE — Fintech SaaS Dark (Mercury/Linear style)
-   Background: #0D1117 deep charcoal
-   Cards:      #161B22 elevated surface
-   Borders:    #21262D hairline
-   Accent:     Electric Blue #0052FF (same as light)
- ───────────────────────────────────────────────────── */
+/* Dark class is same as root since we're discord-dark-only */
 .dark {
-  --spacing-xxs: 0.25rem;
-  --spacing-xs: 0.5rem;
-  --spacing-sm: 0.75rem;
-  --spacing-md: 1rem;
-  --spacing-lg: 1.5rem;
-  --spacing-xl: 2rem;
-  --spacing-xxl: 3rem;
-  --spacing-section: 6rem;
-
-  --font-size-xs: 0.75rem;
-  --font-size-sm: 0.8125rem;
-  --font-size-base: 0.875rem;
-  --font-size-lg: 1rem;
-  --font-size-xl: 1.125rem;
-  --font-size-xxl: 1.375rem;
-
-  --radius-xs: 0.25rem;
-  --radius-sm: 0.375rem;
-  --radius-md: 0.5rem;
-  --radius-lg: 0.75rem;
-  --radius-xl: 1rem;
-  --radius-pill: 9999px;
-  --radius-full: 9999px;
-
-  /* ── Core Surfaces ── */
-  --background:        216 28% 7%;    /* #0D1117 deep charcoal */
-  --foreground:        210 40% 96%;   /* #F1F5F9 near-white */
-  --card:              215 28% 9%;    /* #161B22 elevated surface */
-  --card-foreground:   210 40% 96%;
-  --popover:           215 28% 9%;
-  --popover-foreground:210 40% 96%;
-
-  /* ── Electric Blue Primary (same as light, consistent branding) ── */
-  --primary:           224 100% 50%;  /* #0052FF electric blue */
-  --primary-foreground:0 0% 100%;
-
-  /* ── Neutrals ── */
-  --secondary:         215 25% 13%;   /* #1C2433 */
-  --secondary-foreground: 210 40% 96%;
-  --muted:             216 28% 11%;   /* #141B26 */
-  --muted-foreground:  215 20% 50%;   /* #6B7A8D */
-  --accent:            216 28% 12%;
-  --accent-foreground: 210 40% 96%;
-
-  /* ── Semantic ── */
-  --destructive:       0 72% 51%;     /* #DC2626 */
+  --background:         220 8.9% 20%;
+  --foreground:         220 9% 95%;
+  --card:               220 8% 23%;
+  --card-foreground:    220 9% 95%;
+  --popover:            220 8% 18%;
+  --popover-foreground: 220 9% 95%;
+  --primary:            235 86% 65%;
+  --primary-foreground: 0 0% 100%;
+  --secondary:          220 8% 23%;
+  --secondary-foreground: 220 9% 95%;
+  --muted:              220 8% 18%;
+  --muted-foreground:   220 5% 58%;
+  --accent:             235 86% 65%;
+  --accent-foreground:  0 0% 100%;
+  --destructive:        359 82% 59%;
   --destructive-foreground: 0 0% 100%;
-
-  /* ── Borders & Inputs ── */
-  --border:            215 25% 16%;   /* #21262D hairline */
-  --input:             215 25% 16%;
-  --ring:              224 100% 50%;  /* electric blue focus ring */
-  --radius:            0.625rem;
-
-  /* ── Charts ── */
-  --chart-1: 224 100% 60%;   /* lighter electric blue */
-  --chart-2: 142 71% 45%;    /* emerald */
-  --chart-3: 25 95% 53%;     /* orange */
-  --chart-4: 271 91% 65%;    /* violet */
-  --chart-5: 0 72% 51%;      /* red */
-
-  /* ── Sidebar ── */
-  --sidebar:            215 28% 9%;
-  --sidebar-foreground: 210 40% 96%;
-  --sidebar-primary:    224 100% 50%;
+  --border:             220 8% 26%;
+  --input:              220 8% 15%;
+  --ring:               235 86% 65%;
+  --radius:             0.5rem;
+  --chart-1: 235 86% 65%;
+  --chart-2: 142 69% 64%;
+  --chart-3: 38 92% 50%;
+  --chart-4: 271 91% 65%;
+  --chart-5: 359 82% 59%;
+  --sidebar:            220 8% 18%;
+  --sidebar-foreground: 220 9% 95%;
+  --sidebar-primary:    235 86% 65%;
   --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent:     215 25% 13%;
-  --sidebar-accent-foreground: 210 40% 96%;
-  --sidebar-border:     215 25% 16%;
-  --sidebar-ring:       224 100% 50%;
-
-  /* ── Warning / Amber ── */
-  --warning-50:  48 100% 96%;
-  --warning-100: 48 96%  89%;
-  --warning-200: 48 97%  77%;
-  --warning-500: 38 92%  50%;  /* #F59E0B */
-  --warning-600: 32 95%  44%;
-  --warning-700: 26 90%  37%;
-  --warning-800: 23 83%  28%;
-  --warning-950: 20 50%  10%;
+  --sidebar-accent:     220 8% 23%;
+  --sidebar-accent-foreground: 220 9% 95%;
+  --sidebar-border:     220 8% 15%;
+  --sidebar-ring:       235 86% 65%;
+  --warning-500: 38 92% 50%;
+  --warning-600: 32 95% 44%;
 }
 
 /* ─────────────────────────────────────────────────────
    THEME MAPPING
  ───────────────────────────────────────────────────── */
 @theme inline {
-  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --font-mono: "JetBrains Mono", monospace;
-  --color-background:         hsl(var(--background));
-  --color-foreground:         hsl(var(--foreground));
-  --color-card:               hsl(var(--card));
-  --color-card-foreground:    hsl(var(--card-foreground));
-  --color-popover:            hsl(var(--popover));
-  --color-popover-foreground: hsl(var(--popover-foreground));
-  --color-primary:            hsl(var(--primary));
-  --color-primary-foreground: hsl(var(--primary-foreground));
-  --color-secondary:          hsl(var(--secondary));
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: "Fira Code", "JetBrains Mono", monospace;
+  --color-background:           hsl(var(--background));
+  --color-foreground:           hsl(var(--foreground));
+  --color-card:                 hsl(var(--card));
+  --color-card-foreground:      hsl(var(--card-foreground));
+  --color-popover:              hsl(var(--popover));
+  --color-popover-foreground:   hsl(var(--popover-foreground));
+  --color-primary:              hsl(var(--primary));
+  --color-primary-foreground:   hsl(var(--primary-foreground));
+  --color-secondary:            hsl(var(--secondary));
   --color-secondary-foreground: hsl(var(--secondary-foreground));
-  --color-muted:              hsl(var(--muted));
-  --color-muted-foreground:   hsl(var(--muted-foreground));
-  --color-accent:             hsl(var(--accent));
-  --color-accent-foreground:  hsl(var(--accent-foreground));
-  --color-destructive:        hsl(var(--destructive));
+  --color-muted:                hsl(var(--muted));
+  --color-muted-foreground:     hsl(var(--muted-foreground));
+  --color-accent:               hsl(var(--accent));
+  --color-accent-foreground:    hsl(var(--accent-foreground));
+  --color-destructive:          hsl(var(--destructive));
   --color-destructive-foreground: hsl(var(--destructive-foreground));
-  --color-border:             hsl(var(--border));
-  --color-input:              hsl(var(--input));
-  --color-ring:               hsl(var(--ring));
-  --color-chart-1:            hsl(var(--chart-1));
-  --color-chart-2:            hsl(var(--chart-2));
-  --color-chart-3:            hsl(var(--chart-3));
-  --color-chart-4:            hsl(var(--chart-4));
-  --color-chart-5:            hsl(var(--chart-5));
+  --color-border:               hsl(var(--border));
+  --color-input:                hsl(var(--input));
+  --color-ring:                 hsl(var(--ring));
+  --color-chart-1:              hsl(var(--chart-1));
+  --color-chart-2:              hsl(var(--chart-2));
+  --color-chart-3:              hsl(var(--chart-3));
+  --color-chart-4:              hsl(var(--chart-4));
+  --color-chart-5:              hsl(var(--chart-5));
   --radius-sm: calc(var(--radius) - 2px);
   --radius-md: var(--radius);
   --radius-lg: calc(var(--radius) + 4px);
   --radius-xl: calc(var(--radius) + 8px);
-  --color-sidebar:            hsl(var(--sidebar));
-  --color-sidebar-foreground: hsl(var(--sidebar-foreground));
-  --color-sidebar-primary:    hsl(var(--sidebar-primary));
+  --color-sidebar:                    hsl(var(--sidebar));
+  --color-sidebar-foreground:         hsl(var(--sidebar-foreground));
+  --color-sidebar-primary:            hsl(var(--sidebar-primary));
   --color-sidebar-primary-foreground: hsl(var(--sidebar-primary-foreground));
-  --color-sidebar-accent:     hsl(var(--sidebar-accent));
-  --color-sidebar-accent-foreground: hsl(var(--sidebar-accent-foreground));
-  --color-sidebar-border:     hsl(var(--sidebar-border));
-  --color-sidebar-ring:       hsl(var(--sidebar-ring));
-
-  /* Inject creative warnings into Tailwind v4 color mapping */
-  --color-amber-50:           hsl(var(--warning-50));
-  --color-amber-100:          hsl(var(--warning-100));
-  --color-amber-200:          hsl(var(--warning-200));
-  --color-amber-500:          hsl(var(--warning-500));
-  --color-amber-600:          hsl(var(--warning-600));
-  --color-amber-700:          hsl(var(--warning-700));
-  --color-amber-800:          hsl(var(--warning-800));
-  --color-amber-950:          hsl(var(--warning-950));
-
-  --color-yellow-50:          hsl(var(--warning-50));
-  --color-yellow-100:         hsl(var(--warning-100));
-  --color-yellow-200:         hsl(var(--warning-200));
-  --color-yellow-500:         hsl(var(--warning-500));
-  --color-yellow-600:         hsl(var(--warning-600));
-  --color-yellow-700:         hsl(var(--warning-700));
-  --color-yellow-800:         hsl(var(--warning-800));
-  --color-yellow-950:         hsl(var(--warning-950));
+  --color-sidebar-accent:             hsl(var(--sidebar-accent));
+  --color-sidebar-accent-foreground:  hsl(var(--sidebar-accent-foreground));
+  --color-sidebar-border:             hsl(var(--sidebar-border));
+  --color-sidebar-ring:               hsl(var(--sidebar-ring));
+  --color-amber-500:  hsl(var(--warning-500));
+  --color-amber-600:  hsl(var(--warning-600));
+  --color-yellow-500: hsl(var(--warning-500));
+  --color-yellow-600: hsl(var(--warning-600));
 }
 
 /* ─────────────────────────────────────────────────────
-   BASE LAYER (Typography & Global Resets)
+   BASE LAYER
  ───────────────────────────────────────────────────── */
 @layer base {
-  * { 
-    @apply border-border outline-ring/50; 
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    color-scheme: dark;
   }
   body {
-    @apply bg-background text-foreground antialiased selection:bg-primary/30 selection:text-primary min-h-screen;
+    @apply bg-background text-foreground antialiased min-h-screen;
+    font-family: "Inter", -apple-system, sans-serif;
+    background-color: #313338;
     background-image: none;
   }
-  
-  .dark body {
-    background-color: hsl(var(--background));
-    /* A deep mesh gradient to give the glass panels something to blur */
-    background-image: 
-      radial-gradient(circle at 15% 50%, rgba(0, 82, 255, 0.08), transparent 25%),
-      radial-gradient(circle at 85% 30%, rgba(16, 185, 129, 0.05), transparent 25%);
-    background-attachment: fixed;
-  }
 
-  /* Typography Scale rules */
-  h1 {
-    font-size: 32px;
-    font-weight: 600;
-    line-height: 1.25;
-    letter-spacing: -0.025em;
-  }
-  h2 {
-    font-size: 24px;
-    font-weight: 600;
-    line-height: 1.3;
-    letter-spacing: -0.02em;
-  }
-  h3 {
-    font-size: 18px;
-    font-weight: 600;
-    line-height: 1.4;
-    letter-spacing: -0.015em;
-  }
-  p {
-    font-size: 15px;
-    font-weight: 400;
-    line-height: 1.65;
-    letter-spacing: -0.005em;
-  }
-  
-  /* Tabular numbers for clean medical metrics alignment */
-  table, .tnum-data {
-    font-variant-numeric: tabular-nums;
-    font-feature-settings: "tnum";
-  }
+  h1 { font-size: 32px; font-weight: 700; line-height: 1.2; letter-spacing: -0.02em; }
+  h2 { font-size: 24px; font-weight: 700; line-height: 1.25; letter-spacing: -0.015em; }
+  h3 { font-size: 18px; font-weight: 600; line-height: 1.35; letter-spacing: -0.01em; }
+  p  { font-size: 14px; font-weight: 400; line-height: 1.6; }
+
+  table { font-variant-numeric: tabular-nums; font-feature-settings: "tnum"; }
 }
 
 /* ─────────────────────────────────────────────────────
-   DASHBOARD SIDEBAR LAYOUT
+   DISCORD SIDEBAR LAYOUT
  ───────────────────────────────────────────────────── */
 .dashboard-sidebar {
   width: 240px;
   min-height: 100vh;
-  background: hsl(var(--sidebar));
-  border-right: 1px solid hsl(var(--sidebar-border));
+  background: #2B2D31;
+  border-right: 1px solid rgba(255,255,255,0.04);
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
-  transition: background 150ms ease;
 }
 
 .dashboard-main {
   flex: 1;
   min-height: 100vh;
   overflow: auto;
+  background: #313338;
 }
 
 /* ─────────────────────────────────────────────────────
-   CARDS & CONTAINERS (1px border, no shadow by default, hover shadow)
+   DISCORD NAV ITEMS — channel-list style
  ───────────────────────────────────────────────────── */
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #949BA4;
+  cursor: pointer;
+  transition: background-color 100ms ease, color 100ms ease;
+  border: none;
+  background: transparent;
+  width: 100%;
+  text-align: left;
+  line-height: 1.2;
+}
+.nav-item:hover {
+  background: rgba(255,255,255,0.06);
+  color: #DBDEE1;
+}
+.nav-item.active {
+  background: rgba(88, 101, 242, 0.15);
+  color: #FFFFFF;
+  font-weight: 600;
+}
+.nav-item.active .nav-icon {
+  color: #5865F2;
+}
+
+/* ─────────────────────────────────────────────────────
+   DISCORD CARDS & PANELS
+ ───────────────────────────────────────────────────── */
+.discord-card {
+  background: #2B2D31;
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 8px;
+  transition: border-color 150ms ease;
+}
+.discord-card:hover {
+  border-color: rgba(255,255,255,0.1);
+}
+
 .stat-card {
-  background: hsl(var(--card));
-  border: 1px solid hsl(var(--border));
-  border-radius: var(--radius);
+  background: #2B2D31;
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 8px;
   padding: 1.25rem;
-  transition: border-color 150ms ease, box-shadow 150ms ease;
+  transition: border-color 150ms ease, background 150ms ease;
 }
 .stat-card:hover {
-  border-color: hsl(var(--primary) / 0.4);
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  border-color: rgba(88, 101, 242, 0.3);
+  background: #383A40;
 }
 
-/* ─────────────────────────────────────────────────────
-   STATUS BADGES (Non-Decorative warning/success colors)
- ───────────────────────────────────────────────────── */
-.badge-tb {
-  background: hsl(38 92% 50% / 0.1);
-  color: hsl(38 92% 45%);
-  border: 1px solid hsl(38 92% 50% / 0.3);
-  font-weight: 600;
+/* Glass panel — Discord style (very subtle) */
+.glass-panel {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 8px;
 }
-.dark .badge-tb {
-  background: hsl(38 90% 45% / 0.15);
-  color: hsl(38 90% 55%);
-}
-
-.badge-normal {
-  background: hsl(142.1 76.2% 36.3% / 0.1);
-  color: hsl(142.1 76.2% 32%);
-  border: 1px solid hsl(142.1 76.2% 36.3% / 0.3);
-  font-weight: 600;
-}
-.dark .badge-normal {
-  background: hsl(142.1 70.2% 45.3% / 0.15);
-  color: hsl(142.1 70.2% 55%);
+.dark .glass-panel {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.06);
 }
 
 /* ─────────────────────────────────────────────────────
    DROP ZONE
  ───────────────────────────────────────────────────── */
 .drop-zone {
-  border: 1px dashed hsl(var(--border));
-  background: hsl(var(--card));
-  border-radius: var(--radius);
+  border: 2px dashed rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.02);
+  border-radius: 8px;
   transition: border-color 150ms ease, background-color 150ms ease;
 }
 .drop-zone:hover:not(.disabled) {
-  border-color: hsl(var(--primary) / 0.7);
-  background: hsl(var(--primary) / 0.02);
+  border-color: rgba(88, 101, 242, 0.5);
+  background: rgba(88, 101, 242, 0.04);
 }
 .drop-zone.dragging {
-  border-color: hsl(var(--primary));
-  background: hsl(var(--primary) / 0.04);
+  border-color: #5865F2;
+  background: rgba(88, 101, 242, 0.08);
 }
 
 /* ─────────────────────────────────────────────────────
-   SIDEBAR NAV ITEMS
+   STATUS BADGES
  ───────────────────────────────────────────────────── */
-.nav-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 12px;
-  border-radius: calc(var(--radius) - 2px);
-  font-size: 13px;
-  font-weight: 500;
-  color: hsl(var(--muted-foreground));
-  cursor: pointer;
-  transition: background-color 150ms ease, color 150ms ease;
-  border: none;
-  background: transparent;
-  width: 100%;
-  text-align: left;
+.badge-tb {
+  background: rgba(237, 66, 69, 0.15);
+  color: #ED4245;
+  border: 1px solid rgba(237, 66, 69, 0.3);
+  font-weight: 600;
 }
-.nav-item:hover { 
-  background: hsl(var(--muted)); 
-  color: hsl(var(--foreground)); 
-}
-.nav-item.active {
-  background: hsl(var(--primary) / 0.08);
-  color: hsl(var(--primary));
+.badge-normal {
+  background: rgba(87, 242, 135, 0.12);
+  color: #57F287;
+  border: 1px solid rgba(87, 242, 135, 0.25);
   font-weight: 600;
 }
 
 /* ─────────────────────────────────────────────────────
-   RESTRAINED MOTION (180ms ease, no bouncy springs)
+   ANIMATIONS
  ───────────────────────────────────────────────────── */
 @keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(4px); }
+  from { opacity: 0; transform: translateY(6px); }
   to   { opacity: 1; transform: translateY(0); }
 }
-.animate-fadein { 
-  animation: fadeInUp 180ms cubic-bezier(0.16, 1, 0.3, 1) forwards; 
+@keyframes discordPop {
+  from { opacity: 0; transform: scale(0.96); }
+  to   { opacity: 1; transform: scale(1); }
+}
+@keyframes shimmer {
+  from { background-position: -200% 0; }
+  to   { background-position: 200% 0; }
+}
+
+.animate-fadein {
+  animation: fadeInUp 200ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.animate-pop {
+  animation: discordPop 150ms cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 }
 
 /* ─────────────────────────────────────────────────────
-   SCROLLBAR
+   SCROLLBAR — Discord thin dark
  ───────────────────────────────────────────────────── */
-::-webkit-scrollbar { 
-  width: 4px; 
-  height: 4px; 
-}
-::-webkit-scrollbar-track { 
-  background: transparent; 
-}
-::-webkit-scrollbar-thumb {
-  background: hsl(var(--border));
-  border-radius: 99px;
-}
-::-webkit-scrollbar-thumb:hover { 
-  background: hsl(var(--primary) / 0.4); 
-}
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
 
 /* ─────────────────────────────────────────────────────
    RANGE INPUT
  ───────────────────────────────────────────────────── */
 input[type="range"] {
-  -webkit-appearance: none; 
+  -webkit-appearance: none;
   appearance: none;
-  background: hsl(var(--border)); 
-  border-radius: 4px; 
-  height: 4px; 
+  background: rgba(255,255,255,0.1);
+  border-radius: 4px;
+  height: 4px;
   cursor: pointer;
 }
 input[type="range"]::-webkit-slider-thumb {
   -webkit-appearance: none;
-  width: 12px; 
-  height: 12px; 
+  width: 14px;
+  height: 14px;
   border-radius: 50%;
-  background: hsl(var(--primary));
+  background: #5865F2;
   transition: transform 100ms ease;
 }
-input[type="range"]::-webkit-slider-thumb:hover {
-  transform: scale(1.15);
-}
+input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.2); }
 
-
+/* ─────────────────────────────────────────────────────
+   UTILITIES
+ ───────────────────────────────────────────────────── */
 @layer utilities {
-  .p-xs { padding: var(--spacing-xs); }
-  .p-sm { padding: var(--spacing-sm); }
-  .p-md { padding: var(--spacing-md); }
-  .p-lg { padding: var(--spacing-lg); }
-  .p-xl { padding: var(--spacing-xl); }
+  /* Discord blurple button glow */
+  .btn-blurple {
+    background: #5865F2;
+    color: #FFFFFF;
+    font-weight: 500;
+    border-radius: 4px;
+    padding: 8px 16px;
+    font-size: 14px;
+    transition: background 100ms ease, box-shadow 100ms ease;
+    border: none;
+    cursor: pointer;
+  }
+  .btn-blurple:hover {
+    background: #4752C4;
+    box-shadow: 0 0 0 4px rgba(88, 101, 242, 0.15);
+  }
+  .btn-blurple:active {
+    background: #3C45A5;
+  }
 
-  .m-xs { margin: var(--spacing-xs); }
-  .m-sm { margin: var(--spacing-sm); }
-  .m-md { margin: var(--spacing-md); }
-  .m-lg { margin: var(--spacing-lg); }
-  .m-xl { margin: var(--spacing-xl); }
+  /* Discord surface elevations */
+  .surface-1 { background: #1E1F22; }   /* deepest */
+  .surface-2 { background: #2B2D31; }   /* sidebar */
+  .surface-3 { background: #313338; }   /* main bg */
+  .surface-4 { background: #383A40; }   /* cards/panels */
 
-  .text-xs { font-size: var(--font-size-xs); }
-  .text-sm { font-size: var(--font-size-sm); }
-  .text-base { font-size: var(--font-size-base); }
-  .text-lg { font-size: var(--font-size-lg); }
-  .text-xl { font-size: var(--font-size-xl); }
-
-  .rounded-none { border-radius: var(--radius-none); }
-  .rounded-sm { border-radius: var(--radius-sm); }
-  .rounded-md { border-radius: var(--radius-md); }
-  .rounded-lg { border-radius: var(--radius-lg); }
-  .rounded-xl { border-radius: var(--radius-xl); }
-  .rounded-2xl { border-radius: var(--radius-2xl); }
+  /* Skeleton loading */
+  .skeleton {
+    background: linear-gradient(90deg, #383A40 25%, #43454C 50%, #383A40 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.4s infinite;
+    border-radius: 4px;
+  }
 
   .glass-panel {
-    background-color: rgba(255, 255, 255, 0.4);
-    backdrop-filter: blur(24px);
-    -webkit-backdrop-filter: blur(24px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.1);
-  }
-  .dark .glass-panel {
-    background-color: rgba(255, 255, 255, 0.02);
-    backdrop-filter: blur(24px);
-    -webkit-backdrop-filter: blur(24px);
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.02);
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 8px;
   }
 }
 
-
-@layer utilities {
-  .px-xs { padding-left: var(--spacing-xs); padding-right: var(--spacing-xs); }
-  .px-sm { padding-left: var(--spacing-sm); padding-right: var(--spacing-sm); }
-  .px-md { padding-left: var(--spacing-md); padding-right: var(--spacing-md); }
-  .px-lg { padding-left: var(--spacing-lg); padding-right: var(--spacing-lg); }
-  .px-xl { padding-left: var(--spacing-xl); padding-right: var(--spacing-xl); }
-
-  .py-xs { padding-top: var(--spacing-xs); padding-bottom: var(--spacing-xs); }
-  .py-sm { padding-top: var(--spacing-sm); padding-bottom: var(--spacing-sm); }
-  .py-md { padding-top: var(--spacing-md); padding-bottom: var(--spacing-md); }
-  .py-lg { padding-top: var(--spacing-lg); padding-bottom: var(--spacing-lg); }
-  .py-xl { padding-top: var(--spacing-xl); padding-bottom: var(--spacing-xl); }
-
-  .mx-xs { margin-left: var(--spacing-xs); margin-right: var(--spacing-xs); }
-  .mx-sm { margin-left: var(--spacing-sm); margin-right: var(--spacing-sm); }
-  .mx-md { margin-left: var(--spacing-md); margin-right: var(--spacing-md); }
-  .mx-lg { margin-left: var(--spacing-lg); margin-right: var(--spacing-lg); }
-  .mx-xl { margin-left: var(--spacing-xl); margin-right: var(--spacing-xl); }
-
-  .my-xs { margin-top: var(--spacing-xs); margin-bottom: var(--spacing-xs); }
-  .my-sm { margin-top: var(--spacing-sm); margin-bottom: var(--spacing-sm); }
-  .my-md { margin-top: var(--spacing-md); margin-bottom: var(--spacing-md); }
-  .my-lg { margin-top: var(--spacing-lg); margin-bottom: var(--spacing-lg); }
-  .my-xl { margin-top: var(--spacing-xl); margin-bottom: var(--spacing-xl); }
-}
-
-html,
-body {
+html, body {
   max-width: 100vw;
   overflow-x: hidden;
 }
