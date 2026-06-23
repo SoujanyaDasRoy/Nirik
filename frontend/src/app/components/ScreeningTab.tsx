@@ -745,24 +745,31 @@ export function ScreeningTab({
           {activeResult ? (
               /* ── 3-PANEL PACS WORKSPACE (SUCCESSFUL INFERENCE STATE) ── */
               <div className="flex flex-col space-y-6 w-full animate-fadein">
-                <div className="flex justify-start items-center mb-2 px-2">
-                  {/* Floating Compact Workstation Mode Switcher */}
-                  <div className="flex bg-black/20 dark:bg-black/40 p-1 rounded-xl border border-white/5 backdrop-blur-md">
-                    {(["clinical", "research", "xai"] as const).map(mode => (
-                      <button
-                        key={mode}
-                        onClick={() => setWorkstationMode(mode)}
-                        className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-all duration-300 cursor-pointer ${
-                          workstationMode === mode
-                            ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20"
-                            : "text-muted-foreground hover:text-foreground hover:bg-white/5"
-                        }`}
-                      >
-                        {mode === "clinical" && "Clinical View"}
-                        {mode === "research" && "Research View"}
-                        {mode === "xai" && "Observations"}
-                      </button>
-                    ))}
+                <div className="px-6 py-4 bg-background border border-border/50 rounded-3xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shadow-lg">
+                  <div className="flex items-center gap-3">
+                    {(["clinical", "research", "xai"] as const).map(mode => {
+                      const isActive = workstationMode === mode;
+                      return (
+                        <button
+                          key={mode}
+                          onClick={() => setWorkstationMode(mode)}
+                          className={`px-5 py-2 rounded-full text-xs font-bold transition-all duration-200 cursor-pointer border ${
+                            isActive
+                              ? "bg-[#5865F2] border-[#5865F2] text-white shadow-lg shadow-[#5865F2]/25 scale-[1.03]"
+                              : "bg-[#383A40]/40 border-white/5 hover:bg-[#383A40]/80 text-[#949BA4] hover:text-white"
+                          }`}
+                        >
+                          {mode === "clinical" && "Clinical View"}
+                          {mode === "research" && "Research View"}
+                          {mode === "xai" && "Observations"}
+                        </button>
+                      );
+                    })}
+                    {activeResult.study_id && activeResult.study_id !== "N/A" && (
+                      <span className="text-xs font-mono text-muted-foreground bg-black/10 px-3 py-1.5 rounded-lg border border-white/5 ml-2">
+                        Study: {activeResult.study_id}
+                      </span>
+                    )}
                   </div>
                 </div>
 
@@ -782,6 +789,8 @@ export function ScreeningTab({
                         result={activeResult}
                         similarCases={similarCases}
                         loadingSimilar={loadingSimilar}
+                        workstationMode={workstationMode}
+                        setWorkstationMode={setWorkstationMode}
                       />
                     </div>
                   ) : (
