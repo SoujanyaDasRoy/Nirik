@@ -16,7 +16,7 @@ export default function TsnePlot() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+    const API = process.env.NEXT_PUBLIC_API_URL || "https://projectmantra-nirikshon-backend.hf.space";
     fetch(`${API}/model/tsne`, { credentials: "include" })
       .then(r => {
         if (!r.ok) throw new Error("Failed to load t-SNE data");
@@ -35,7 +35,7 @@ export default function TsnePlot() {
   const handleRetry = () => {
     setLoading(true);
     setError(null);
-    const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+    const API = process.env.NEXT_PUBLIC_API_URL || "https://projectmantra-nirikshon-backend.hf.space";
     fetch(`${API}/model/tsne`, { credentials: "include" })
       .then(r => {
         if (!r.ok) throw new Error("Failed to load t-SNE data");

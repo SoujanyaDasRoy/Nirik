@@ -30,7 +30,7 @@ interface FhirPanelProps {
   onPatientSelect?: (patient: FhirPatient) => void;
 }
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://projectmantra-nirikshon-backend.hf.space";
 
 export default function FhirPanel({ onPatientSelect }: FhirPanelProps) {
   const [search, setSearch]             = useState("");

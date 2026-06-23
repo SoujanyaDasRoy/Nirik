@@ -31,7 +31,7 @@ interface LongitudinalTrackerProps {
   onCompare?: (priorRecord: HistoryRecord) => void;
 }
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://projectmantra-nirikshon-backend.hf.space";
 
 export default function LongitudinalTracker({ patientId, patientName, currentResult, onCompare }: LongitudinalTrackerProps) {
   const [history, setHistory]     = useState<HistoryRecord[]>([]);

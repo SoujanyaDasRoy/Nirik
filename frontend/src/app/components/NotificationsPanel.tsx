@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { Bell, Check, Info, AlertTriangle, Eye } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://projectmantra-nirikshon-backend.hf.space";
 
 export interface NotificationItem {
   id: number;

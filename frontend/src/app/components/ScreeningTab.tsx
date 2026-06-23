@@ -5,7 +5,7 @@ import dynamic from "next/dynamic";
 import { getCookie } from "../hooks/usePrediction";
 import LongitudinalTracker from "./LongitudinalTracker";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://projectmantra-nirikshon-backend.hf.space";
 import {
   Activity,
   Eye,
@@ -269,7 +269,7 @@ export function ScreeningTab({
     if (!activeResult || !activeResult.original_image) return;
     setIsComparing(true);
     try {
-      const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+      const API = process.env.NEXT_PUBLIC_API_URL || "https://projectmantra-nirikshon-backend.hf.space";
       const fd = new FormData();
       
       let blob;

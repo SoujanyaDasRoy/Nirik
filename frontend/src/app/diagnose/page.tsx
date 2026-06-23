@@ -34,7 +34,7 @@ import AdminConsole from "../components/AdminConsole";
 
 type ViewState = "upload" | "workbench" | "dashboard" | "patients" | "admin" | "settings";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://projectmantra-nirikshon-backend.hf.space";
 
 // ── Sidebar nav items ─────────────────────────────────────
 const NAV_ITEMS: { id: ViewState; icon: React.ReactNode; label: string; category: string; adminOnly?: boolean }[] = [

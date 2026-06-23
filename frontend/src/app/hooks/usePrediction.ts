@@ -27,7 +27,7 @@ export function usePrediction(
       return next;
     });
 
-    const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+    const API = process.env.NEXT_PUBLIC_API_URL || "https://projectmantra-nirikshon-backend.hf.space";
     const fd = new FormData();
     fd.append("file", file);
 
