@@ -496,7 +496,7 @@ export default function XaiVisualization({
               <div className="absolute top-0 right-0 w-1 bg-gradient-to-b from-primary to-accent h-full opacity-50"></div>
               <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-4">CAD Explanatory Report</h3>
               <div className="text-sm text-foreground/90 leading-relaxed space-y-4">
-                <p className="font-serif italic text-foreground/80">"{summary}"</p>
+                <p className="font-sans italic text-foreground/90 leading-relaxed text-xs">"{summary}"</p>
                 <div className="flex items-start gap-2 bg-amber-500/10 border border-amber-500/20 p-3 rounded-xl text-amber-200/80 text-[11px] leading-snug">
                   <AlertCircle className="w-4 h-4 shrink-0 text-amber-500" />
                   <p>Computer-Aided Detection (CAD) is a triage support tool. Always correlate with clinical history, microbiological assays, and expert radiological review.</p>

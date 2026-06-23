@@ -1073,7 +1073,10 @@ export function ScreeningTab({
                           )}
 
                           <div className="space-y-3 pt-2">
-                            <p className="text-[10px] font-bold uppercase tracking-wider text-foreground pl-1">Clinical Evidence</p>
+                            <div className="flex items-center gap-1.5 pl-1">
+                              <Eye className="w-3.5 h-3.5 text-primary" />
+                              <p className="text-[10px] font-bold uppercase tracking-wider text-foreground">Clinical Evidence Findings</p>
+                            </div>
                             {activeResult.status === "loading" || activeResult.status === "pending" ? (
                               <div className="space-y-3">
                                 {[1, 2].map((i) => (
@@ -1086,17 +1089,30 @@ export function ScreeningTab({
                               </div>
                             ) : (
                               <div className="space-y-3">
-                                {getEvidenceCards(activeResult).map((ec, idx) => (
-                                  <div key={idx} className="glass-panel p-4 rounded-xl border-l-2 border-l-primary/50 hover:border-l-primary transition-all group">
-                                    <div className="flex justify-between items-start mb-1.5">
-                                      <h4 className="text-xs font-bold text-foreground group-hover:text-primary transition-colors">{ec.title}</h4>
-                                      {ec.confidence > 0 && (
-                                        <span className="text-[10px] font-mono text-muted-foreground">{(ec.confidence * 100).toFixed(0)}%</span>
-                                      )}
+                                {getEvidenceCards(activeResult).map((ec, idx) => {
+                                  const isAbnormal = activeResult.is_tb && (ec.title.toLowerCase().includes("consolidation") || ec.title.toLowerCase().includes("density") || ec.title.toLowerCase().includes("failed") || ec.title.toLowerCase().includes("infiltrate"));
+                                  const borderColor = isAbnormal ? "border-l-amber-500 hover:border-l-amber-400" : "border-l-emerald-500 hover:border-l-emerald-400";
+                                  const badgeColor = isAbnormal ? "bg-amber-500/10 text-amber-400" : "bg-emerald-500/10 text-emerald-400";
+                                  
+                                  return (
+                                    <div 
+                                      key={idx} 
+                                      className={`glass-panel p-4 rounded-xl border-l-4 ${borderColor} bg-card/25 backdrop-blur hover:bg-card/45 transition-all duration-200 group shadow-sm`}
+                                    >
+                                      <div className="flex justify-between items-start mb-1.5">
+                                        <h4 className="text-xs font-bold text-foreground group-hover:text-primary transition-colors pr-2">
+                                          {ec.title}
+                                        </h4>
+                                        {ec.confidence > 0 && (
+                                          <Badge className={`rounded font-mono font-bold text-[9px] px-1.5 py-0.5 border-0 ${badgeColor}`}>
+                                            {(ec.confidence * 100).toFixed(0)}%
+                                          </Badge>
+                                        )}
+                                      </div>
+                                      <p className="text-[11px] text-muted-foreground leading-relaxed">{ec.description}</p>
                                     </div>
-                                    <p className="text-[11px] text-muted-foreground leading-relaxed">{ec.description}</p>
-                                  </div>
-                                ))}
+                                  );
+                                })}
                               </div>
                             )}
                           </div>
