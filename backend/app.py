@@ -56,13 +56,26 @@ if os.environ.get("DESKTOP_APP") == "true":
 CORS(app, resources={r"/*": {
     "origins": ALLOWED_ORIGINS,
     "expose_headers": ["X-CSRF-Token"],
-    "allow_headers": ["Content-Type", "X-CSRF-Token"]
+    "allow_headers": ["Content-Type", "X-CSRF-Token", "Authorization"]
 }}, supports_credentials=True)
 
 app.config['MAX_CONTENT_LENGTH'] = 15 * 1024 * 1024
 
 # Register Phase 4 API Router
 app.register_blueprint(api_v1)
+
+# Intercept Bearer authentication headers for cross-origin clients blocking cookies
+@app.before_request
+def handle_header_auth():
+    auth_header = request.headers.get("Authorization")
+    if auth_header and auth_header.startswith("Bearer "):
+        try:
+            parts = auth_header[7:].split(":")
+            if len(parts) == 2:
+                session["username"] = parts[0]
+                session["role"] = parts[1]
+        except Exception:
+            pass
 
 # CSRF protection double-submit cookie validation hook
 @app.before_request
