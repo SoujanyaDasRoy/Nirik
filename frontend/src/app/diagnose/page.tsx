@@ -553,7 +553,7 @@ export default function WorkspacePage() {
                       onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = "#4752C4"; }}
                       onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = "#5865F2"; }}
                     >
-                      Open Workbench <ChevronRight className="w-4 h-4" strokeWidth={2} />
+                      Start Scanning <ChevronRight className="w-4 h-4" strokeWidth={2} />
                     </button>
                   </div>
                 </div>

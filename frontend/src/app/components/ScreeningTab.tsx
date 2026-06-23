@@ -714,11 +714,12 @@ export function ScreeningTab({
     if (!activeResult) return [];
     const isLoading = activeResult.status === "loading" || activeResult.status === "pending";
     const stepList = [
-      { text: "Image loaded in buffer", done: true, loading: false },
-      { text: "AI classification complete", done: activeResult.status === "success", loading: isLoading },
-      { text: "Grad-CAM++ heatmaps calculated", done: activeResult.status === "success", loading: isLoading },
-      { text: "Clinical Adjudication Sign-off", done: reviewerName.trim().length > 2, loading: false },
-      { text: "Clinical Report finalized", done: dbRegistered, loading: false }
+      { text: "Chest X-ray loaded in memory", done: true, loading: false },
+      { text: "Grayscale intensity normalization & padding", done: activeResult.status === "success" || activeResult.status === "error", loading: isLoading && activeResult.status === "loading" },
+      { text: "DenseNet-121 model load & pre-warm validation", done: activeResult.status === "success" || activeResult.status === "error", loading: false },
+      { text: "AI classification risk scoring (tuberculosis vs normal)", done: activeResult.status === "success", loading: isLoading && activeResult.status === "loading" },
+      { text: "Grad-CAM++ activation layer backpropagation maps", done: activeResult.status === "success", loading: isLoading && activeResult.status === "loading" },
+      { text: "Anatomical zone contribution ROI calculations", done: activeResult.status === "success", loading: false }
     ];
     return stepList;
   };
@@ -961,7 +962,53 @@ export function ScreeningTab({
                     </div>
                   )}
 
-                  {workstationMode === "clinical" || workstationMode === "research" ? (
+                  {activeResult && (activeResult.status === "loading" || activeResult.status === "pending") ? (
+                    <div className="glass-panel rounded-2xl p-6 space-y-5 animate-fadein">
+                      <div className="space-y-1">
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-primary">Inference Active</p>
+                        <h4 className="text-sm font-bold text-foreground">AI Processing Pipeline</h4>
+                      </div>
+                      
+                      {/* Detailed step-by-step progress checklist */}
+                      <div className="space-y-4">
+                        {getStepperStatus().map((step, idx) => (
+                          <div key={idx} className="flex items-start gap-3">
+                            <div className="mt-0.5 flex-shrink-0">
+                              {step.done ? (
+                                <div className="w-4 h-4 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
+                                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                  </svg>
+                                </div>
+                              ) : step.loading ? (
+                                <div className="w-4 h-4 rounded-full border-2 border-primary border-t-transparent animate-spin"></div>
+                              ) : (
+                                <div className="w-4 h-4 rounded-full border border-muted-foreground/30 bg-muted/10"></div>
+                              )}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className={`text-xs font-semibold ${step.done ? "text-foreground" : step.loading ? "text-primary animate-pulse" : "text-muted-foreground"}`}>
+                                {step.text}
+                              </p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      <div className="pt-4 border-t border-white/5 flex flex-col items-center justify-center text-center gap-2">
+                        <div className="text-[10px] text-muted-foreground">Neural computation is executing on the backend container.</div>
+                        <div className="w-full bg-muted/20 rounded-full h-1 overflow-hidden">
+                          <div 
+                            className="bg-primary h-1 rounded-full animate-pulse" 
+                            style={{ 
+                              width: activeResult.status === "loading" ? "75%" : "25%", 
+                              transition: "width 1.5s ease-in-out" 
+                            }} 
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ) : workstationMode === "clinical" || workstationMode === "research" ? (
                     <>
                       {/* MINIMALIST BORDERLESS TABS */}
                       <div className="flex w-full mt-2 border-b border-border/40">
