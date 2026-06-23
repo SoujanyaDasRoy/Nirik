@@ -924,9 +924,7 @@ export function ScreeningTab({
                     <div className="glass-panel rounded-2xl p-6 relative overflow-hidden">
                       {/* Subtle background glow based on risk */}
                       <div className={`absolute -top-10 -right-10 w-32 h-32 blur-3xl opacity-20 rounded-full pointer-events-none ${
-                        activeDiagnosis?.riskLevel === "High" ? "bg-red-500" :
-                        activeDiagnosis?.riskLevel === "Medium" ? "bg-amber-500" :
-                        "bg-emerald-500"
+                        activeDiagnosis?.riskLevel === "High" ? "bg-red-500" : "bg-blue-500"
                       }`} />
                       
                       <div className="flex flex-col gap-4 relative z-10">
@@ -957,9 +955,7 @@ export function ScreeningTab({
                                   ? "text-muted-foreground animate-pulse"
                                   : activeDiagnosis?.riskLevel === "High"
                                   ? "text-red-500"
-                                  : activeDiagnosis?.riskLevel === "Medium"
-                                  ? "text-amber-500"
-                                  : "text-emerald-500"
+                                  : "text-blue-500"
                               }`}>
                                 {activeResult.status === "loading" || activeResult.status === "pending" ? (
                                   "Calculating..."
@@ -973,9 +969,7 @@ export function ScreeningTab({
                           {/* Minimalist Risk Badge */}
                           {activeResult.status === "success" && (
                             <Badge className={`uppercase font-bold text-[10px] py-1 px-3 rounded-full border-0 ${
-                              activeDiagnosis?.riskLevel === "High" ? "bg-red-500/20 text-red-500" :
-                              activeDiagnosis?.riskLevel === "Medium" ? "bg-amber-500/20 text-amber-500" :
-                              "bg-emerald-500/20 text-emerald-500"
+                              activeDiagnosis?.riskLevel === "High" ? "bg-red-500/20 text-red-500" : "bg-blue-500/20 text-blue-500"
                             }`}>
                               {activeDiagnosis?.riskLevel === "High" ? "High Risk" :
                                activeDiagnosis?.riskLevel === "Medium" ? "Medium Risk" :
@@ -996,9 +990,7 @@ export function ScreeningTab({
                             <Progress 
                               value={(activeDiagnosis?.confidence || 0) * 100} 
                               className={`h-1.5 bg-muted/30 ${
-                                activeDiagnosis?.riskLevel === "High" ? "[&>div]:bg-red-500" :
-                                activeDiagnosis?.riskLevel === "Medium" ? "[&>div]:bg-amber-500" :
-                                "[&>div]:bg-emerald-500"
+                                activeDiagnosis?.riskLevel === "High" ? "[&>div]:bg-red-500" : "[&>div]:bg-blue-500"
                               }`} 
                             />
                           </div>
@@ -1137,20 +1129,16 @@ export function ScreeningTab({
                                 {getEvidenceCards(activeResult).map((ec, idx) => {
                                   const isAbnormal = activeResult.is_tb && (ec.title.toLowerCase().includes("consolidation") || ec.title.toLowerCase().includes("density") || ec.title.toLowerCase().includes("failed") || ec.title.toLowerCase().includes("infiltrate"));
                                   
-                                  let colorPrefix = "emerald";
+                                  let colorPrefix = "blue";
                                   if (isAbnormal) {
-                                    colorPrefix = activeDiagnosis?.riskLevel === "High" ? "red" :
-                                                  activeDiagnosis?.riskLevel === "Medium" ? "amber" :
-                                                  "emerald";
+                                    colorPrefix = activeDiagnosis?.riskLevel === "High" ? "red" : "blue";
                                   }
                                   
                                   const borderColor = colorPrefix === "red" ? "border-l-red-500 hover:border-l-red-400" :
-                                                      colorPrefix === "amber" ? "border-l-amber-500 hover:border-l-amber-400" :
-                                                      "border-l-emerald-500 hover:border-l-emerald-400";
+                                                      "border-l-blue-500 hover:border-l-blue-400";
                                                       
                                   const badgeColor = colorPrefix === "red" ? "bg-red-500/10 text-red-400" :
-                                                     colorPrefix === "amber" ? "bg-amber-500/10 text-amber-400" :
-                                                     "bg-emerald-500/10 text-emerald-400";
+                                                     "bg-blue-500/10 text-blue-400";
                                   
                                   return (
                                     <div 
