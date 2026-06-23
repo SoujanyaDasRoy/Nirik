@@ -226,7 +226,12 @@ def generate_saliency_heatmap(model, tensor, original_img: Image.Image, is_tb: b
             torch_input = torch.tensor(np_input, dtype=torch.float32, device=DEVICE, requires_grad=True)
 
             act, logit = grad_model(torch_input)
-            score = torch.mean(logit)
+            
+            # Target the class score: if TB, positive logit. If Normal, negative logit (so we differentiate -logit)
+            if is_tb:
+                score = torch.mean(logit)
+            else:
+                score = torch.mean(-logit)
 
             grads = torch.autograd.grad(score, act)[0]
 
