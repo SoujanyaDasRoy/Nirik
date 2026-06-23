@@ -40,7 +40,7 @@ interface DicomViewerProps {
   activeZone: LungZone;
   annotateMode: boolean;
   annotationCanvasRef: React.RefObject<HTMLCanvasElement | null>;
-  setViewMode?: (mode: "original" | "heatmap" | "heatmap-only" | "side-by-side" | "split") => void;
+  setViewMode?: (mode: "original" | "heatmap" | "heatmap-only" | "side-by-side" | "split" | "longitudinal") => void;
   setAnnotateMode?: (active: boolean) => void;
   setHeatmapOpacity?: (opacity: number) => void;
   setActiveZone?: (zone: LungZone) => void;

@@ -732,7 +732,8 @@ export function ScreeningTab({
         <div className="w-full">
           {activeResult ? (
               /* ── 3-PANEL PACS WORKSPACE (SUCCESSFUL INFERENCE STATE) ── */
-              <div className="flex flex-col spa                <div className="flex justify-between items-end mb-2 px-2">
+              <div className="flex flex-col space-y-6 w-full animate-fadein">
+                <div className="flex justify-between items-end mb-2 px-2">
                   <div className="space-y-1">
                     <h2 className="text-xl font-semibold tracking-tight text-foreground flex items-center gap-2">
                       Diagnostic Workbench
@@ -804,7 +805,6 @@ export function ScreeningTab({
                         observationFocusRegion={observationFocusRegion}
                         setViewMode={setViewMode}
                         setAnnotateMode={setAnnotateMode}
-                        setActiveZone={setActiveZone}
                       />
                     </Card>
 
@@ -972,43 +972,59 @@ export function ScreeningTab({
                               <div className="flex items-center justify-between">
                                 <p className="text-[10px] font-bold uppercase tracking-wider text-foreground">Image Quality</p>
                                 <div className="flex gap-2">
-                                        const t = currentThreshold;
-                                        // Mock ROC parameterization
-                                        const tpr = 1 - Math.pow(t, 6);
-                                        const fpr = Math.pow(1 - t, 3);
-                                        
-                                        const totalTb = 100;
-                                        const totalNormal = 500;
-                                        
-                                        const caught = Math.round(totalTb * tpr);
-                                        const missed = totalTb - caught;
-                                        const falsePos = Math.round(totalNormal * fpr);
-                                        
-                                        return (
-                                          <div className="text-[10px] text-muted-foreground leading-relaxed">
-                                            <p className="mb-2 italic border-l-2 border-primary/40 pl-2">
-                                              "At this threshold ({t.toFixed(2)}), you'll miss <strong className="text-destructive">{missed}</strong> TB cases per 100 to catch <strong className="text-emerald-500">{caught}</strong> — is that the trade-off you want?"
-                                            </p>
-                                            <div className="grid grid-cols-2 gap-2 mt-2 pt-2 border-t border-border/50">
-                                              <div className="flex flex-col">
-                                                <span className="uppercase text-[9px] font-bold">False Negatives (Missed)</span>
-                                                <span className="text-destructive font-mono font-bold">{missed} per 100</span>
-                                              </div>
-                                              <div className="flex flex-col">
-                                                <span className="uppercase text-[9px] font-bold">False Positives (Workup)</span>
-                                                <span className="text-amber-500 font-mono font-bold">{falsePos} per 500</span>
-                                              </div>
-                                            </div>
-                                          </div>
-                                        );
-                                      })()}
-                                    </div>
-                                  </>
-                                )}
+                                  <Badge variant={q.suitableForAi ? "default" : "destructive"} className="rounded-md font-bold uppercase text-[9px] px-2 py-0.5 border-0">
+                                    {q.suitableForAi ? "Suitable" : "Unsuitable"}
+                                  </Badge>
+                                  <span className="text-[10px] font-mono text-muted-foreground font-bold">Score: {q.qualityScore}%</span>
+                                </div>
                               </div>
-                            </CardContent>
-                          </Card>
-                          
+                              <div className="flex gap-4 text-[10px] text-muted-foreground">
+                                <span className={q.exposure === "Adequate Exposure" ? "text-emerald-500" : "text-amber-500"}>• {q.exposure}</span>
+                                <span className={q.coverage === "Full Lung Coverage" ? "text-emerald-500" : "text-amber-500"}>• {q.coverage}</span>
+                              </div>
+                              {!q.suitableForAi && (
+                                <div className="flex items-center gap-2 mt-1 pt-3 border-t border-white/5">
+                                  <input 
+                                    type="checkbox" 
+                                    id="iqa-ack" 
+                                    className="h-3 w-3 accent-amber-500"
+                                    checked={iqaAcknowledged}
+                                    onChange={(e) => setIqaAcknowledged(e.target.checked)}
+                                  />
+                                  <label htmlFor="iqa-ack" className="text-[10px] font-bold text-amber-500 cursor-pointer select-none">
+                                    Acknowledge sub-optimal quality to proceed
+                                  </label>
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                          <div className="space-y-3 pt-2">
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-foreground pl-1">Clinical Evidence</p>
+                            {activeResult.status === "loading" || activeResult.status === "pending" ? (
+                              <div className="space-y-3">
+                                {[1, 2].map((i) => (
+                                  <div key={i} className="glass-panel p-4 rounded-xl space-y-2 animate-pulse">
+                                    <div className="h-4 bg-muted/50 rounded w-1/3"></div>
+                                    <div className="h-3 bg-muted/30 rounded w-full"></div>
+                                    <div className="h-3 bg-muted/30 rounded w-4/5"></div>
+                                  </div>
+                                ))}
+                              </div>
+                            ) : (
+                              <div className="space-y-3">
+                                {getEvidenceCards(activeResult).map((ec, idx) => (
+                                  <div key={idx} className="glass-panel p-4 rounded-xl border-l-2 border-l-primary/50 hover:border-l-primary transition-all group">
+                                    <div className="flex justify-between items-start mb-1.5">
+                                      <h4 className="text-xs font-bold text-foreground group-hover:text-primary transition-colors">{ec.title}</h4>
+                                      <span className="text-[10px] font-mono text-muted-foreground">{(ec.confidence * 100).toFixed(0)}%</span>
+                                    </div>
+                                    <p className="text-[11px] text-muted-foreground leading-relaxed">{ec.description}</p>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
                         </div>
                       )}
 
@@ -1092,9 +1108,9 @@ export function ScreeningTab({
 
                           {/* LONGITUDINAL PATIENT TRACKER */}
                           <LongitudinalTracker 
-                            patientId={activeResult.metadata?.patient_id} 
+                            patientId={activeResult.metadata?.patient_id || ""} 
                             patientName={activeResult.metadata?.patient_name || "Unknown Patient"} 
-                            currentResult={activeResult}
+                            currentResult={activeResult as any}
                             onCompare={handleCompare}
                           />
                         </div>
