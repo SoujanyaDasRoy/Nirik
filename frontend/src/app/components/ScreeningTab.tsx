@@ -307,10 +307,10 @@ export function ScreeningTab({
     }
   };
 
-  // Automatically switch to XAI mode when an image successfully finishes AI processing
+  // Automatically switch to clinical mode when an image successfully finishes AI processing
   useEffect(() => {
     if (activeResult?.status === "success" && activeResult?.xai_results) {
-      setWorkstationMode("xai");
+      setWorkstationMode("clinical");
     }
   }, [activeResult?.status, activeResult?.study_id]);
 
