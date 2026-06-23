@@ -24,6 +24,8 @@ import {
   CircleDot,
   Columns,
   Loader2,
+  LayoutDashboard,
+  Search,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -314,6 +316,8 @@ export function ScreeningTab({
 
   const [activeRightTab, setActiveRightTab] = useState<"findings" | "review" | "report">("findings");
   const [highlightedAnatomicalZone, setHighlightedAnatomicalZone] = useState<string>("");
+  const [zoomLevel, setZoomLevel] = useState<number>(1);
+  const [xaiComparing, setXaiComparing] = useState<boolean>(false);
 
   // Annotation layers
   const [boxes, setBoxes] = useState<Box[]>([]);
@@ -771,6 +775,29 @@ export function ScreeningTab({
                       </span>
                     )}
                   </div>
+                  
+                  {workstationMode === "xai" && (
+                    <div className="flex items-center gap-3 ml-auto">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className={`border-border/50 text-xs font-medium rounded-xl transition-all cursor-pointer ${xaiComparing ? 'bg-secondary text-secondary-foreground border-secondary/80' : 'bg-card/50 text-muted-foreground hover:bg-card hover:text-foreground'}`}
+                        onClick={() => setXaiComparing(!xaiComparing)}
+                      >
+                        <LayoutDashboard className="w-4 h-4 mr-2" />
+                        {xaiComparing ? "Exit Split View" : "Split View"}
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="border-border/50 bg-card/50 text-muted-foreground hover:bg-card hover:text-foreground text-xs font-medium rounded-xl transition-all cursor-pointer"
+                        onClick={() => setZoomLevel(zoomLevel === 1.3 ? 1 : 1.3)}
+                      >
+                        <Search className="w-4 h-4 mr-2" />
+                        {zoomLevel === 1.3 ? "Reset Zoom" : "Zoom 130%"}
+                      </Button>
+                    </div>
+                  )}
                 </div>
 
                 {activeResult && activeResult.demo_mode && (
@@ -791,6 +818,10 @@ export function ScreeningTab({
                         loadingSimilar={loadingSimilar}
                         workstationMode={workstationMode}
                         setWorkstationMode={setWorkstationMode}
+                        zoomLevel={zoomLevel}
+                        setZoomLevel={setZoomLevel}
+                        isComparing={xaiComparing}
+                        setIsComparing={setXaiComparing}
                       />
                     </div>
                   ) : (

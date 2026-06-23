@@ -13,6 +13,10 @@ interface XaiVisualizationProps {
   loadingSimilar: boolean;
   workstationMode: "clinical" | "research" | "xai";
   setWorkstationMode: (mode: "clinical" | "research" | "xai") => void;
+  zoomLevel: number;
+  setZoomLevel: (zoom: number) => void;
+  isComparing: boolean;
+  setIsComparing: (comp: boolean) => void;
 }
 
 export default function XaiVisualization({ 
@@ -20,7 +24,11 @@ export default function XaiVisualization({
   similarCases, 
   loadingSimilar,
   workstationMode,
-  setWorkstationMode
+  setWorkstationMode,
+  zoomLevel,
+  setZoomLevel,
+  isComparing,
+  setIsComparing
 }: XaiVisualizationProps) {
   const [opacity, setOpacity] = useState<number>(65);
   const [showHeatmap, setShowHeatmap] = useState<boolean>(true);
@@ -29,8 +37,6 @@ export default function XaiVisualization({
   const [showContour, setShowContour] = useState<boolean>(true);
   const [heatmapMode, setHeatmapMode] = useState<"gradcam" | "gradcam_plusplus" | "attention" | "coverage" | "attribution">("gradcam_plusplus");
   const [hoveredRoiId, setHoveredRoiId] = useState<string | null>(null);
-  const [zoomLevel, setZoomLevel] = useState<number>(1);
-  const [isComparing, setIsComparing] = useState<boolean>(false);
 
   const imgRef = useRef<HTMLImageElement>(null);
   const [naturalSize, setNaturalSize] = useState({ w: 1, h: 1 });
@@ -131,56 +137,6 @@ export default function XaiVisualization({
 
   return (
     <div className="bg-background rounded-3xl overflow-hidden text-foreground shadow-2xl font-sans border border-border/50">
-      
-      {/* Sleek Top Header with Tabs */}
-      <div className="px-6 py-4 glass-panel flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b-0 border-x-0 border-t-0">
-        <div className="flex items-center gap-3">
-          {(["clinical", "research", "xai"] as const).map(mode => {
-            const isActive = workstationMode === mode;
-            return (
-              <button
-                key={mode}
-                onClick={() => setWorkstationMode(mode)}
-                className={`px-5 py-2 rounded-full text-xs font-bold transition-all duration-200 cursor-pointer border ${
-                  isActive
-                    ? "bg-[#5865F2] border-[#5865F2] text-white shadow-lg shadow-[#5865F2]/25 scale-[1.03]"
-                    : "bg-[#383A40]/40 border-white/5 hover:bg-[#383A40]/80 text-[#949BA4] hover:text-white"
-                }`}
-              >
-                {mode === "clinical" && "Clinical View"}
-                {mode === "research" && "Research View"}
-                {mode === "xai" && "Observations"}
-              </button>
-            );
-          })}
-          {result.study_id && result.study_id !== "N/A" && (
-            <span className="text-xs font-mono text-muted-foreground bg-black/10 px-3 py-1.5 rounded-lg border border-white/5 ml-2">
-              Study: {result.study_id}
-            </span>
-          )}
-        </div>
-        
-        <div className="flex items-center gap-3 ml-auto">
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className={`border-border/50 text-xs font-medium rounded-xl transition-all ${isComparing ? 'bg-secondary text-secondary-foreground border-secondary/80' : 'bg-card/50 text-muted-foreground hover:bg-card hover:text-foreground'}`}
-            onClick={() => setIsComparing(!isComparing)}
-          >
-            <LayoutDashboard className="w-4 h-4 mr-2" />
-            {isComparing ? "Exit Split View" : "Split View"}
-          </Button>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="border-border/50 bg-card/50 text-muted-foreground hover:bg-card hover:text-foreground text-xs font-medium rounded-xl transition-all cursor-pointer"
-            onClick={() => setZoomLevel(zoomLevel === 1.3 ? 1 : 1.3)}
-          >
-            <Search className="w-4 h-4 mr-2" />
-            {zoomLevel === 1.3 ? "Reset Zoom" : "Zoom 130%"}
-          </Button>
-        </div>
-      </div>
 
       <div className="p-6 lg:p-8">
         <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
