@@ -108,7 +108,7 @@ function NavItem({
 export default function WorkspacePage() {
   const [mounted, setMounted] = useState(false);
   const [viewState, setViewState] = useState<ViewState>("upload");
-  const [workstationMode, setWorkstationMode] = useState<"clinical" | "research" | "xai">("clinical");
+  const [workstationMode, setWorkstationMode] = useState<"clinical" | "xai">("clinical");
   const [globalNote, setGlobalNote] = useState("");
   const [sessionUser, setSessionUser] = useState<{ username: string; role: string } | null>(null);
   const [checkingSession, setCheckingSession] = useState(true);

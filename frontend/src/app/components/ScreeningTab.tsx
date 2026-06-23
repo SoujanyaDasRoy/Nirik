@@ -199,8 +199,8 @@ interface ScreeningTabProps {
     comments?: string,
     reviewer?: string
   ) => void;
-  workstationMode: "clinical" | "research" | "xai";
-  setWorkstationMode: (mode: "clinical" | "research" | "xai") => void;
+  workstationMode: "clinical" | "xai";
+  setWorkstationMode: (mode: "clinical" | "xai") => void;
 }
 
 const getQualityMetrics = (result: any) => {
@@ -768,7 +768,7 @@ export function ScreeningTab({
               <div className="flex flex-col space-y-6 w-full animate-fadein p-6">
                 <div className="px-6 py-4 bg-background border border-border/50 rounded-3xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shadow-lg">
                   <div className="flex items-center gap-3">
-                    {(["clinical", "research", "xai"] as const).map(mode => {
+                    {(["clinical", "xai"] as const).map(mode => {
                       const isActive = workstationMode === mode;
                       return (
                         <button
@@ -781,7 +781,6 @@ export function ScreeningTab({
                           }`}
                         >
                           {mode === "clinical" && "Clinical View"}
-                          {mode === "research" && "Research View"}
                           {mode === "xai" && "Observations"}
                         </button>
                       );
@@ -913,11 +912,7 @@ export function ScreeningTab({
 
                 {/* 2. RIGHT PANEL (30%): Steppers & RIS Records drawer */}
                 <div className="lg:col-span-4 space-y-4">
-                  {workstationMode === "research" && (
-                    <div className="mb-4 animate-fadein">
-                      <TsnePlot />
-                    </div>
-                  )}
+
 
                   {/* UNIFIED VERDICT CARD (Always visible) */}
                   {workstationMode === "clinical" && activeResult && (

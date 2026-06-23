@@ -11,8 +11,8 @@ interface XaiVisualizationProps {
   result: AnalysisResult;
   similarCases: { tb_similar: any[]; normal_similar: any[] } | null;
   loadingSimilar: boolean;
-  workstationMode: "clinical" | "research" | "xai";
-  setWorkstationMode: (mode: "clinical" | "research" | "xai") => void;
+  workstationMode: "clinical" | "xai";
+  setWorkstationMode: (mode: "clinical" | "xai") => void;
   zoomLevel: number;
   setZoomLevel: (zoom: number) => void;
   isComparing: boolean;
