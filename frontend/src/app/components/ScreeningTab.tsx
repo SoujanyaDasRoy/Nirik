@@ -745,18 +745,9 @@ export function ScreeningTab({
           {activeResult ? (
               /* ── 3-PANEL PACS WORKSPACE (SUCCESSFUL INFERENCE STATE) ── */
               <div className="flex flex-col space-y-6 w-full animate-fadein">
-                <div className="flex justify-between items-end mb-2 px-2">
-                  <div className="space-y-1">
-                    <h2 className="text-xl font-semibold tracking-tight text-foreground flex items-center gap-2">
-                      Diagnostic Workbench
-                    </h2>
-                    <p className="text-sm text-muted-foreground">
-                      Study ID: <span className="font-mono text-foreground/80">{activeResult.study_id || "N/A"}</span>
-                    </p>
-                  </div>
-                  
+                <div className="flex justify-start items-center mb-2 px-2">
                   {/* Floating Compact Workstation Mode Switcher */}
-                  <div className="flex bg-black/20 dark:bg-black/40 p-1 rounded-xl border border-white/5 backdrop-blur-md self-center">
+                  <div className="flex bg-black/20 dark:bg-black/40 p-1 rounded-xl border border-white/5 backdrop-blur-md">
                     {(["clinical", "research", "xai"] as const).map(mode => (
                       <button
                         key={mode}
@@ -769,7 +760,7 @@ export function ScreeningTab({
                       >
                         {mode === "clinical" && "Clinical View"}
                         {mode === "research" && "Research View"}
-                        {mode === "xai" && "Explainable AI (XAI)"}
+                        {mode === "xai" && "Observations"}
                       </button>
                     ))}
                   </div>

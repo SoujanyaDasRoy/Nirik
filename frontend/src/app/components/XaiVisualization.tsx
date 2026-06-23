@@ -127,7 +127,7 @@ export default function XaiVisualization({ result, similarCases, loadingSimilar 
       {/* Sleek Top Header (Simplified to avoid layout redundancy) */}
       <div className="px-6 py-4 glass-panel flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b-0 border-x-0 border-t-0">
         <div className="flex items-center gap-2.5">
-          <Badge className="bg-primary/20 text-primary border-none px-2.5 py-1 font-mono text-[10px] uppercase tracking-widest font-bold">
+          <Badge className="bg-primary/20 text-primary border border-primary/25 px-4 py-2 font-mono text-[10px] uppercase tracking-widest font-bold rounded-lg shadow-sm">
             XAI Live Overlay
           </Badge>
           {result.study_id && result.study_id !== "N/A" && (
