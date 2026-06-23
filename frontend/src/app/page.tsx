@@ -229,6 +229,168 @@ export default function AboutPage() {
         </div>
       </section>
 
+      {/* ── MODEL PERFORMANCE SHOWCASE ── */}
+      <section className="w-full bg-background py-20 border-b border-border">
+        <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 space-y-16">
+
+          {/* Section Header */}
+          <div className="text-center space-y-3">
+            <Badge variant="outline" className="px-4 py-1.5 text-[11px] font-semibold text-primary bg-primary/5 border-primary/20 uppercase tracking-widest rounded-full">
+              Validated Model Performance
+            </Badge>
+            <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-foreground">
+              Real Results, Verified on Unseen Data
+            </h2>
+            <p className="text-sm text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+              The DenseNet-121 student model was evaluated on a held-out test set never seen during training. 
+              All metrics below reflect true out-of-sample performance on chest X-rays from the NIRT Chennai cohort.
+            </p>
+          </div>
+
+          {/* ── KEY METRICS STRIP ── */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            {[
+              { label: "AUC-ROC", value: "94.1%", sub: "Classifier discrimination", color: "text-cyan-500", bg: "bg-cyan-500/10 border-cyan-500/20" },
+              { label: "TB Recall", value: "81.7%", sub: "Active cases detected", color: "text-emerald-500", bg: "bg-emerald-500/10 border-emerald-500/20" },
+              { label: "Accuracy", value: "93.4%", sub: "Overall test set", color: "text-violet-500", bg: "bg-violet-500/10 border-violet-500/20" },
+              { label: "F1 Score (TB)", value: "0.844", sub: "Harmonic precision-recall", color: "text-amber-500", bg: "bg-amber-500/10 border-amber-500/20" },
+            ].map((m) => (
+              <div key={m.label} className={`border rounded-2xl p-5 flex flex-col gap-1 ${m.bg}`}>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{m.label}</p>
+                <p className={`text-3xl font-extrabold tracking-tight ${m.color}`}>{m.value}</p>
+                <p className="text-[11px] text-muted-foreground">{m.sub}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* ── ROC + CONFUSION MATRIX ── */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="border border-border rounded-2xl overflow-hidden bg-card">
+              <div className="px-5 py-4 border-b border-border">
+                <h3 className="text-sm font-bold text-foreground">ROC &amp; Precision-Recall Curves</h3>
+                <p className="text-[11px] text-muted-foreground mt-0.5">AUC = 0.941 · Threshold = 0.870 at Recall = 81.7%</p>
+              </div>
+              <div className="p-4 bg-white dark:bg-zinc-900">
+                <img
+                  src="/model-results/roc_pr_curves.png"
+                  alt="ROC and Precision-Recall Curves"
+                  className="w-full rounded-lg object-contain"
+                />
+              </div>
+            </div>
+
+            <div className="border border-border rounded-2xl overflow-hidden bg-card">
+              <div className="px-5 py-4 border-b border-border">
+                <h3 className="text-sm font-bold text-foreground">Confusion Matrix — Test Set</h3>
+                <p className="text-[11px] text-muted-foreground mt-0.5">378 Normal correct · 89 TB correct · 13 FP · 20 FN</p>
+              </div>
+              <div className="p-4 bg-white dark:bg-zinc-900 flex items-center justify-center">
+                <img
+                  src="/model-results/confusion_matrix.png"
+                  alt="Confusion Matrix"
+                  className="w-full max-w-sm rounded-lg object-contain"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* ── GRAD-CAM EXPLAINABILITY ── */}
+          <div className="border border-border rounded-2xl overflow-hidden bg-card">
+            <div className="px-5 py-4 border-b border-border flex items-start justify-between gap-4">
+              <div>
+                <h3 className="text-sm font-bold text-foreground">Grad-CAM Explainability Visualizations</h3>
+                <p className="text-[11px] text-muted-foreground mt-0.5">
+                  Gradient-weighted class activation maps show exactly which lung regions activated the model's TB prediction. Red = high activation, Blue = low.
+                </p>
+              </div>
+              <Badge variant="outline" className="text-[9px] px-2 py-1 shrink-0 border-primary/30 text-primary bg-primary/5 rounded-full uppercase tracking-wider font-bold">XAI</Badge>
+            </div>
+            <div className="p-4 bg-white dark:bg-zinc-900">
+              <img
+                src="/model-results/gradcam_visualizations.png"
+                alt="Grad-CAM Heatmap Visualizations"
+                className="w-full rounded-lg object-contain"
+              />
+            </div>
+            <div className="px-5 py-3 border-t border-border grid grid-cols-3 gap-4 text-center bg-muted/20">
+              {[
+                { label: "True TB", desc: "Model correctly focuses on pathological regions (upper lobe consolidation, cavity)" },
+                { label: "High-Conf Errors", desc: "False positives often show pleural effusion/hilar features that share visual similarity" },
+                { label: "Low-Conf Correct", desc: "Normal scans with unusual anatomy or portable technique challenge the model" },
+              ].map((item) => (
+                <div key={item.label} className="space-y-1 py-2">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-foreground">{item.label}</p>
+                  <p className="text-[10px] text-muted-foreground leading-relaxed">{item.desc}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* ── SAMPLE PREDICTIONS ── */}
+          <div className="border border-border rounded-2xl overflow-hidden bg-card">
+            <div className="px-5 py-4 border-b border-border">
+              <h3 className="text-sm font-bold text-foreground">Sample Predictions on Held-Out Test Cases</h3>
+              <p className="text-[11px] text-muted-foreground mt-0.5">
+                Row 1: Normal cases correctly classified · Row 2: TB cases correctly detected · Row 3: High-confidence errors · Row 4: Low-confidence but correct
+              </p>
+            </div>
+            <div className="p-4 bg-white dark:bg-zinc-900">
+              <img
+                src="/model-results/sample_predictions.png"
+                alt="Sample Predictions on Test Set"
+                className="w-full rounded-lg object-contain"
+              />
+            </div>
+          </div>
+
+          {/* ── TEACHER vs STUDENT COMPARISON ── */}
+          <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+            <div className="lg:col-span-3 border border-border rounded-2xl overflow-hidden bg-card">
+              <div className="px-5 py-4 border-b border-border">
+                <h3 className="text-sm font-bold text-foreground">Deployment Performance Metrics</h3>
+                <p className="text-[11px] text-muted-foreground mt-0.5">Teacher (ResNet-50) vs Student (DenseNet-121) — size, speed, and parameters</p>
+              </div>
+              <div className="p-4 bg-white dark:bg-zinc-900">
+                <img
+                  src="/model-results/deployment_metrics.png"
+                  alt="Deployment Metrics"
+                  className="w-full rounded-lg object-contain"
+                />
+              </div>
+            </div>
+
+            <div className="lg:col-span-2 border border-border rounded-2xl overflow-hidden bg-card flex flex-col">
+              <div className="px-5 py-4 border-b border-border">
+                <h3 className="text-sm font-bold text-foreground">Knowledge Distillation Results</h3>
+                <p className="text-[11px] text-muted-foreground mt-0.5">Student retains 99.5% of teacher AUC at 1/16th the size</p>
+              </div>
+              <div className="flex-1 p-5 flex flex-col justify-center gap-4">
+                {[
+                  { label: "Model Size", teacher: "471.9 MB", student: "29.7 MB", better: true, note: "16× smaller" },
+                  { label: "Parameters", teacher: "23.6M", student: "7.0M", better: true, note: "3.3× fewer" },
+                  { label: "AUC-ROC", teacher: "0.947", student: "0.941", better: false, note: "−0.6% drop" },
+                  { label: "Accuracy", teacher: "67.0%", student: "93.4%", better: true, note: "+26.4% gain" },
+                  { label: "Inference", teacher: "7.8 ms", student: "15.5 ms", better: false, note: "CPU-optimized" },
+                ].map((row) => (
+                  <div key={row.label} className="flex items-center justify-between text-xs">
+                    <span className="text-muted-foreground font-medium w-24">{row.label}</span>
+                    <span className="font-mono text-muted-foreground line-through text-[10px]">{row.teacher}</span>
+                    <span className={`font-mono font-bold ${row.better ? "text-emerald-500" : "text-amber-500"}`}>{row.student}</span>
+                    <Badge variant="outline" className={`text-[9px] px-2 py-0.5 rounded-full font-bold border-0 ${row.better ? "bg-emerald-500/10 text-emerald-600" : "bg-amber-500/10 text-amber-600"}`}>
+                      {row.note}
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+              <div className="px-5 py-3 border-t border-border bg-muted/20 text-[10px] text-muted-foreground">
+                Student model runs entirely on CPU — no GPU required for deployment.
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
       {/* ── ABOUT SECTION (for showcase) ── */}
       <div className="flex-1 w-full max-w-6xl mx-auto px-4 sm:px-6 py-12 grid grid-cols-1 lg:grid-cols-12 gap-8">
 
