@@ -663,6 +663,8 @@ def predict_image(img: Image.Image, prior_image_b64: str = None):
     #
     INFERENCE_USES_RESNET_PREPROCESSING = True  # ← set False after retraining
 
+    padded_img = pad_to_square(img).convert('L')
+    resized_img = padded_img.resize((224, 224), Image.BILINEAR)
     arr = np.array(resized_img, dtype=np.float32)
     # Stack 3 times to create R=G=B channels (grayscale X-ray, degenerate RGB)
     x = np.stack([arr, arr, arr], axis=-1)  # shape: (224, 224, 3)
