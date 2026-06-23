@@ -907,7 +907,9 @@ export function ScreeningTab({
                     <div className="glass-panel rounded-2xl p-6 relative overflow-hidden">
                       {/* Subtle background glow based on risk */}
                       <div className={`absolute -top-10 -right-10 w-32 h-32 blur-3xl opacity-20 rounded-full pointer-events-none ${
-                        activeResult.is_tb ? "bg-amber-500" : "bg-emerald-500"
+                        activeDiagnosis?.riskLevel === "High" ? "bg-red-500" :
+                        activeDiagnosis?.riskLevel === "Medium" ? "bg-amber-500" :
+                        "bg-emerald-500"
                       }`} />
                       
                       <div className="flex flex-col gap-4 relative z-10">
@@ -936,7 +938,9 @@ export function ScreeningTab({
                               <h3 className={`text-xl font-extrabold tracking-tight ${
                                 activeResult.status === "loading" || activeResult.status === "pending"
                                   ? "text-muted-foreground animate-pulse"
-                                  : activeResult.is_tb
+                                  : activeDiagnosis?.riskLevel === "High"
+                                  ? "text-red-500"
+                                  : activeDiagnosis?.riskLevel === "Medium"
                                   ? "text-amber-500"
                                   : "text-emerald-500"
                               }`}>
@@ -952,9 +956,13 @@ export function ScreeningTab({
                           {/* Minimalist Risk Badge */}
                           {activeResult.status === "success" && (
                             <Badge className={`uppercase font-bold text-[10px] py-1 px-3 rounded-full border-0 ${
-                              activeResult.is_tb ? "bg-amber-500/20 text-amber-500" : "bg-emerald-500/20 text-emerald-500"
+                              activeDiagnosis?.riskLevel === "High" ? "bg-red-500/20 text-red-500" :
+                              activeDiagnosis?.riskLevel === "Medium" ? "bg-amber-500/20 text-amber-500" :
+                              "bg-emerald-500/20 text-emerald-500"
                             }`}>
-                              {activeResult.is_tb ? "High Risk" : "Low Risk"}
+                              {activeDiagnosis?.riskLevel === "High" ? "High Risk" :
+                               activeDiagnosis?.riskLevel === "Medium" ? "Medium Risk" :
+                               "Low Risk"}
                             </Badge>
                           )}
                         </div>
@@ -970,7 +978,11 @@ export function ScreeningTab({
                             </div>
                             <Progress 
                               value={(activeDiagnosis?.confidence || 0) * 100} 
-                              className={`h-1.5 bg-muted/30 ${activeResult.is_tb ? "[&>div]:bg-amber-500" : "[&>div]:bg-emerald-500"}`} 
+                              className={`h-1.5 bg-muted/30 ${
+                                activeDiagnosis?.riskLevel === "High" ? "[&>div]:bg-red-500" :
+                                activeDiagnosis?.riskLevel === "Medium" ? "[&>div]:bg-amber-500" :
+                                "[&>div]:bg-emerald-500"
+                              }`} 
                             />
                             
                             {/* Decision Threshold Slider */}
@@ -1122,8 +1134,21 @@ export function ScreeningTab({
                               <div className="space-y-3">
                                 {getEvidenceCards(activeResult).map((ec, idx) => {
                                   const isAbnormal = activeResult.is_tb && (ec.title.toLowerCase().includes("consolidation") || ec.title.toLowerCase().includes("density") || ec.title.toLowerCase().includes("failed") || ec.title.toLowerCase().includes("infiltrate"));
-                                  const borderColor = isAbnormal ? "border-l-amber-500 hover:border-l-amber-400" : "border-l-emerald-500 hover:border-l-emerald-400";
-                                  const badgeColor = isAbnormal ? "bg-amber-500/10 text-amber-400" : "bg-emerald-500/10 text-emerald-400";
+                                  
+                                  let colorPrefix = "emerald";
+                                  if (isAbnormal) {
+                                    colorPrefix = activeDiagnosis?.riskLevel === "High" ? "red" :
+                                                  activeDiagnosis?.riskLevel === "Medium" ? "amber" :
+                                                  "emerald";
+                                  }
+                                  
+                                  const borderColor = colorPrefix === "red" ? "border-l-red-500 hover:border-l-red-400" :
+                                                      colorPrefix === "amber" ? "border-l-amber-500 hover:border-l-amber-400" :
+                                                      "border-l-emerald-500 hover:border-l-emerald-400";
+                                                      
+                                  const badgeColor = colorPrefix === "red" ? "bg-red-500/10 text-red-400" :
+                                                     colorPrefix === "amber" ? "bg-amber-500/10 text-amber-400" :
+                                                     "bg-emerald-500/10 text-emerald-400";
                                   
                                   return (
                                     <div 
