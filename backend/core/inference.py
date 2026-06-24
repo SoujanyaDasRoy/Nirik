@@ -233,9 +233,16 @@ def _generate_density_heatmap(original_img: Image.Image, is_tb: bool) -> Image.I
     heatmap_8bit = (norm_blurred * 255).astype(np.uint8)
     color_heatmap = cv2.applyColorMap(heatmap_8bit, cv2.COLORMAP_JET)
     color_heatmap_rgb = cv2.cvtColor(color_heatmap, cv2.COLOR_BGR2RGB)
-    
-    alpha = 0.50 if is_tb else 0.20
-    blended = cv2.addWeighted(orig_np, 1.0 - alpha, color_heatmap_rgb, alpha, 0)
+
+    # Pixel-wise alpha: opacity is proportional to activation strength.
+    # This keeps the original X-ray visible where there is no activation,
+    # avoiding the dark-blue background artifact from uniform addWeighted.
+    max_alpha = 0.70 if is_tb else 0.55
+    alpha_map = (norm_blurred * max_alpha).astype(np.float32)  # shape (h, w), range [0, max_alpha]
+    alpha_3ch = np.stack([alpha_map, alpha_map, alpha_map], axis=-1)  # (h, w, 3)
+    orig_f = orig_np.astype(np.float32)
+    heat_f = color_heatmap_rgb.astype(np.float32)
+    blended = np.clip(orig_f * (1.0 - alpha_3ch) + heat_f * alpha_3ch, 0, 255).astype(np.uint8)
     return Image.fromarray(blended)
 
 def generate_saliency_heatmap(model, tensor, original_img: Image.Image, is_tb: bool, method: str = "gradcam_plusplus", return_raw: bool = False) -> tuple:
@@ -397,18 +404,27 @@ def generate_saliency_heatmap(model, tensor, original_img: Image.Image, is_tb: b
         orig_np = np.array(original_img)
         if len(orig_np.shape) == 2:
             orig_np = cv2.cvtColor(orig_np, cv2.COLOR_GRAY2RGB)
-            
+
         color_heatmap = cv2.resize(color_heatmap, (w, h))
         color_heatmap_rgb = cv2.cvtColor(color_heatmap, cv2.COLOR_BGR2RGB)
-        
-        alpha = 0.55 if is_tb else 0.35
+
+        # Pixel-wise alpha: opacity is proportional to the normalised activation.
+        # This prevents the JET colormap's dark-blue low-value regions from
+        # flooding the background of the X-ray image.
         if method == "attention":
-            alpha = 0.65
+            max_alpha = 0.70
         elif method == "coverage":
-            alpha = 0.45
-            
-        blended = cv2.addWeighted(orig_np, 1.0 - alpha, color_heatmap_rgb, alpha, 0)
-        
+            max_alpha = 0.55
+        else:
+            max_alpha = 0.65 if is_tb else 0.50
+
+        # heatmap_blurred is already normalised to [0, 1]; resize to match original
+        alpha_map = cv2.resize(heatmap_blurred, (w, h)) * max_alpha  # (h, w)
+        alpha_3ch = np.stack([alpha_map, alpha_map, alpha_map], axis=-1).astype(np.float32)
+        orig_f = orig_np.astype(np.float32)
+        heat_f = color_heatmap_rgb.astype(np.float32)
+        blended = np.clip(orig_f * (1.0 - alpha_3ch) + heat_f * alpha_3ch, 0, 255).astype(np.uint8)
+
         if return_raw:
             return Image.fromarray(blended), False, heatmap_blurred
         return Image.fromarray(blended), False

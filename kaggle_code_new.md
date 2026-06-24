@@ -106,8 +106,437 @@ if os.path.isdir(nirt):
 ```
 
 # ============================================================================
-# CELL 3 — Build the master DataFrame + sanity check
+# CELL 3 — Train U-Net Lung Segmenter on Montgomery + Shenzhen
 # ============================================================================
+```python
+import os
+import glob
+import numpy as np
+import tensorflow as tf
+from tensorflow.keras import layers, models, optimizers, losses, metrics
+from PIL import Image
+
+# 1) Scan /kaggle/input/ recursively to locate images and masks
+print("Scanning /kaggle/input/ recursively for image and mask directories...")
+seg_images_dirs = []
+seg_masks_dirs = []
+mont_left_mask_dirs = []
+mont_right_mask_dirs = []
+
+for root, dirs, files in os.walk("/kaggle/input"):
+    root_clean = root.replace("\\", "/").lower()
+    
+    # Match CXR_png or images directories for segmentation
+    # Note: exclude classification directories (like normal/abnormal/Tuberculosis) to avoid pollution
+    if root_clean.endswith("/cxr_png") or root_clean.endswith("/lung segmentation/cxr_png") or root_clean.endswith("/data/cxr_png"):
+        seg_images_dirs.append(root)
+    elif root_clean.endswith("/images") and "tuberculosis-chest-xrays" in root_clean:
+        seg_images_dirs.append(root)
+    # Match masks directories
+    elif (root_clean.endswith("/masks") or root_clean.endswith("/mask")) and "left" not in root_clean and "right" not in root_clean:
+        seg_masks_dirs.append(root)
+    # Match Montgomery Set Left/Right masks
+    elif "leftmask" in root_clean or "left_mask" in root_clean:
+        mont_left_mask_dirs.append(root)
+    elif "rightmask" in root_clean or "right_mask" in root_clean:
+        mont_right_mask_dirs.append(root)
+
+print("Resolved image directories:", seg_images_dirs)
+print("Resolved mask directories:", seg_masks_dirs)
+print("Resolved left mask directories:", mont_left_mask_dirs)
+print("Resolved right mask directories:", mont_right_mask_dirs)
+
+seg_pairs = []
+matched_bases = set()
+
+# First attempt: Pair images from CXR_png/images with combined masks from masks/ folders
+for img_dir in seg_images_dirs:
+    # Exclude classification-only datasets (like TB_Chest_Radiography_Database)
+    if "tuberculosis-tb-chest-xray-dataset" in img_dir.lower() or "nirt-india-chest-x-ray-dicom-dataset" in img_dir.lower():
+        continue
+    for f in glob.glob(os.path.join(img_dir, "*.png")):
+        base = os.path.basename(f)
+        if base in matched_bases:
+            continue
+        stem = os.path.splitext(base)[0]
+        
+        # Look for a matching mask in any masks directory
+        mask_path = None
+        for mask_dir in seg_masks_dirs:
+            for candidate in [f"{stem}_mask.png", f"{stem}.png", f"{stem}_mask.PNG", f"{stem}.PNG", base]:
+                p = os.path.join(mask_dir, candidate)
+                if os.path.exists(p):
+                    mask_path = p
+                    break
+            if mask_path:
+                break
+        
+        if mask_path:
+            seg_pairs.append({
+                "image_path": f,
+                "mask_type": "combined",
+                "mask_path": mask_path
+            })
+            matched_bases.add(base)
+
+# Second attempt: Check if we have Montgomery images and left/right masks
+if mont_left_mask_dirs and mont_right_mask_dirs:
+    for img_dir in seg_images_dirs:
+        if "montgomery" in img_dir.lower():
+            for f in glob.glob(os.path.join(img_dir, "*.png")):
+                base = os.path.basename(f)
+                if base in matched_bases:
+                    continue
+                
+                # Check for left and right masks
+                lp_found, rp_found = None, None
+                for lp_dir in mont_left_mask_dirs:
+                    p = os.path.join(lp_dir, base)
+                    if os.path.exists(p):
+                        lp_found = p; break
+                for rp_dir in mont_right_mask_dirs:
+                    p = os.path.join(rp_dir, base)
+                    if os.path.exists(p):
+                        rp_found = p; break
+                
+                if lp_found and rp_found:
+                    seg_pairs.append({
+                        "image_path": f,
+                        "mask_type": "montgomery",
+                        "left_mask_path": lp_found,
+                        "right_mask_path": rp_found
+                    })
+                    matched_bases.add(base)
+
+print(f"Found {len(seg_pairs)} image-mask pairs for U-Net training.")
+
+# Debug listing and validation check
+if len(seg_pairs) == 0:
+    print("\n[DEBUG] Listing first 3 levels of /kaggle/input directory tree:")
+    for root, dirs, files in os.walk("/kaggle/input"):
+        depth = root.replace("/kaggle/input", "").count(os.sep)
+        if depth <= 3:
+            print(f"{'  ' * depth}📂 {os.path.basename(root) or root}/")
+            for d in dirs[:10]:
+                print(f"{'  ' * (depth + 1)}📁 {d}")
+            if len(dirs) > 10:
+                print(f"{'  ' * (depth + 1)}... and {len(dirs) - 10} more dirs")
+    raise ValueError(
+        "Could not automatically resolve all image and mask paths for U-Net training. "
+        "Please ensure you have added nikhilpandey360/chest-xray-masks-and-labels dataset "
+        "to your notebook. See the printed directory listing above to debug."
+    )
+
+# 2) Preload and preprocess images and masks to memory (fast epochs)
+def pad_to_square_pil(img: Image.Image, fill=0) -> Image.Image:
+    w, h = img.size
+    if w == h:
+        return img
+    elif w > h:
+        result = Image.new(img.mode, (w, w), fill)
+        result.paste(img, (0, (w - h) // 2))
+        return result
+    else:
+        result = Image.new(img.mode, (h, h), fill)
+        result.paste(img, ((h - w) // 2, 0))
+        return result
+
+seg_images = []
+seg_masks = []
+
+for pair in seg_pairs:
+    try:
+        img = Image.open(pair["image_path"]).convert("L")
+        img_padded = pad_to_square_pil(img, fill=0)
+        img_resized = img_padded.resize((256, 256), Image.Resampling.BILINEAR)
+        img_arr = np.array(img_resized, dtype=np.float32) / 255.0
+        
+        if pair["mask_type"] == "montgomery":
+            lm = Image.open(pair["left_mask_path"]).convert("L")
+            rm = Image.open(pair["right_mask_path"]).convert("L")
+            mask = Image.fromarray(np.maximum(np.array(lm), np.array(rm)))
+        else:
+            mask = Image.open(pair["mask_path"]).convert("L")
+            
+        mask_padded = pad_to_square_pil(mask, fill=0)
+        mask_resized = mask_padded.resize((256, 256), Image.Resampling.NEAREST)
+        mask_arr = np.array(mask_resized, dtype=np.float32) / 255.0
+        mask_arr = (mask_arr > 0.5).astype(np.float32)
+        
+        seg_images.append(img_arr[..., np.newaxis])
+        seg_masks.append(mask_arr[..., np.newaxis])
+    except Exception as e:
+        print(f"Skipping pair due to error loading: {pair['image_path']}, Error: {e}")
+
+X_seg = np.array(seg_images)
+y_seg = np.array(seg_masks)
+print("Loaded segmentation data shapes:", X_seg.shape, y_seg.shape)
+
+# 3) Split into train/validation sets and build tf.data pipeline with augmentation
+indices = np.arange(len(X_seg))
+random.seed(SEED); np.random.seed(SEED); tf.random.set_seed(SEED)
+np.random.shuffle(indices)
+
+split_idx = int(0.85 * len(indices))
+train_idx, val_idx = indices[:split_idx], indices[split_idx:]
+
+X_train_seg, y_train_seg = X_seg[train_idx], y_seg[train_idx]
+X_val_seg, y_val_seg = X_seg[val_idx], y_seg[val_idx]
+
+train_seg_ds = tf.data.Dataset.from_tensor_slices((X_train_seg, y_train_seg))
+val_seg_ds = tf.data.Dataset.from_tensor_slices((X_val_seg, y_val_seg))
+
+def augment_seg(image, mask):
+    concat = tf.concat([image, mask], axis=-1)
+    concat = tf.image.random_flip_left_right(concat, seed=SEED)
+    return concat[..., :1], concat[..., 1:]
+
+train_seg_ds = train_seg_ds.shuffle(128).map(augment_seg).batch(16).prefetch(tf.data.AUTOTUNE)
+val_seg_ds = val_seg_ds.batch(16).prefetch(tf.data.AUTOTUNE)
+
+
+# 4) Build U-Net Architecture
+def build_unet(input_shape=(256, 256, 1)):
+    inputs = layers.Input(shape=input_shape)
+    
+    # Contracting path (encoder)
+    c1 = layers.Conv2D(32, (3, 3), activation='relu', padding='same')(inputs)
+    c1 = layers.Conv2D(32, (3, 3), activation='relu', padding='same')(c1)
+    p1 = layers.MaxPooling2D((2, 2))(c1)
+    
+    c2 = layers.Conv2D(64, (3, 3), activation='relu', padding='same')(p1)
+    c2 = layers.Conv2D(64, (3, 3), activation='relu', padding='same')(c2)
+    p2 = layers.MaxPooling2D((2, 2))(c2)
+    
+    c3 = layers.Conv2D(128, (3, 3), activation='relu', padding='same')(p2)
+    c3 = layers.Conv2D(128, (3, 3), activation='relu', padding='same')(c3)
+    p3 = layers.MaxPooling2D((2, 2))(c3)
+    
+    c4 = layers.Conv2D(256, (3, 3), activation='relu', padding='same')(p3)
+    c4 = layers.Conv2D(256, (3, 3), activation='relu', padding='same')(c4)
+    p4 = layers.MaxPooling2D((2, 2))(c4)
+    
+    # Bottleneck
+    c5 = layers.Conv2D(512, (3, 3), activation='relu', padding='same')(p4)
+    c5 = layers.Conv2D(512, (3, 3), activation='relu', padding='same')(c5)
+    
+    # Expanding path (decoder)
+    u6 = layers.Conv2DTranspose(256, (2, 2), strides=(2, 2), padding='same')(c5)
+    u6 = layers.concatenate([u6, c4])
+    c6 = layers.Conv2D(256, (3, 3), activation='relu', padding='same')(u6)
+    c6 = layers.Conv2D(256, (3, 3), activation='relu', padding='same')(c6)
+    
+    u7 = layers.Conv2DTranspose(128, (2, 2), strides=(2, 2), padding='same')(c6)
+    u7 = layers.concatenate([u7, c3])
+    c7 = layers.Conv2D(128, (3, 3), activation='relu', padding='same')(u7)
+    c7 = layers.Conv2D(128, (3, 3), activation='relu', padding='same')(c7)
+    
+    u8 = layers.Conv2DTranspose(64, (2, 2), strides=(2, 2), padding='same')(c7)
+    u8 = layers.concatenate([u8, c2])
+    c8 = layers.Conv2D(64, (3, 3), activation='relu', padding='same')(u8)
+    c8 = layers.Conv2D(64, (3, 3), activation='relu', padding='same')(c8)
+    
+    u9 = layers.Conv2DTranspose(32, (2, 2), strides=(2, 2), padding='same')(c8)
+    u9 = layers.concatenate([u9, c1])
+    c9 = layers.Conv2D(32, (3, 3), activation='relu', padding='same')(u9)
+    c9 = layers.Conv2D(32, (3, 3), activation='relu', padding='same')(c9)
+    
+    outputs = layers.Conv2D(1, (1, 1), activation='sigmoid', dtype='float32')(c9)
+    
+    model = models.Model(inputs=[inputs], outputs=[outputs])
+    return model
+
+def dice_coef(y_true, y_pred):
+    y_true_f = tf.reshape(y_true, [-1])
+    y_pred_f = tf.reshape(y_pred, [-1])
+    intersection = tf.reduce_sum(y_true_f * y_pred_f)
+    return (2. * intersection + 1.0) / (tf.reduce_sum(y_true_f) + tf.reduce_sum(y_pred_f) + 1.0)
+
+def dice_loss(y_true, y_pred):
+    return 1.0 - dice_coef(y_true, y_pred)
+
+def bce_dice_loss(y_true, y_pred):
+    return losses.binary_crossentropy(y_true, y_pred) + dice_loss(y_true, y_pred)
+
+# 5) Compile and train
+unet = build_unet()
+unet.compile(
+    optimizer=optimizers.Adam(1e-4),
+    loss=bce_dice_loss,
+    metrics=[dice_coef, 'accuracy']
+)
+
+callbacks = [
+    tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=5, restore_best_weights=True)
+]
+
+print("Training U-Net Lung Segmenter...")
+history_unet = unet.fit(
+    train_seg_ds,
+    validation_data=val_seg_ds,
+    epochs=20,
+    callbacks=callbacks,
+    verbose=2
+)
+
+# Save U-Net model
+unet.save('/kaggle/working/unet_lung_segmenter.keras')
+print("Saved U-Net model to /kaggle/working/unet_lung_segmenter.keras")
+
+# 6) Visual Verification of U-Net predictions
+import matplotlib.pyplot as plt
+plt.figure(figsize=(10, 6))
+for i in range(min(3, len(val_idx))):
+    idx = val_idx[i]
+    img = X_seg[idx]
+    gt_mask = y_seg[idx]
+    pred_mask = unet.predict(img[np.newaxis, ...], verbose=0)[0]
+    
+    plt.subplot(3, 3, i*3 + 1)
+    plt.imshow(img.squeeze(), cmap='gray')
+    plt.title("Image")
+    plt.axis('off')
+    
+    plt.subplot(3, 3, i*3 + 2)
+    plt.imshow(gt_mask.squeeze(), cmap='gray')
+    plt.title("Ground Truth")
+    plt.axis('off')
+    
+    plt.subplot(3, 3, i*3 + 3)
+    plt.imshow(pred_mask.squeeze(), cmap='gray')
+    plt.title("Predicted Mask")
+    plt.axis('off')
+plt.tight_layout()
+plt.savefig('/kaggle/working/unet_validation_samples.png', dpi=150)
+plt.show()
+```
+
+# ============================================================================
+# CELL 4 — Pre-segment all classification images and save as PNGs
+# ============================================================================
+```python
+import os
+import cv2
+import hashlib
+import numpy as np
+import pydicom
+from PIL import Image
+
+os.makedirs("/kaggle/working/segmented_images", exist_ok=True)
+
+# Helper function to pad numpy array to square (preserves aspect ratio)
+def pad_image_to_square(img_arr, fill_val=0):
+    h, w = img_arr.shape[:2]
+    if h == w:
+        return img_arr
+    elif h < w:
+        pad_top = (w - h) // 2
+        pad_bottom = w - h - pad_top
+        padded = np.pad(img_arr, ((pad_top, pad_bottom), (0, 0)), mode='constant', constant_values=fill_val)
+        return padded
+    else:
+        pad_left = (h - w) // 2
+        pad_right = h - w - pad_left
+        padded = np.pad(img_arr, ((0, 0), (pad_left, pad_right)), mode='constant', constant_values=fill_val)
+        return padded
+
+def pre_segment_image(rec, unet_model):
+    path = rec["path"]
+    is_dicom = rec["is_dicom"]
+    
+    # 1. Read image as grayscale
+    if is_dicom:
+        ds = pydicom.dcmread(path)
+        arr = ds.pixel_array.astype(np.float32)
+        if str(getattr(ds, "PhotometricInterpretation", "")) == "MONOCHROME1":
+            arr = arr.max() - arr
+        arr = arr - arr.min()
+        if arr.max() > 0:
+            arr = arr / arr.max()
+        arr = (arr * 255.0).astype(np.uint8)
+    else:
+        arr = cv2.imread(path, cv2.IMREAD_GRAYSCALE)
+        if arr is None:
+            raise ValueError(f"Failed to read standard image: {path}")
+            
+    # 2. Pad to square
+    padded = pad_image_to_square(arr, fill_val=0)
+    h_pad, w_pad = padded.shape[:2]
+    
+    # 3. Prepare for U-Net (256x256, normalized to [0,1])
+    img_norm = cv2.resize(padded, (256, 256)).astype(np.float32) / 255.0
+    seg_tensor = img_norm[np.newaxis, :, :, np.newaxis] # (1, 256, 256, 1)
+    
+    # 4. Predict mask
+    pred = unet_model.predict(seg_tensor, verbose=0)
+    pred_np = pred[0, :, :, 0] # (256, 256)
+    binary_mask = (pred_np > 0.5).astype(np.uint8)
+    
+    # 5. Scale mask back to the padded image resolution
+    mask_full = cv2.resize(binary_mask, (w_pad, h_pad), interpolation=cv2.INTER_NEAREST)
+    
+    # 6. Apply mask (bitwise AND)
+    masked = cv2.bitwise_and(padded, padded, mask=mask_full)
+    
+    # 7. Resize to classification input size (224x224)
+    final_img = cv2.resize(masked, (224, 224))
+    
+    # 8. Save image as PNG
+    file_id = hashlib.md5(path.encode()).hexdigest()
+    out_path = f"/kaggle/working/segmented_images/{file_id}.png"
+    cv2.imwrite(out_path, final_img)
+    
+    return out_path
+
+# Execute masking loop on the 4 classification datasets
+print("Starting pre-segmentation masking loop on classification datasets...")
+import time
+start_time = time.time()
+success_count = 0
+failed_count = 0
+
+for i, rec in enumerate(records):
+    try:
+        new_path = pre_segment_image(rec, unet)
+        records[i]["path"] = new_path
+        records[i]["is_dicom"] = False # now standard PNG
+        success_count += 1
+    except Exception as ex:
+        print(f"Error segmenting {rec['path']}: {ex}")
+        failed_count += 1
+        # Fallback: pad to square, resize to 224x224, save without U-Net mask
+        try:
+            path = rec["path"]
+            if rec["is_dicom"]:
+                ds = pydicom.dcmread(path)
+                arr = ds.pixel_array.astype(np.float32)
+                if str(getattr(ds, "PhotometricInterpretation", "")) == "MONOCHROME1":
+                    arr = arr.max() - arr
+                arr = arr - arr.min()
+                if arr.max() > 0: arr = arr / arr.max()
+                arr = (arr * 255.0).astype(np.uint8)
+            else:
+                arr = cv2.imread(path, cv2.IMREAD_GRAYSCALE)
+            padded = pad_image_to_square(arr, fill_val=0)
+            final_img = cv2.resize(padded, (224, 224))
+            file_id = hashlib.md5(path.encode()).hexdigest()
+            out_path = f"/kaggle/working/segmented_images/{file_id}.png"
+            cv2.imwrite(out_path, final_img)
+            records[i]["path"] = out_path
+            records[i]["is_dicom"] = False
+            success_count += 1
+        except Exception as ex2:
+            print(f"Fallback failed for {rec['path']}: {ex2}")
+            pass
+
+print(f"Pre-segmentation complete: {success_count} success, {failed_count} fallback/failed.")
+print(f"Time elapsed: {time.time() - start_time:.2f} seconds")
+```
+
+# ============================================================================
+# CELL 5 — Build the master DataFrame + sanity check
+# ============================================================================
+
 ```python
 df = pd.DataFrame(records)
 assert len(df) > 0, "No records found - check PATHS in Cell 1"
@@ -118,7 +547,7 @@ print("\nTotal:", len(df), "| Unlabeled:", df['label'].isna().sum())
 ```
 
 # ============================================================================
-# CELL 4 — Image readers + content-hash deduplication
+# CELL 6 — Image readers + content-hash deduplication
 # ============================================================================
 ```python
 def read_dicom(path):
@@ -155,7 +584,7 @@ print(f"Removed {before-len(df)} duplicate images, {len(df)} remain")
 ```
 
 # ============================================================================
-# CELL 5 — Patient-group-aware 80/10/10 split
+# CELL 7 — Patient-group-aware 80/10/10 split
 # ============================================================================
 ```python
 from sklearn.model_selection import train_test_split
@@ -187,7 +616,7 @@ for nm, fr in [("Train", train_df), ("Val", val_df), ("Test", test_df)]:
 ```
 
 # ============================================================================
-# CELL 6 — tf.data pipelines with augmentation + cache
+# CELL 8 — tf.data pipelines with augmentation + cache
 # ============================================================================
 ```python
 # ── Bug 2 fix: teacher (ResNet50) and student (DenseNet121) need DIFFERENT
@@ -246,7 +675,7 @@ test_ds  = make_ds_densenet(test_df)
 ```
 
 # ============================================================================
-# CELL 7 — Build teacher (ResNet50), class weights, train
+# CELL 9 — Build teacher (ResNet50), class weights, train
 # ============================================================================
 ```python
 from sklearn.utils.class_weight import compute_class_weight
@@ -285,7 +714,8 @@ teacher_history = teacher.fit(train_ds_t, validation_data=val_ds_t, epochs=10,
             class_weight=class_weight,
             callbacks=[tf.keras.callbacks.EarlyStopping(
                 monitor="val_auc", mode="max", patience=3,
-                restore_best_weights=True)])
+                restore_best_weights=True)],
+            verbose=2)
 
 print("\nTeacher test eval:")
 teacher_test_eval_early = teacher.evaluate(test_ds_t)
@@ -293,9 +723,12 @@ teacher_test_eval_early = teacher.evaluate(test_ds_t)
 teacher.save("/kaggle/working/teacher_resnet50.keras")
 print("Teacher checkpoint saved to /kaggle/working/teacher_resnet50.keras")
 
+```
+
 # ============================================================================
-# CELL 8 — Knowledge Distillation: Distiller class + student (DenseNet121)
+# CELL 10 — Knowledge Distillation: Distiller class + student (DenseNet121)
 # ============================================================================
+```python
 class Distiller(models.Model):
     def __init__(self, student, teacher, alpha=0.5, T=3.0):
         super().__init__()
@@ -350,16 +783,20 @@ distiller.compile(optimizer=optimizers.Adam(1e-4))
 history = distiller.fit(train_ds, validation_data=val_ds, epochs=15,
                         callbacks=[tf.keras.callbacks.EarlyStopping(
                             monitor="val_auc", mode="max", patience=4,
-                            restore_best_weights=True)])
+                            restore_best_weights=True)],
+                        verbose=2)
 
 student.save("/kaggle/working/tb_student_densenet121.keras")
 with open("/kaggle/working/best_threshold.txt", "w") as f:
     f.write("0.5")
 print("Student checkpoint + placeholder threshold saved to /kaggle/working/")
 
+```
+
 # ============================================================================
-# CELL 9 — Threshold tuning on validation, then test-set evaluation
+# CELL 11 — Threshold tuning on validation, then test-set evaluation
 # ============================================================================
+```python
 from sklearn.metrics import (classification_report, roc_auc_score,
                              confusion_matrix, f1_score, roc_curve, precision_recall_curve)
 
@@ -389,9 +826,12 @@ print("\nAt default 0.5 threshold:")
 print(classification_report(test_y, (test_p > 0.5).astype(int),
                             target_names=["Normal", "TB"], digits=3))
 
+```
+
 # ============================================================================
-# CELL 10 — Plot functions
+# CELL 12 — Plot functions
 # ============================================================================
+```python
 def _save_and_show(save_path, dpi=300):
     plt.savefig(save_path, dpi=dpi, bbox_inches='tight')
     try:
@@ -490,8 +930,14 @@ def generate_gradcam_overlay(model, img_arr, last_conv_layer_name=None):
     img_restore = img_restore * _dn_std + _dn_mean  # undo normalisation
     img_restore = np.clip(img_restore * 255.0, 0, 255).astype(np.uint8)
 
-    alpha = 0.4
-    blended = cv2.addWeighted(img_restore, 1.0 - alpha, color_heatmap_rgb, alpha, 0)
+    # Pixel-wise alpha blending: heatmap only shows where activations are strong.
+    # Avoids the dark-blue JET colormap flooding low-activation background regions.
+    max_alpha = 0.6
+    alpha_map = cam_resized * max_alpha          # shape (224, 224), range [0, max_alpha]
+    alpha_3ch = np.stack([alpha_map, alpha_map, alpha_map], axis=-1).astype(np.float32)
+    orig_f = img_restore.astype(np.float32)
+    heat_f = color_heatmap_rgb.astype(np.float32)
+    blended = np.clip(orig_f * (1.0 - alpha_3ch) + heat_f * alpha_3ch, 0, 255).astype(np.uint8)
     return blended
 
 def list_saved_plots():
@@ -899,18 +1345,15 @@ def measure_deployment_performance(teacher, student, sample_batch,
 ```
 
 # ============================================================================
-# CELL 11 — Run diagnostics + save model & threshold
+# CELL 13 — Run all 10 deliverables: diagnostics + plots + tables + metrics
 # ============================================================================
 ```python
-# ============================================================================
-# CELL 11 — Run all 10 deliverables: diagnostics + plots + tables + metrics
-# ============================================================================
 print("\nGenerating all 10 deliverables...")
 os.makedirs("/kaggle/working", exist_ok=True)
 
 # --- 1. Training/Validation Loss + AUC + Accuracy curves ---
-# Bug 3 fix: plot_training_curves was not defined at Cell 7 run time, so
-# teacher curves were never actually saved. We plot both here in Cell 11.
+# Bug 3 fix: plot_training_curves was not defined at Cell 9 run time, so
+# teacher curves were never actually saved. We plot both here in Cell 13.
 print("  1a. Plotting teacher training curves...")
 plot_training_curves(teacher_history)   # saves training_curves.png (teacher)
 

@@ -228,17 +228,17 @@ def init_db():
             tech_hash = generate_password_hash("password123")
             
             conn.execute("""
-                INSERT OR REPLACE INTO users (username, password_hash, role, institution_id, created_at)
+                INSERT OR IGNORE INTO users (username, password_hash, role, institution_id, created_at)
                 VALUES (?, ?, ?, ?, ?)
             """, ("admin", admin_hash, "admin", 1, now_iso))
 
             conn.execute("""
-                INSERT OR REPLACE INTO users (username, password_hash, role, institution_id, created_at)
+                INSERT OR IGNORE INTO users (username, password_hash, role, institution_id, created_at)
                 VALUES (?, ?, ?, ?, ?)
             """, ("reviewer", reviewer_hash, "radiologist", 1, now_iso))
 
             conn.execute("""
-                INSERT OR REPLACE INTO users (username, password_hash, role, institution_id, created_at)
+                INSERT OR IGNORE INTO users (username, password_hash, role, institution_id, created_at)
                 VALUES (?, ?, ?, ?, ?)
             """, ("technician", tech_hash, "technician", 1, now_iso))
 
