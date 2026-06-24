@@ -18,6 +18,8 @@ DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 IMAGENET_MEAN = np.array([0.485, 0.456, 0.406], dtype=np.float32)
 IMAGENET_STD = np.array([0.229, 0.224, 0.225], dtype=np.float32)
 IMG_SIZE = 224
+SEG_SIZE = 256  # U-Net lung segmenter input resolution
+UNET_MODEL_PATH = os.path.join(BASE_DIR, "unet_lung_segmenter.keras")
 
 def pad_to_square(img: Image.Image, fill=0) -> Image.Image:
     w, h = img.size
@@ -46,9 +48,13 @@ def crop_to_original(padded_img: Image.Image, original_size) -> Image.Image:
         right = left + w_orig
         return padded_img.crop((left, 0, right, h_orig))
 
-# Lazy load model with thread safety
+# Lazy load classifier model with thread safety
 _model = None
 _model_lock = threading.Lock()
+
+# Lazy load U-Net segmenter with thread safety
+_unet = None
+_unet_lock = threading.Lock()
 
 def get_model():
     global _model, OPTIMAL_THRESHOLD
@@ -101,6 +107,80 @@ def get_model():
                 else:
                     print(f"WARNING: {MODEL_PATH} not found in the backend folder. Predictions will fail until it is added.")
     return _model
+
+def get_unet():
+    """Lazily load the U-Net lung segmenter. Returns None if the model file
+    has not yet been deployed — the inference pipeline falls back gracefully."""
+    global _unet, _unet_lock
+    if _unet is not None:
+        return _unet
+    if not os.path.exists(UNET_MODEL_PATH):
+        return None
+    with _unet_lock:
+        if _unet is None:
+            try:
+                _unet = keras.saving.load_model(UNET_MODEL_PATH)
+                print(f"U-Net lung segmenter loaded from {UNET_MODEL_PATH}")
+                # Warm-up pass
+                try:
+                    dummy = torch.zeros(1, SEG_SIZE, SEG_SIZE, 1).to(DEVICE)
+                    _ = _unet(dummy)
+                    print("U-Net warm-up pass completed \u2713")
+                except Exception as wu_err:
+                    print(f"U-Net warm-up warning: {wu_err}")
+            except Exception as load_err:
+                print(f"Failed to load U-Net segmenter: {load_err}")
+    return _unet
+
+def segment_lungs(gray_arr: np.ndarray) -> np.ndarray:
+    """Run U-Net lung segmentation on a grayscale padded image array.
+
+    Blacks out everything outside the lung fields (clavicles, arms, stomach,
+    text annotation markers) so the DenseNet-121 classifier only evaluates
+    lung parenchyma.
+
+    Args:
+        gray_arr: float32 numpy array of shape (H, W), values in [0, 255].
+
+    Returns:
+        float32 array of shape (IMG_SIZE, IMG_SIZE) — the masked and resized
+        image ready for channel stacking and preprocessing.
+        Falls back to a plain resize if the U-Net model is not available.
+    """
+    unet = get_unet()
+    if unet is None:
+        # No segmenter deployed yet — plain resize to preserve existing behaviour
+        return cv2.resize(gray_arr, (IMG_SIZE, IMG_SIZE)).astype(np.float32)
+
+    h_orig, w_orig = gray_arr.shape[:2]
+
+    # Normalise to [0, 1] and batch for U-Net input (N, H, W, C)
+    img_norm = cv2.resize(gray_arr, (SEG_SIZE, SEG_SIZE)).astype(np.float32) / 255.0
+    seg_tensor = torch.tensor(
+        img_norm[np.newaxis, :, :, np.newaxis],  # (1, SEG_SIZE, SEG_SIZE, 1)
+        dtype=torch.float32, device=DEVICE
+    )
+
+    with torch.no_grad():
+        pred = unet(seg_tensor)  # (1, SEG_SIZE, SEG_SIZE, 1)
+
+    pred_np = (
+        pred.detach().cpu().numpy()
+        if hasattr(pred, "detach")
+        else np.array(pred)
+    )[0, :, :, 0]  # (SEG_SIZE, SEG_SIZE)
+
+    binary_mask = (pred_np > 0.5).astype(np.uint8)
+
+    # Scale mask back to the padded image resolution
+    mask_full = cv2.resize(binary_mask, (w_orig, h_orig), interpolation=cv2.INTER_NEAREST)
+
+    # Zero out non-lung pixels
+    gray_uint8 = np.clip(gray_arr, 0, 255).astype(np.uint8)
+    masked = cv2.bitwise_and(gray_uint8, gray_uint8, mask=mask_full)
+
+    # Resize to classifier input size
+    return cv2.resize(masked, (IMG_SIZE, IMG_SIZE)).astype(np.float32)
 
 def _generate_density_heatmap(original_img: Image.Image, is_tb: bool) -> Image.Image:
     # FALLBACK: Create a beautiful simulated clinical heatmap targeting density / consolidating features
@@ -662,52 +742,48 @@ def predict_image(img: Image.Image, prior_image_b64: str = None):
         
     # ── Preprocessing ─────────────────────────────────────────────────────────
     #
-    # BUG NOTICE (Bug 2 — training-time, cannot be fixed without retraining):
+    # Preprocessing pipeline auto-selects based on which model generation is
+    # deployed (detected by whether unet_lung_segmenter.keras is present):
     #
-    # The deployed model (tb_student_densenet121.keras) was trained with the
-    # data pipeline in __notebook_source__.ipynb, which calls:
+    # ┌─────────────────────────────────────────────────────────────────────────┐
+    # │ Generation 1 — no U-Net (current live model)                            │
+    # │   Training bug: resnet50.preprocess_input applied to DenseNet student.  │
+    # │   Inference must match → ResNet50/caffe mode (BGR mean subtraction).    │
+    # ├─────────────────────────────────────────────────────────────────────────┤
+    # │ Generation 2 — with U-Net (retrained on segmented lung fields)          │
+    # │   Training used densenet.preprocess_input (correct torch mode).         │
+    # │   Inference → DenseNet/torch mode (÷255, subtract mean, ÷ std).         │
+    # └─────────────────────────────────────────────────────────────────────────┘
     #
-    #     tf.keras.applications.resnet50.preprocess_input(img)   ← applied to DenseNet!
-    #
-    # ResNet50 preprocessing (mode='caffe'):
-    #   1. Reverses RGB → BGR channel order
-    #   2. Subtracts fixed ImageNet means [103.939, 116.779, 123.68] (no /255, no std)
-    #   Output range: roughly −123 to +152
-    #
-    # DenseNet121's CORRECT preprocessing (mode='torch') would be:
-    #   1. Divide by 255  →  [0, 1]
-    #   2. Subtract mean [0.485, 0.456, 0.406], divide by std [0.229, 0.224, 0.225]
-    #   Output range: roughly −2.1 to +2.6
-    #
-    # Since the model adapted to ResNet preprocessing during training (BatchNorm
-    # partially re-calibrated), inference MUST match training exactly — applying
-    # correct DenseNet preprocessing here would break the deployed model entirely.
-    #
-    # TO FIX PROPERLY: retrain the student using `densenet.preprocess_input` in
-    # make_ds(), then flip INFERENCE_USES_RESNET_PREPROCESSING to False below.
-    # The notebook fix is already committed in __notebook_source__.ipynb.
-    #
-    INFERENCE_USES_RESNET_PREPROCESSING = True  # ← set False after retraining
+    # To activate Generation 2: drop unet_lung_segmenter.keras into backend/
+    # alongside the retrained tb_student_densenet121.keras. No code changes needed.
 
     padded_img = pad_to_square(img).convert('L')
-    resized_img = padded_img.resize((224, 224), Image.BILINEAR)
-    arr = np.array(resized_img, dtype=np.float32)
-    # Stack 3 times to create R=G=B channels (grayscale X-ray, degenerate RGB)
-    x = np.stack([arr, arr, arr], axis=-1)  # shape: (224, 224, 3)
+    gray_arr = np.array(padded_img, dtype=np.float32)
 
-    if INFERENCE_USES_RESNET_PREPROCESSING:
-        # ResNet50 mode='caffe': BGR mean subtraction, no division, no std
-        # This matches what resnet50.preprocess_input() applies in the notebook
-        x[..., 0] -= 103.939  # B channel mean
-        x[..., 1] -= 116.779  # G channel mean
-        x[..., 2] -= 123.680  # R channel mean
-    else:
-        # DenseNet121 CORRECT preprocessing (mode='torch') — use after retraining
+    # ── U-Net Lung Segmentation ───────────────────────────────────────────────
+    # Masks out clavicles, arms, stomach and text markers so the classifier
+    # only evaluates lung parenchyma. Falls back to plain resize when the
+    # U-Net model file has not yet been deployed.
+    unet_active = get_unet() is not None
+    arr = segment_lungs(gray_arr)  # (IMG_SIZE, IMG_SIZE) float32
+
+    # Stack grayscale channel 3× to produce degenerate RGB for ImageNet backbone
+    x = np.stack([arr, arr, arr], axis=-1)  # (224, 224, 3)
+
+    if unet_active:
+        # Generation 2 — DenseNet correct preprocessing (mode='torch')
         # Matches tf.keras.applications.densenet.preprocess_input()
         x /= 255.0
         x[..., 0] = (x[..., 0] - 0.485) / 0.229
         x[..., 1] = (x[..., 1] - 0.456) / 0.224
         x[..., 2] = (x[..., 2] - 0.406) / 0.225
+    else:
+        # Generation 1 — ResNet50/caffe preprocessing (matches training bug)
+        # BGR mean subtraction, no division, no std normalisation
+        x[..., 0] -= 103.939  # B channel mean
+        x[..., 1] -= 116.779  # G channel mean
+        x[..., 2] -= 123.680  # R channel mean
 
     tensor = torch.tensor(x).unsqueeze(0).to(DEVICE)  # shape: (1, 224, 224, 3) NHWC
     
@@ -747,6 +823,7 @@ def predict_image(img: Image.Image, prior_image_b64: str = None):
         "threshold_used": OPTIMAL_THRESHOLD,
         "is_tb": bool(is_tb),
         "demo_mode": False,
+        "segmentation_active": unet_active,
         "saliency_fallback": any_fallback,
         "heatmaps": heatmaps_b64,
         "xai_results": xai_payload
