@@ -119,7 +119,7 @@ def get_unet():
     with _unet_lock:
         if _unet is None:
             try:
-                _unet = keras.saving.load_model(UNET_MODEL_PATH)
+                _unet = keras.saving.load_model(UNET_MODEL_PATH, compile=False)
                 print(f"U-Net lung segmenter loaded from {UNET_MODEL_PATH}")
                 # Warm-up pass
                 try:
