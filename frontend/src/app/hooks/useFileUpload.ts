@@ -7,6 +7,7 @@ export interface AnalysisResult {
   confidence?: number;
   is_tb?: boolean;
   threshold_used?: number;
+  segmentation_active?: boolean;
   metadata?: {
     patient_id?: string;
     patient_name?: string;
@@ -69,6 +70,19 @@ export interface AnalysisResult {
       reliability: string;
       uncertainty: string;
     };
+  };
+  quadrant_analysis?: {
+    quadrant_scores: {
+      upper_left: number;
+      upper_right: number;
+      lower_left: number;
+      lower_right: number;
+    };
+    upper_fraction: number;
+    lower_fraction: number;
+    dominant_zone: "upper" | "lower" | "mixed";
+    interpretation: string;
+    disease_overlap: string[];
   };
 }
 

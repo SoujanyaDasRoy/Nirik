@@ -682,6 +682,71 @@ def get_mock_xai_payload(img_size: tuple, is_tb: bool, prob: float, quality_scor
 
 # ── Main Prediction Flow ─────────────────────────────────────
 
+def compute_quadrant_analysis(raw_map_np: np.ndarray, unet_mask_np: np.ndarray = None) -> dict:
+    """
+    Divides the heatmap into 4 quadrants and computes activation fractions.
+    Returns quadrant scores + clinical interpretation.
+    """
+    H, W = raw_map_np.shape
+    # Apply U-Net mask if available (Gen 2)
+    if unet_mask_np is not None:
+        try:
+            mask_resized = cv2.resize(unet_mask_np, (W, H))
+            heatmap = raw_map_np * (mask_resized > 0.5).astype(np.float32)
+        except Exception:
+            heatmap = raw_map_np
+    else:
+        heatmap = raw_map_np
+    
+    # Split into 4 quadrants
+    upper_left  = heatmap[:H//2, :W//2]
+    upper_right = heatmap[:H//2, W//2:]
+    lower_left  = heatmap[H//2:, :W//2]
+    lower_right = heatmap[H//2:, W//2:]
+    
+    total = heatmap.sum()
+    if total < 1e-5:
+        # Default flat score if no activation exists
+        scores = {
+            "upper_left":  0.25,
+            "upper_right": 0.25,
+            "lower_left":  0.25,
+            "lower_right": 0.25,
+        }
+    else:
+        scores = {
+            "upper_left":  float(upper_left.sum() / total),
+            "upper_right": float(upper_right.sum() / total),
+            "lower_left":  float(lower_left.sum() / total),
+            "lower_right": float(lower_right.sum() / total),
+        }
+    
+    upper_frac = scores["upper_left"] + scores["upper_right"]
+    lower_frac = scores["lower_left"] + scores["lower_right"]
+    
+    # Clinical interpretation
+    if upper_frac >= 0.55:
+        zone = "upper"
+        interpretation = "Anomalies concentrated in upper lung zones — pattern highly consistent with active pulmonary Tuberculosis (typical apical/posterior lobe involvement)."
+        disease_overlap = ["Tuberculosis", "Aspergillosis", "Apical Silicosis"]
+    elif lower_frac >= 0.55:
+        zone = "lower"
+        interpretation = "Anomalies concentrated in lower lung zones — clinical pattern typical for bacterial/viral pneumonia, COVID-19, or pulmonary edema rather than primary TB."
+        disease_overlap = ["Bacterial Pneumonia", "COVID-19", "Pulmonary Edema", "Bronchiectasis"]
+    else:
+        zone = "mixed"
+        interpretation = "Anomalies distributed across multiple zones — findings are non-specific. Differential includes miliary TB, sarcoidosis, or systemic fungal infections."
+        disease_overlap = ["Tuberculosis (Miliary/Disseminated)", "Sarcoidosis", "Fungal Infection", "Lymphoma"]
+    
+    return {
+        "quadrant_scores": {k: round(v * 100, 1) for k, v in scores.items()},
+        "upper_fraction": round(upper_frac * 100, 1),
+        "lower_fraction": round(lower_frac * 100, 1),
+        "dominant_zone": zone,
+        "interpretation": interpretation,
+        "disease_overlap": disease_overlap
+    }
+
 def predict_image(img: Image.Image, prior_image_b64: str = None):
     model = get_model()
     # Import image_to_base64 here
@@ -707,6 +772,20 @@ def predict_image(img: Image.Image, prior_image_b64: str = None):
         gradcam_plusplus_img, _ = generate_saliency_heatmap(None, None, padded_img, is_tb, method="gradcam_plusplus")
         gradcam_plusplus_cropped = crop_to_original(gradcam_plusplus_img, img.size)
         
+        # Generate mock raw heatmap for demo mode quadrant analysis
+        w, h = img.size
+        mock_raw = np.zeros((h, w), dtype=np.float32)
+        if is_tb:
+            # Concentrated mostly in upper-right lobe (TB consistent)
+            cv2.circle(mock_raw, (int(w * 0.35), int(h * 0.30)), int(min(w, h) * 0.2), 1.0, -1)
+            cv2.circle(mock_raw, (int(w * 0.65), int(h * 0.35)), int(min(w, h) * 0.12), 0.5, -1)
+        else:
+            # Random/lower concentration
+            cv2.circle(mock_raw, (int(w * 0.5), int(h * 0.7)), int(min(w, h) * 0.25), 0.6, -1)
+        mock_raw = cv2.GaussianBlur(mock_raw, (45, 45), 0)
+        norm_mock_raw = (mock_raw - mock_raw.min()) / (mock_raw.max() - mock_raw.min() + 1e-8)
+        quadrant_analysis = compute_quadrant_analysis(norm_mock_raw)
+        
         xai_payload = get_mock_xai_payload(img.size, is_tb, prob)
         
         result_dict = {
@@ -715,9 +794,11 @@ def predict_image(img: Image.Image, prior_image_b64: str = None):
             "threshold_used": OPTIMAL_THRESHOLD,
             "is_tb": bool(is_tb),
             "demo_mode": True,
+            "segmentation_active": False,
             "saliency_fallback": False,
             "heatmaps": heatmaps_b64,
-            "xai_results": xai_payload
+            "xai_results": xai_payload,
+            "quadrant_analysis": quadrant_analysis
         }
         
         if prior_image_b64:
@@ -813,6 +894,26 @@ def predict_image(img: Image.Image, prior_image_b64: str = None):
     raw_map_cropped = crop_to_original(Image.fromarray((raw_map * 255).astype(np.uint8)), img.size)
     raw_map_np = np.array(raw_map_cropped, dtype=np.float32) / 255.0
     
+    # Fetch actual U-Net lung mask resized to match raw_map_np size for exact overlapping if active
+    unet_mask = None
+    if unet_active:
+        try:
+            # Recompute or extract mask_full at original size
+            unet = get_unet()
+            h_orig, w_orig = gray_arr.shape[:2]
+            img_norm = cv2.resize(gray_arr, (SEG_SIZE, SEG_SIZE)).astype(np.float32) / 255.0
+            seg_tensor = torch.tensor(img_norm[np.newaxis, :, :, np.newaxis], dtype=torch.float32, device=DEVICE)
+            with torch.no_grad():
+                pred = unet(seg_tensor)
+            pred_np = (pred.detach().cpu().numpy() if hasattr(pred, "detach") else np.array(pred))[0, :, :, 0]
+            binary_mask = (pred_np > 0.5).astype(np.float32)
+            # Resize binary mask to original image size
+            unet_mask = cv2.resize(binary_mask, img.size, interpolation=cv2.INTER_NEAREST)
+        except Exception:
+            pass
+            
+    quadrant_analysis = compute_quadrant_analysis(raw_map_np, unet_mask)
+    
     xai_payload = compute_xai_payload(is_tb, prob, raw_map_np)
     if is_fb:
         any_fallback = True
@@ -826,7 +927,8 @@ def predict_image(img: Image.Image, prior_image_b64: str = None):
         "segmentation_active": unet_active,
         "saliency_fallback": any_fallback,
         "heatmaps": heatmaps_b64,
-        "xai_results": xai_payload
+        "xai_results": xai_payload,
+        "quadrant_analysis": quadrant_analysis
     }
     
     if prior_image_b64:

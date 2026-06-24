@@ -447,6 +447,97 @@ export default function XaiVisualization({
               </div>
             </div>
 
+            {/* Panel 2.5: Anatomical Quadrant Analysis */}
+            {result.quadrant_analysis && (
+              <div className="bg-card/40 backdrop-blur-xl border border-border/50 rounded-3xl p-6 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-teal-500/10 rounded-full blur-[50px] -mr-10 -mt-10 pointer-events-none"></div>
+                
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2">
+                    <Layers className="w-4 h-4 text-teal-400" /> Quadrant Analysis
+                  </h3>
+                  <Badge 
+                    className={`border-none font-mono text-[10px] px-2.5 py-0.5 rounded-full ${
+                      result.quadrant_analysis.dominant_zone === "upper"
+                        ? "bg-rose-500/20 text-rose-400"
+                        : result.quadrant_analysis.dominant_zone === "lower"
+                        ? "bg-blue-500/20 text-blue-400"
+                        : "bg-amber-500/20 text-amber-400"
+                    }`}
+                  >
+                    {result.quadrant_analysis.dominant_zone === "upper" && "Apical/Upper Predominance (TB Sign)"}
+                    {result.quadrant_analysis.dominant_zone === "lower" && "Basilar/Lower Predominance"}
+                    {result.quadrant_analysis.dominant_zone === "mixed" && "Diffuse/Mixed Zones"}
+                  </Badge>
+                </div>
+
+                {/* 2x2 Grid Representation of Chest Quadrants */}
+                <div className="grid grid-cols-2 gap-2 mb-4">
+                  {[
+                    { key: "upper_left", label: "Upper Left" },
+                    { key: "upper_right", label: "Upper Right" },
+                    { key: "lower_left", label: "Lower Left" },
+                    { key: "lower_right", label: "Lower Right" }
+                  ].map(quad => {
+                    const val = (result.quadrant_analysis?.quadrant_scores as any)[quad.key] || 0;
+                    return (
+                      <div 
+                        key={quad.key} 
+                        className="bg-background/60 border border-border/40 rounded-xl p-3 flex flex-col justify-between relative overflow-hidden group hover:border-teal-500/30 transition-all duration-300"
+                      >
+                        <div 
+                          className="absolute inset-0 bg-teal-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
+                          style={{
+                            backgroundColor: val > 40 ? "rgba(239, 68, 68, 0.05)" : "rgba(20, 184, 166, 0.05)"
+                          }}
+                        ></div>
+                        <span className="text-[9px] text-muted-foreground font-semibold uppercase tracking-wider">{quad.label}</span>
+                        <div className="flex items-baseline gap-1 mt-1">
+                          <span className={`text-lg font-extrabold font-mono tracking-tighter ${val > 40 ? "text-rose-400" : "text-teal-400"}`}>
+                            {val}%
+                          </span>
+                          <span className="text-[9px] text-muted-foreground uppercase font-bold">activation</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Overlap fractions summary */}
+                <div className="flex justify-between items-center text-[10px] text-muted-foreground bg-background/30 rounded-xl p-2.5 border border-border/30 mb-4">
+                  <div>
+                    Upper Zone: <span className="font-bold text-foreground font-mono">{result.quadrant_analysis.upper_fraction}%</span>
+                  </div>
+                  <div className="h-3 w-px bg-border/60"></div>
+                  <div>
+                    Lower Zone: <span className="font-bold text-foreground font-mono">{result.quadrant_analysis.lower_fraction}%</span>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <div className="text-xs leading-relaxed text-foreground/90 p-3 bg-muted/30 border border-border/40 rounded-xl">
+                    <span className="font-semibold text-[10px] uppercase text-teal-400 block mb-1">Clinical Insight</span>
+                    {result.quadrant_analysis.interpretation}
+                  </div>
+
+                  <div>
+                    <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest block mb-2">Differential Guidance</span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {result.quadrant_analysis.disease_overlap.map((disease, i) => (
+                        <Badge 
+                          key={i} 
+                          variant="outline" 
+                          className="text-[10px] py-0.5 px-2 font-medium bg-background/50 border-border/80 text-foreground hover:bg-muted transition-colors"
+                        >
+                          {disease}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Panel 3: Medical Report Block */}
             <div className="bg-card/40 backdrop-blur-xl border border-border/50 rounded-3xl p-6 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] relative overflow-hidden">
               <div className="absolute top-0 right-0 w-1 bg-gradient-to-b from-primary to-accent h-full opacity-50"></div>
