@@ -9,6 +9,7 @@ import logging
 from datetime import datetime, timezone
 from contextlib import closing
 from werkzeug.security import generate_password_hash, check_password_hash
+import numpy as np
 
 if os.environ.get("DESKTOP_APP") == "true":
     if os.name == "nt":
