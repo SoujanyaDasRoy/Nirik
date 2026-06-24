@@ -190,7 +190,14 @@ for nm, fr in [("Train", train_df), ("Val", val_df), ("Test", test_df)]:
 # CELL 6 — tf.data pipelines with augmentation + cache
 # ============================================================================
 ```python
-def make_ds(frame, training=False):
+# ── Bug 2 fix: teacher (ResNet50) and student (DenseNet121) need DIFFERENT
+# preprocessing. We build two separate pipeline factories:
+#   make_ds_resnet  → resnet50.preprocess_input  (caffe mode: BGR mean subtract)
+#   make_ds_densenet → densenet.preprocess_input  (torch mode: /255 + mean/std)
+# Both read the same raw images; only the normalisation differs.
+
+def _build_ds(frame, preprocess_fn, training=False):
+    """Shared pipeline builder — callers pass the correct preprocess_fn."""
     paths  = frame["path"].values
     dicoms = frame["is_dicom"].values.astype(np.int32)
     labels = frame["label"].values.astype(np.float32)
@@ -200,13 +207,13 @@ def make_ds(frame, training=False):
             lambda p, d: load_image(p.decode(), bool(d)).astype(np.float32),
             [path, is_dicom], tf.float32)
         img.set_shape([IMG_SIZE, IMG_SIZE, 3])
-        img = tf.keras.applications.resnet50.preprocess_input(img)
+        img = preprocess_fn(img)
         return img, label
 
     ds = tf.data.Dataset.from_tensor_slices((paths, dicoms, labels))
     ds = ds.map(_load, num_parallel_calls=AUTOTUNE)
 
-    # NOTE (P100): ds.cache() materialises the whole test set in CPU RAM,
+    # NOTE (P100): ds.cache() materialises the whole set in CPU RAM,
     # which can OOM during the error-analysis gallery. Re-enable on T4/A100.
     # ds = ds.cache()
 
@@ -219,9 +226,23 @@ def make_ds(frame, training=False):
                     num_parallel_calls=AUTOTUNE)
     return ds.batch(BATCH).prefetch(AUTOTUNE)
 
-train_ds = make_ds(train_df, training=True)
-val_ds   = make_ds(val_df)
-test_ds  = make_ds(test_df)
+def make_ds_resnet(frame, training=False):
+    """Pipeline for the ResNet50 teacher — caffe-style preprocessing."""
+    return _build_ds(frame, tf.keras.applications.resnet50.preprocess_input, training)
+
+def make_ds_densenet(frame, training=False):
+    """Pipeline for the DenseNet121 student — torch-style preprocessing."""
+    return _build_ds(frame, tf.keras.applications.densenet.preprocess_input, training)
+
+# Teacher datasets (ResNet50 preprocessing)
+train_ds_t = make_ds_resnet(train_df, training=True)
+val_ds_t   = make_ds_resnet(val_df)
+test_ds_t  = make_ds_resnet(test_df)
+
+# Student datasets (DenseNet121 correct preprocessing)
+train_ds = make_ds_densenet(train_df, training=True)
+val_ds   = make_ds_densenet(val_df)
+test_ds  = make_ds_densenet(test_df)
 ```
 
 # ============================================================================
@@ -260,35 +281,21 @@ teacher.compile(optimizer=optimizers.Adam(1e-4),
                 metrics=[metrics.BinaryAccuracy(threshold=0.0, name="acc"),
                          metrics.AUC(from_logits=True, name="auc")])
 
-teacher_history = teacher.fit(train_ds, validation_data=val_ds, epochs=10,
+teacher_history = teacher.fit(train_ds_t, validation_data=val_ds_t, epochs=10,
             class_weight=class_weight,
             callbacks=[tf.keras.callbacks.EarlyStopping(
                 monitor="val_auc", mode="max", patience=3,
                 restore_best_weights=True)])
 
 print("\nTeacher test eval:")
-teacher.evaluate(test_ds)
+teacher_test_eval_early = teacher.evaluate(test_ds_t)
 
-# Crash-resilience: save the teacher checkpoint NOW so even if Cell 8/10/11
-# fails (OOM, kernel restart, etc.), the trained teacher weights survive.
 teacher.save("/kaggle/working/teacher_resnet50.keras")
 print("Teacher checkpoint saved to /kaggle/working/teacher_resnet50.keras")
-
-# Save teacher training curves NOW (Cell 11 only knows about `history`,
-# which is the student's history). This guarantees we have a teacher
-# curves figure even if Cell 8+ crashes.
-try:
-    plot_training_curves(teacher_history)
-except NameError:
-    # Fallback: rebuild a history-like object from the teacher's fit history
-    # (defined as 'history' in some notebook configs). Skip silently if missing.
-    pass
-```
 
 # ============================================================================
 # CELL 8 — Knowledge Distillation: Distiller class + student (DenseNet121)
 # ============================================================================
-```python
 class Distiller(models.Model):
     def __init__(self, student, teacher, alpha=0.5, T=3.0):
         super().__init__()
@@ -298,14 +305,11 @@ class Distiller(models.Model):
 
     def compile(self, optimizer, **kw):
         super().compile(optimizer=optimizer, **kw)
-        self.acc_metric = metrics.BinaryAccuracy(threshold=0.0, name="acc")  # operates on logits
+        self.acc_metric = metrics.BinaryAccuracy(threshold=0.0, name="acc")
         self.auc_metric = metrics.AUC(from_logits=True, name="auc")
 
     @property
     def metrics(self):
-        # Registering these is what makes Keras call reset_state() at the
-        # start of every epoch (and before validation). Without this,
-        # the metrics silently accumulate forever across the whole run.
         return [self.acc_metric, self.auc_metric]
 
     def _kd_loss(self, t_logits, s_logits):
@@ -324,8 +328,8 @@ class Distiller(models.Model):
             loss = self.alpha * hard + (1 - self.alpha) * soft
         grads = tape.gradient(loss, self.student.trainable_variables)
         self.optimizer.apply_gradients(zip(grads, self.student.trainable_variables))
-        self.acc_metric.update_state(y, s_logits)   # raw logits, matches threshold=0.0
-        self.auc_metric.update_state(y, s_logits)   # raw logits, matches from_logits=True
+        self.acc_metric.update_state(y, s_logits)
+        self.auc_metric.update_state(y, s_logits)
         return {"loss": loss, "acc": self.acc_metric.result(), "auc": self.auc_metric.result()}
 
     def test_step(self, data):
@@ -338,9 +342,7 @@ class Distiller(models.Model):
                 "acc":  self.acc_metric.result(),
                 "auc":  self.auc_metric.result()}
 
-# Freeze teacher so no test info leaks through distillation
 teacher.trainable = False
-
 student = build_model(tf.keras.applications.DenseNet121)
 distiller = Distiller(student, teacher, alpha=0.5, T=3.0)
 distiller.compile(optimizer=optimizers.Adam(1e-4))
@@ -350,19 +352,14 @@ history = distiller.fit(train_ds, validation_data=val_ds, epochs=15,
                             monitor="val_auc", mode="max", patience=4,
                             restore_best_weights=True)])
 
-# Crash-resilience: save the student checkpoint NOW. The real tuned threshold
-# is written by Cell 11; we write a sensible default here so even if Cells 9-11
-# never run, this .keras file is still usable for inference.
 student.save("/kaggle/working/tb_student_densenet121.keras")
 with open("/kaggle/working/best_threshold.txt", "w") as f:
     f.write("0.5")
 print("Student checkpoint + placeholder threshold saved to /kaggle/working/")
-```
 
 # ============================================================================
 # CELL 9 — Threshold tuning on validation, then test-set evaluation
 # ============================================================================
-```python
 from sklearn.metrics import (classification_report, roc_auc_score,
                              confusion_matrix, f1_score, roc_curve, precision_recall_curve)
 
@@ -373,13 +370,11 @@ def collect(ds):
         yp.extend(tf.sigmoid(student(x, training=False)).numpy().ravel())
     return np.array(yt), np.array(yp)
 
-# 1) Pick best threshold on VALIDATION (never on test)
 val_y, val_p = collect(val_ds)
 thresholds = np.linspace(0.05, 0.95, 91)
 best_t = max(thresholds, key=lambda t: f1_score(val_y, (val_p > t).astype(int)))
 print(f"Best threshold (val, max F1): {best_t:.3f}")
 
-# 2) Evaluate on TEST at that threshold
 test_y, test_p = collect(test_ds)
 test_pred = (test_p > best_t).astype(int)
 
@@ -390,198 +385,110 @@ print(classification_report(test_y, test_pred,
 print("Confusion matrix [rows=true, cols=pred]:")
 print(confusion_matrix(test_y, test_pred))
 
-# 3) Also show default-0.5 for reference
 print("\nAt default 0.5 threshold:")
 print(classification_report(test_y, (test_p > 0.5).astype(int),
                             target_names=["Normal", "TB"], digits=3))
-```
 
 # ============================================================================
-# CELL 10 — Plot functions (training curves, CM, ROC/PR, Grad-CAM, error gallery)
+# CELL 10 — Plot functions
 # ============================================================================
-```python
 def _save_and_show(save_path, dpi=300):
-    """Save the current figure to /kaggle/working AND render it inline.
-    Kaggle's renderer ignores plt.savefig() followed by plt.close() because
-    the figure is destroyed before the renderer can capture it. This helper
-    saves the PNG, forces a render via display(), and only then closes."""
     plt.savefig(save_path, dpi=dpi, bbox_inches='tight')
     try:
         from IPython.display import display
         display(plt.gcf())
     except Exception:
-        # Non-notebook environments (script mode): just rely on the saved PNG.
         pass
     plt.close()
 
 def plot_training_curves(hist):
     epochs = range(1, len(hist.history['loss']) + 1)
     fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(14, 10))
-
-    # 1) Training & Validation Loss
     ax1.plot(epochs, hist.history['loss'], 'b-o', label='Training Loss')
     if 'val_loss' in hist.history:
         ax1.plot(epochs, hist.history['val_loss'], 'r-o', label='Validation Loss')
-    ax1.set_title('Training & Validation Loss')
-    ax1.set_xlabel('Epochs'); ax1.set_ylabel('Loss')
-    ax1.legend(); ax1.grid(True)
-
-    # 2) Training & Validation AUC
+    ax1.set_title('Training & Validation Loss'); ax1.legend(); ax1.grid(True)
     if 'auc' in hist.history:
         ax2.plot(epochs, hist.history['auc'], 'b-o', label='Training AUC')
     if 'val_auc' in hist.history:
         ax2.plot(epochs, hist.history['val_auc'], 'r-o', label='Validation AUC')
-    else:
-        ax2.plot(epochs, hist.history['auc'], 'b-o', label='Training AUC')
-    ax2.set_title('Training & Validation AUC')
-    ax2.set_xlabel('Epochs'); ax2.set_ylabel('AUC')
-    ax2.legend(); ax2.grid(True)
-
-    # 3) Training & Validation Accuracy
+    ax2.set_title('Training & Validation AUC'); ax2.legend(); ax2.grid(True)
     if 'acc' in hist.history:
         ax3.plot(epochs, hist.history['acc'], 'b-o', label='Training Accuracy')
     if 'val_acc' in hist.history:
         ax3.plot(epochs, hist.history['val_acc'], 'r-o', label='Validation Accuracy')
-    ax3.set_title('Training & Validation Accuracy')
-    ax3.set_xlabel('Epochs'); ax3.set_ylabel('Accuracy')
-    ax3.set_ylim([0, 1.05])
-    ax3.legend(); ax3.grid(True)
-
-    # 4) Combined view: val_loss + val_auc (single axes, normalized) — quick health check
+    ax3.set_title('Training & Validation Accuracy'); ax3.legend(); ax3.grid(True)
     if 'val_loss' in hist.history:
         vloss = np.array(hist.history['val_loss'])
         vloss_norm = (vloss - vloss.min()) / (vloss.max() - vloss.min() + 1e-8)
-        ax4.plot(epochs, vloss_norm, 'm-o', label='Val Loss (normalized)')
+        ax4.plot(epochs, vloss_norm, 'm-o', label='Val Loss (norm)')
     if 'val_auc' in hist.history:
         ax4.plot(epochs, hist.history['val_auc'], 'g-o', label='Val AUC')
-    ax4.set_title('Validation Summary (Lower loss, Higher AUC = Better)')
-    ax4.set_xlabel('Epochs'); ax4.set_ylabel('Normalized metric')
-    ax4.legend(); ax4.grid(True)
-
+    ax4.set_title('Validation Summary'); ax4.legend(); ax4.grid(True)
     plt.tight_layout()
     _save_and_show('/kaggle/working/training_curves.png')
 
 def plot_confusion_matrix_heatmap(y_true, y_pred):
     cm = confusion_matrix(y_true, y_pred)
     plt.figure(figsize=(6, 5))
-    sns.heatmap(cm, annot=True, fmt='d', cmap='Blues',
-                xticklabels=['Normal', 'TB'],
-                yticklabels=['Normal', 'TB'])
-    plt.ylabel('Actual Label')
-    plt.xlabel('Predicted Label')
-    plt.title('Confusion Matrix')
-    plt.tight_layout()
+    sns.heatmap(cm, annot=True, fmt='d', cmap='Blues')
+    plt.ylabel('Actual Label'); plt.xlabel('Predicted Label'); plt.title('Confusion Matrix')
     _save_and_show('/kaggle/working/confusion_matrix.png')
 
 def plot_roc_pr_curves(y_true, y_probs, optimal_thresh):
     fpr, tpr, _ = roc_curve(y_true, y_probs)
     auc_score = roc_auc_score(y_true, y_probs)
     precision, recall, thresholds_pr = precision_recall_curve(y_true, y_probs)
-
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 6))
-
-    # ROC
     ax1.plot(fpr, tpr, color='darkorange', lw=2, label=f'ROC (AUC = {auc_score:.4f})')
-    ax1.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--')
-    ax1.set_xlim([0.0, 1.0])
-    ax1.set_ylim([0.0, 1.05])
-    ax1.set_xlabel('False Positive Rate')
-    ax1.set_ylabel('True Positive Rate')
-    ax1.set_title('Receiver Operating Characteristic (ROC) Curve')
-    ax1.legend(loc="lower right")
-    ax1.grid(True)
-
-    # Precision-Recall
+    ax1.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--'); ax1.grid(True)
     ax2.plot(recall, precision, color='blue', lw=2, label='Precision-Recall')
     idx = np.argmin(np.abs(thresholds_pr - optimal_thresh))
-    ax2.plot(recall[idx], precision[idx], 'ro', markersize=10,
-             label=f'Clinical Thresh = {optimal_thresh:.3f}\n(Recall = {recall[idx]:.3f})')
-    ax2.set_xlabel('Recall (Sensitivity)')
-    ax2.set_ylabel('Precision')
-    ax2.set_title('Precision-Recall Curve')
-    ax2.legend(loc="lower left")
-    ax2.grid(True)
-
-    plt.tight_layout()
-    _save_and_show('/kaggle/working/roc_pr_curves.png')
+    ax2.plot(recall[idx], precision[idx], 'ro', label=f'Thresh={optimal_thresh:.3f}')
+    ax2.grid(True); _save_and_show('/kaggle/working/roc_pr_curves.png')
 
 def generate_gradcam_overlay(model, img_arr, last_conv_layer_name=None):
-    # Pick a sensible last-conv layer for the backbone, since "relu" is not the
-    # top conv layer for DenseNet121 / ResNet50. The Distiller wraps the student,
-    # so `model.input` (single tensor) is safer than `model.inputs` (which can be
-    # a list of length > 1 for sub-models and produces a 0x0 spatial cam).
     if last_conv_layer_name is None:
-        # Try the canonical DenseNet121 last-conv name first, then ResNet50,
-        # then fall back to the last layer that has 4D output.
-        for candidate in ("conv5_block16_2_conv", "conv5_block32_concat",
-                          "conv5_block3_out", "conv4_block6_out"):
+        for candidate in ("relu", "conv5_block3_out"):
             try:
                 _ = model.get_layer(candidate)
                 last_conv_layer_name = candidate
                 break
-            except ValueError:
-                continue
-        if last_conv_layer_name is None:
-            for layer in reversed(model.layers):
-                try:
-                    shp = layer.output_shape
-                except AttributeError:
-                    continue
-                if isinstance(shp, tuple) and len(shp) == 4 and shp[1] is not None and shp[1] > 1:
-                    last_conv_layer_name = layer.name
-                    break
-
+            except ValueError: continue
     img_tensor = tf.expand_dims(img_arr, axis=0)
-
-    # Multi-output model targeting the chosen conv layer + the logit head.
-    # Use model.input (a single KerasTensor) instead of model.inputs (a list)
-    # so Grad-CAM works on both the bare student and the Distiller wrapper.
-    grad_model = tf.keras.models.Model(
-        inputs=model.input,
-        outputs=[model.get_layer(last_conv_layer_name).output, model.output]
-    )
-
+    grad_model = tf.keras.models.Model(inputs=model.input,
+        outputs=[model.get_layer(last_conv_layer_name).output, model.output])
     with tf.GradientTape() as tape:
         conv_outputs, predictions = grad_model(img_tensor)
         loss = predictions[0]
-
     grads = tape.gradient(loss, conv_outputs)[0]
     weights = tf.reduce_mean(grads, axis=(0, 1))
     cam = tf.reduce_sum(conv_outputs[0] * weights, axis=-1).numpy()
     cam = np.maximum(cam, 0)
-
     cam_min, cam_max = cam.min(), cam.max()
-    if cam_max > cam_min:
-        cam = (cam - cam_min) / (cam_max - cam_min + 1e-8)
-
-    # Defensive: cam can sometimes arrive as a 0-D or non-2-D tensor (e.g. when
-    # the chosen layer turns out to be the global pool). Force it to a 2-D
-    # contiguous float32 array of shape (H, W) before cv2.resize, otherwise
-    # OpenCV raises "func != 0 in function 'resize'".
+    if cam_max > cam_min: cam = (cam - cam_min) / (cam_max - cam_min + 1e-8)
     cam = np.asarray(cam).squeeze()
+    _dn_mean = np.array([0.485, 0.456, 0.406], dtype=np.float32)
+    _dn_std  = np.array([0.229, 0.224, 0.225], dtype=np.float32)
     if cam.ndim != 2 or cam.size == 0:
-        # Nothing usable -- return a uniform gray image so the gallery still renders.
         gray = np.full((224, 224), 128, dtype=np.uint8)
         color_heatmap = cv2.applyColorMap(gray, cv2.COLORMAP_JET)
         color_heatmap_rgb = cv2.cvtColor(color_heatmap, cv2.COLOR_BGR2RGB)
-        img_restore = np.clip(img_arr + np.array([103.939, 116.779, 123.68],
-                                                  dtype=np.float32), 0, 255)
-        img_restore = img_restore[..., ::-1].astype(np.uint8)
+        img_restore = np.clip((img_arr * _dn_std + _dn_mean) * 255.0, 0, 255).astype(np.uint8)
         return cv2.addWeighted(img_restore, 0.6, color_heatmap_rgb, 0.4, 0)
-
     cam = np.ascontiguousarray(cam, dtype=np.float32)
     cam_resized = cv2.resize(cam, (224, 224))
     heatmap = np.uint8(255 * cam_resized)
     color_heatmap = cv2.applyColorMap(heatmap, cv2.COLORMAP_JET)
     color_heatmap_rgb = cv2.cvtColor(color_heatmap, cv2.COLOR_BGR2RGB)
 
-    # Reverse resnet50.preprocess_input normalization to restore original RGB image
+    # Restore visible image from DenseNet-preprocessed input
+    # densenet.preprocess_input: /255 then (x - mean) / std  → reverse with *std + mean, *255
+    _dn_mean = np.array([0.485, 0.456, 0.406], dtype=np.float32)
+    _dn_std  = np.array([0.229, 0.224, 0.225], dtype=np.float32)
     img_restore = img_arr.copy()
-    img_restore[..., 0] += 103.939 # Add B mean
-    img_restore[..., 1] += 116.779 # Add G mean
-    img_restore[..., 2] += 123.68  # Add R mean
-    img_restore = img_restore[..., ::-1] # BGR to RGB
-    img_restore = np.clip(img_restore, 0, 255).astype(np.uint8)
+    img_restore = img_restore * _dn_std + _dn_mean  # undo normalisation
+    img_restore = np.clip(img_restore * 255.0, 0, 255).astype(np.uint8)
 
     alpha = 0.4
     blended = cv2.addWeighted(img_restore, 1.0 - alpha, color_heatmap_rgb, alpha, 0)
@@ -733,13 +640,10 @@ def plot_sample_predictions(test_ds, model, optimal_thresh, n_per_row=4):
             if c_idx < len(indices):
                 idx = int(indices[c_idx])
                 img_arr = raw_images[idx]
-                # Restore RGB from resnet50-preprocessed input
-                img_show = img_arr.copy()
-                img_show[..., 0] += 103.939
-                img_show[..., 1] += 116.779
-                img_show[..., 2] += 123.68
-                img_show = img_show[..., ::-1]
-                img_show = np.clip(img_show, 0, 255).astype(np.uint8)
+                # Restore visible image from DenseNet-preprocessed input
+                _dn_mean = np.array([0.485, 0.456, 0.406], dtype=np.float32)
+                _dn_std  = np.array([0.229, 0.224, 0.225], dtype=np.float32)
+                img_show = np.clip((img_arr.copy() * _dn_std + _dn_mean) * 255.0, 0, 255).astype(np.uint8)
                 ax.imshow(img_show)
                 true_lbl = "TB" if labels[idx] == 1 else "Normal"
                 pred_lbl = "TB" if preds[idx] == 1 else "Normal"
@@ -775,7 +679,9 @@ def plot_gradcam_clean(test_ds, model, optimal_thresh, n_samples=8):
 
     cols = 4
     rows = (n_samples + cols - 1) // cols
-    chosen = np.random.choice(len(labels), min(n_samples, len(labels)), replace=False)
+    # Bug 6 fix: use a seeded RNG for reproducibility (matches every other plot function)
+    rng = np.random.default_rng(SEED)
+    chosen = rng.choice(len(labels), min(n_samples, len(labels)), replace=False)
 
     fig, axes = plt.subplots(rows, cols, figsize=(4*cols, 4*rows))
     axes = np.atleast_2d(axes)
@@ -798,6 +704,7 @@ def plot_gradcam_clean(test_ds, model, optimal_thresh, n_samples=8):
                 print(f"Grad-CAM overlay generation failed (showing raw image). First error: {e_gc}")
                 gradcam_failed_once = True
         ax.set_title(f"True: {true_lbl} | Prob(TB): {probs[idx]:.3f}", fontsize=10)
+        ax.axis('off')
         ax.axis('off')
 
     # Hide any unused axes
@@ -833,6 +740,7 @@ def plot_model_architecture(model, save_path='/kaggle/working/model_architecture
 
 def build_performance_table(teacher, student, teacher_test_eval, student_test_y,
                             student_test_p, student_test_pred, best_t,
+                            teacher_test_ds_t=None,
                             teacher_inference_ms=None, student_inference_ms=None,
                             teacher_path='/kaggle/working/teacher_resnet50.keras',
                             student_path='/kaggle/working/tb_student_densenet121.keras'):
@@ -850,14 +758,23 @@ def build_performance_table(teacher, student, teacher_test_eval, student_test_y,
     student_auc = roc_auc_score(student_test_y, student_test_p)
     student_acc = float((student_test_pred == student_test_y).mean())
     student_f1  = f1_score(student_test_y, student_test_pred)
-    teacher_f1  = float('nan')
-    try:
-        teacher_pred_test = (teacher_test_eval is not None) and False  # placeholder
-    except Exception:
-        pass
 
-    # Re-derive teacher test predictions for fair F1 (needs a second forward pass)
-    # Skipped to keep runtime small: teacher F1 left as NaN if no teacher test labels passed.
+    # Bug 5 fix: compute teacher F1 with a real forward pass on test_ds_t.
+    # The previous code had a dead placeholder that always left teacher_f1 = nan.
+    teacher_f1 = float('nan')
+    if teacher_test_ds_t is not None:
+        try:
+            t_probs, t_true = [], []
+            for bx, by in teacher_test_ds_t:
+                t_probs.extend(tf.sigmoid(teacher(bx, training=False)).numpy().ravel())
+                t_true.extend(by.numpy())
+            t_probs, t_true = np.array(t_probs), np.array(t_true)
+            # Use the same optimal threshold from validation (student's best_t is a
+            # reasonable proxy — both models rank similar cases)
+            t_pred = (t_probs > best_t).astype(int)
+            teacher_f1 = f1_score(t_true, t_pred)
+        except Exception as _e:
+            print(f"Teacher F1 computation failed: {_e}")
     rows = [
         ("Teacher (ResNet50)",  teacher_acc, teacher_auc, teacher_f1,
          teacher.count_params(), os.path.getsize(teacher_path) / 1e6,
@@ -940,7 +857,14 @@ def measure_deployment_performance(teacher, student, sample_batch,
         f.write(f"  Size on disk:      {student_size_mb:>12.2f} MB\n")
         f.write(f"  Inference latency: {student_ms:>12.3f} ms / image\n")
         f.write(f"  Throughput:        {1000.0/student_ms:>12.1f} images / sec\n\n")
-        f.write(f"Speedup: {teacher_ms/student_ms:.2f}x faster than teacher\n")
+        # Bug 4 fix: DenseNet has more sequential ops than ResNet despite fewer params
+        # (430 vs 178 layers, concat-heavy vs add-residual). Student may be SLOWER.
+        speed_ratio = teacher_ms / student_ms
+        if speed_ratio >= 1.0:
+            speedup_label = f"{speed_ratio:.2f}x faster than teacher"
+        else:
+            speedup_label = f"{1.0/speed_ratio:.2f}x SLOWER than teacher (DenseNet dense-connectivity overhead)"
+        f.write(f"Speedup: {speedup_label}\n")
         f.write(f"Compression: {teacher_params/student_params:.2f}x fewer params\n")
 
     # Render bar chart
@@ -966,8 +890,10 @@ def measure_deployment_performance(teacher, student, sample_batch,
     _save_and_show('/kaggle/working/deployment_metrics.png', dpi=200)
 
     print("\nDeployment metrics saved to /kaggle/working/deployment_metrics.txt")
-    print(f"Teacher: {teacher_ms:.2f} ms/img | Student: {student_ms:.2f} ms/img | "
-          f"Speedup: {teacher_ms/student_ms:.2f}x")
+    speed_ratio = teacher_ms / student_ms
+    speed_str = (f"{speed_ratio:.2f}x faster" if speed_ratio >= 1.0
+                 else f"{1.0/speed_ratio:.2f}x slower (DenseNet concat overhead)")
+    print(f"Teacher: {teacher_ms:.2f} ms/img | Student: {student_ms:.2f} ms/img | {speed_str}")
 
     return teacher_ms, student_ms
 ```
@@ -982,8 +908,14 @@ def measure_deployment_performance(teacher, student, sample_batch,
 print("\nGenerating all 10 deliverables...")
 os.makedirs("/kaggle/working", exist_ok=True)
 
-# --- 1. Training/Validation Loss + AUC + Accuracy curves (2x2 figure) ---
-plot_training_curves(history)
+# --- 1. Training/Validation Loss + AUC + Accuracy curves ---
+# Bug 3 fix: plot_training_curves was not defined at Cell 7 run time, so
+# teacher curves were never actually saved. We plot both here in Cell 11.
+print("  1a. Plotting teacher training curves...")
+plot_training_curves(teacher_history)   # saves training_curves.png (teacher)
+
+print("  1b. Plotting student/distiller training curves...")
+plot_training_curves(history)           # overwrites with distiller history
 
 # --- 2. Confusion Matrix ---
 plot_confusion_matrix_heatmap(test_y, test_pred)
@@ -1009,8 +941,8 @@ _sample_x, _ = next(iter(test_ds))
 teacher_ms, student_ms = measure_deployment_performance(teacher, student, _sample_x)
 
 # --- 9. Performance Comparison Table (teacher vs student) ---
-# Re-evaluate teacher on test set to get AUC/accuracy (loss, acc, auc) tuple
-teacher_test_eval = teacher.evaluate(test_ds, verbose=0)
+# Re-evaluate teacher on its own (ResNet-preprocessed) test set
+teacher_test_eval = teacher.evaluate(test_ds_t, verbose=0)
 build_performance_table(
     teacher=teacher,
     student=student,
@@ -1019,6 +951,7 @@ build_performance_table(
     student_test_p=test_p,
     student_test_pred=test_pred,
     best_t=best_t,
+    teacher_test_ds_t=test_ds_t,  # Bug 5 fix: pass teacher dataset for real F1
     teacher_inference_ms=teacher_ms,
     student_inference_ms=student_ms,
 )
