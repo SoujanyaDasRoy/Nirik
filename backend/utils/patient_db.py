@@ -370,8 +370,16 @@ def save_prediction_record(study_id: str, result: dict) -> None:
     now_str = datetime.now(timezone.utc).isoformat() + "Z"
     is_tb = 1 if result.get("is_tb", False) else 0
     prediction_label = result.get("prediction", "Unknown")
-    
-    attention = result.get("attention_region", "right apical" if is_tb else "clear")
+
+    # Derive attention_region from xai ROIs when caller didn't pass one.
+    # Keeps a single source of truth (utils.attention_region) for the
+    # fallback defaults so the API and DB agree.
+    if "attention_region" in result and result["attention_region"]:
+        attention = result["attention_region"]
+    else:
+        from utils.attention_region import derive_attention_region
+        rois = (result.get("xai_results") or {}).get("rois") or []
+        attention = derive_attention_region(rois, bool(is_tb))
     coverage = result.get("heatmap_coverage", 15.2 if is_tb else 0.0)
     
     with closing(get_connection()) as conn:
@@ -463,9 +471,10 @@ def get_dashboard_stats() -> dict:
             SELECT COUNT(DISTINCT s.id) 
             FROM studies s
             LEFT JOIN predictions p ON s.id = p.study_id
-            LEFT JOIN (
-                SELECT study_id, status FROM reviews GROUP BY study_id HAVING max(id)
-            ) r ON s.id = r.study_id
+            LEFT JOIN reviews r
+                ON r.id = (
+                    SELECT MAX(id) FROM reviews r2 WHERE r2.study_id = s.id
+                )
             WHERE (p.is_tb = 1 AND (r.status IS NULL OR r.status != 'reject'))
                OR (r.status = 'confirm' AND p.is_tb = 1)
         """)
@@ -540,14 +549,23 @@ def get_dashboard_stats() -> dict:
         }
 
 def list_studies(date_str: str = None, status_str: str = None, reviewer: str = None) -> list:
-    """List studies applying workflow filters."""
+    """List studies applying workflow filters.
+
+    Joins the LATEST prediction per study via a correlated subquery (id =
+    MAX(id) for that study). The previous `SELECT * FROM predictions GROUP
+    BY study_id HAVING max(id)` form was non-deterministic in SQLite:
+    without GROUP BY strict mode, the non-aggregated columns can come from
+    any row in each group, which surfaced stale confidences after retraining
+    or retry runs.
+    """
     query = """
         SELECT s.*, p.name as patient_name, pr.prediction, pr.confidence, pr.is_tb
         FROM studies s
         LEFT JOIN patients p ON s.patient_id = p.id
-        LEFT JOIN (
-            SELECT * FROM predictions GROUP BY study_id HAVING max(id)
-        ) pr ON s.id = pr.study_id
+        LEFT JOIN predictions pr
+            ON pr.id = (
+                SELECT MAX(id) FROM predictions p2 WHERE p2.study_id = s.id
+            )
         WHERE 1=1
     """
     params = []

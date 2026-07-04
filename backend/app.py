@@ -24,6 +24,7 @@ from utils.patient_db import (
     mark_notification_read, get_dashboard_stats, list_studies,
     get_study_audit_trail, get_similar_cases, get_research_export_data
 )
+from utils.attention_region import derive_attention_region
 from utils.fhir_mock import search_patients, get_pacs_status
 from api_v1 import api_v1
 
@@ -271,16 +272,18 @@ def predict():
 
         # Update result with images and metadata
         is_tb = result_dict["is_tb"]
+        xai_results = result_dict.get("xai_results", {}) or {}
+        rois = xai_results.get("rois") or []
         result_record = {
             "confidence": result_dict["confidence"],
             "is_tb": is_tb,
             "prediction": result_dict["prediction"],
             "heatmap_image": heatmap_base64,
             "inference_time_ms": result_dict.get("inference_time_ms", 324.0),
-            "attention_region": "right apical" if is_tb else "clear",
+            "attention_region": derive_attention_region(rois, is_tb),
             "heatmap_coverage": 15.2 if is_tb else 0.0,
             "heatmaps": result_dict.get("heatmaps", {}),
-            "xai_results": result_dict.get("xai_results", {})
+            "xai_results": xai_results
         }
         
         if "delta_heatmap_b64" in result_dict:
@@ -317,6 +320,12 @@ def predict():
             "image_quality": iqa_results
         }
         response.update(result_dict)
+        # Expose result_record fields that are NOT in result_dict so the
+        # frontend (and tests) can always find them at the top level.
+        response["attention_region"] = result_record["attention_region"]
+        response["heatmap_coverage"] = result_record["heatmap_coverage"]
+        response["xai_results"]      = result_record["xai_results"]
+        response["heatmaps"]         = result_record.get("heatmaps", {})
         return jsonify(response)
         
     except Exception as e:

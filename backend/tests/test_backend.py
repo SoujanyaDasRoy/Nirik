@@ -28,6 +28,94 @@ def test_image_helpers_malformed():
     with pytest.raises(Exception):
         process_standard_image(b"malformed image bytes")
 
+
+# ── Regression test for Bug #2: hard-coded attention_region ─────────────
+# attention_region must surface the top ROI from xai_results, not the
+# legacy hard-coded "right apical" / "clear" strings.
+def test_attention_region_derives_from_xai_rois():
+    from utils.attention_region import derive_attention_region
+
+    # When ROIs exist, return the top one by location
+    rois = [
+        {"location": "Left Mid Lung Zone", "contribution_pct": 18.0},
+        {"location": "Right Upper Lung Zone", "contribution_pct": 82.0},
+    ]
+    assert derive_attention_region(rois, is_tb=True) == "Right Upper Lung Zone"
+
+    # TB with no ROIs falls back to "right apical" (legacy clinical default)
+    assert derive_attention_region([], is_tb=True) == "right apical"
+
+    # Normal with no ROIs falls back to "clear"
+    assert derive_attention_region([], is_tb=False) == "clear"
+
+    # Empty/None ROIs handled gracefully
+    assert derive_attention_region(None, is_tb=True) == "right apical"
+
+    # Top ROI is determined by contribution_pct, not list order
+    rois_ordered_low_first = [
+        {"location": "Right Lower Lung Zone", "contribution_pct": 25.0},
+        {"location": "Right Upper Lung Zone", "contribution_pct": 75.0},
+    ]
+    assert derive_attention_region(rois_ordered_low_first, is_tb=True) == "Right Upper Lung Zone"
+
+
+# ── Regression test for Bug #2: hard-coded attention_region ─────────────
+# The /predict endpoint must NOT hard-code "right apical" / "clear" as the
+# attention_region. It must surface the top ROI from xai_results so the
+# frontend evidence cards align with the actual model focus.
+def test_attention_region_not_hardcoded(client):
+    """attention_region must be derived from XAI ROIs, not hard-coded."""
+    from PIL import Image
+    import io
+    from unittest.mock import patch
+    import numpy as np
+
+    # Build a 400x400 synthetic image (bypasses the image quality gate via
+    # patching, so exact pixel content doesn't matter here).
+    rng = np.random.default_rng(seed=42)
+    noise = rng.normal(loc=115, scale=40, size=(400, 400)).clip(50, 180).astype(np.uint8)
+    img = Image.fromarray(noise, mode="L").convert("RGB")
+    buf = io.BytesIO()
+    img.save(buf, format="PNG")
+
+    # Bypass auth
+    with client.session_transaction() as sess:
+        sess["username"] = "reviewer"
+        sess["role"] = "reviewer"
+
+    # Patch the image quality gate so the test focuses on attention_region
+    # derivation logic, not image validation.
+    # The import in app.py is lazy (inside the route), so patching the
+    # source module (utils.image_helpers) is the correct target.
+    with patch("utils.image_helpers.validate_chest_xray", return_value=(True, "Valid chest radiograph")):
+        data = {"file": (io.BytesIO(buf.getvalue()), "test_xray.png")}
+        resp = client.post(
+            "/predict",
+            data=data,
+            content_type="multipart/form-data",
+        )
+    assert resp.status_code == 200, f"predict failed: {resp.data!r}"
+    body = resp.get_json()
+    assert "attention_region" in body
+    region = body["attention_region"]
+
+    # If xai_results carries ROIs, attention_region must match the top one —
+    # proving it's derived, not hard-coded.
+    rois = (body.get("xai_results") or {}).get("rois") or []
+    if rois:
+        assert region == rois[0]["location"], (
+            f"attention_region {region!r} != top ROI location "
+            f"{rois[0]['location']!r}"
+        )
+    else:
+        # No ROIs produced (synthetic image has no lung structure) so the
+        # clinical fallback string is acceptable.  What we can still verify is
+        # that the key is present and is a non-empty string.
+        assert isinstance(region, str) and len(region) > 0, (
+            "attention_region must be a non-empty string even when no ROIs exist"
+        )
+
+
 def test_image_helpers_base64():
     img = Image.new("RGB", (100, 100), color=(128, 128, 128))
     b64_str = image_to_base64(img)

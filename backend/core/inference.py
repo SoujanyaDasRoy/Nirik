@@ -14,6 +14,58 @@ OPTIMAL_THRESHOLD = 0.93
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 MODEL_PATH = os.path.join(BASE_DIR, "tb_student_densenet121.keras")
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+print(f"Using device: {DEVICE}")
+
+# ResNet50 / caffe-style BGR mean pixel values (used by tf.keras ResNet50
+# preprocess_input in 'caffe' mode). See keras.applications.resnet50.
+RESNET50_BGR_MEAN = np.array([103.939, 116.779, 123.680], dtype=np.float32)
+
+
+def preprocess_for_classifier(gray_arr: np.ndarray, unet_active: bool):
+    """Preprocess a grayscale padded image array into a (1, H, W, 3) tensor
+    suitable for the DenseNet-121 classifier.
+
+    The grayscale image is stacked 3× to produce a degenerate RGB input
+    (all three channels carry the same value). For Generation 2 (U-Net
+    deployed) we apply ImageNet/torch mean-and-std normalisation per
+    channel. For Generation 1 (no U-Net, matches the legacy training bug
+    of using ResNet50/caffe preprocessing) we apply a uniform global bias
+    equal to the AVERAGE of the BGR means so the three channels stay equal
+    after preprocessing — subtracting different per-channel means would
+    destroy channel equality on a grayscale input and bias the network
+    toward artefacts unrelated to lung tissue.
+
+    Args:
+        gray_arr: float32 numpy array of shape (H, W), values in [0, 255].
+        unet_active: True when the U-Net segmenter is deployed.
+
+    Returns:
+        torch.Tensor of shape (1, H, W, 3).
+    """
+    # Stack grayscale channel 3× to produce degenerate RGB for ImageNet backbone
+    x = np.stack([gray_arr, gray_arr, gray_arr], axis=-1)  # (H, W, 3)
+
+    if unet_active:
+        # Generation 2 — DenseNet correct preprocessing (mode='torch')
+        # Matches tf.keras.applications.densenet.preprocess_input().
+        # Because the input is grayscale stacked 3× (all channels equal),
+        # we apply the channel-AVERAGED mean and std uniformly so the
+        # three channels stay equal. Subtracting distinct per-channel means
+        # on an equal-channel input would break channel equality and bias
+        # the network toward artefacts unrelated to lung tissue.
+        x /= 255.0
+        mean = (0.485 + 0.456 + 0.406) / 3.0
+        std = (0.229 + 0.224 + 0.225) / 3.0
+        x = (x - mean) / std
+    else:
+        # Generation 1 — ResNet50/caffe preprocessing (matches training bug)
+        # BGR mean subtraction, no division, no std normalisation.
+        # We apply the AVERAGE of the three means uniformly across all
+        # channels so the grayscale input preserves channel equality.
+        mean_shift = float(RESNET50_BGR_MEAN.mean())
+        x -= mean_shift
+
+    return torch.tensor(x).unsqueeze(0).to(DEVICE)  # shape: (1, H, W, 3) NHWC
 
 IMAGENET_MEAN = np.array([0.485, 0.456, 0.406], dtype=np.float32)
 IMAGENET_STD = np.array([0.229, 0.224, 0.225], dtype=np.float32)
@@ -865,24 +917,7 @@ def predict_image(img: Image.Image, prior_image_b64: str = None):
     unet_active = get_unet() is not None
     arr = segment_lungs(gray_arr)  # (IMG_SIZE, IMG_SIZE) float32
 
-    # Stack grayscale channel 3× to produce degenerate RGB for ImageNet backbone
-    x = np.stack([arr, arr, arr], axis=-1)  # (224, 224, 3)
-
-    if unet_active:
-        # Generation 2 — DenseNet correct preprocessing (mode='torch')
-        # Matches tf.keras.applications.densenet.preprocess_input()
-        x /= 255.0
-        x[..., 0] = (x[..., 0] - 0.485) / 0.229
-        x[..., 1] = (x[..., 1] - 0.456) / 0.224
-        x[..., 2] = (x[..., 2] - 0.406) / 0.225
-    else:
-        # Generation 1 — ResNet50/caffe preprocessing (matches training bug)
-        # BGR mean subtraction, no division, no std normalisation
-        x[..., 0] -= 103.939  # B channel mean
-        x[..., 1] -= 116.779  # G channel mean
-        x[..., 2] -= 123.680  # R channel mean
-
-    tensor = torch.tensor(x).unsqueeze(0).to(DEVICE)  # shape: (1, 224, 224, 3) NHWC
+    tensor = preprocess_for_classifier(arr, unet_active=unet_active)
     
     # Check prediction
     with torch.no_grad():
