@@ -113,6 +113,18 @@ def get_model():
     if _model is None:
         with _model_lock:
             if _model is None:
+                # Check for quantized model override
+                use_quantized = os.environ.get("USE_QUANTIZED_MODEL", "false").lower() in ("true", "1")
+                if use_quantized:
+                    quantized_path = os.environ.get("QUANTIZED_MODEL_PATH")
+                    if quantized_path:
+                        try:
+                            _model = torch.jit.load(quantized_path)
+                            _model.to(DEVICE)
+                            print(f"Loaded quantized model from {quantized_path}")
+                            return _model
+                        except Exception as e:
+                            print(f"Failed to load quantized model: {e}")
                 # Check for model metadata dynamically to resolve clinical threshold settings
                 metadata_path = os.path.join(BASE_DIR, "model_metadata.json")
                 if os.path.exists(metadata_path):
@@ -855,7 +867,13 @@ def predict_image(img: Image.Image, prior_image_b64: str = None):
         quadrant_analysis = compute_quadrant_analysis(norm_mock_raw)
         
         xai_payload = get_mock_xai_payload(img.size, is_tb, prob)
-        
+
+        # Phase 5: rich clinical_observations list derived from the XAI ROIs.
+        from utils.observation_builder import build_clinical_observations
+        clinical_observations = build_clinical_observations(
+            xai_payload, is_tb=is_tb, confidence=prob
+        )
+
         result_dict = {
             "prediction": "Tuberculosis" if is_tb else "Normal",
             "confidence": float(prob),
@@ -866,7 +884,8 @@ def predict_image(img: Image.Image, prior_image_b64: str = None):
             "saliency_fallback": False,
             "heatmaps": heatmaps_b64,
             "xai_results": xai_payload,
-            "quadrant_analysis": quadrant_analysis
+            "quadrant_analysis": quadrant_analysis,
+            "clinical_observations": clinical_observations
         }
         
         if prior_image_b64:
@@ -964,11 +983,17 @@ def predict_image(img: Image.Image, prior_image_b64: str = None):
             pass
             
     quadrant_analysis = compute_quadrant_analysis(raw_map_np, unet_mask)
-    
+
     xai_payload = compute_xai_payload(is_tb, prob, raw_map_np)
     if is_fb:
         any_fallback = True
-    
+
+    # Phase 5: rich clinical_observations list derived from the XAI ROIs.
+    from utils.observation_builder import build_clinical_observations
+    clinical_observations = build_clinical_observations(
+        xai_payload, is_tb=is_tb, confidence=prob
+    )
+
     result_dict = {
         "prediction": "Tuberculosis" if is_tb else "Normal",
         "confidence": float(prob),
@@ -979,7 +1004,8 @@ def predict_image(img: Image.Image, prior_image_b64: str = None):
         "saliency_fallback": any_fallback,
         "heatmaps": heatmaps_b64,
         "xai_results": xai_payload,
-        "quadrant_analysis": quadrant_analysis
+        "quadrant_analysis": quadrant_analysis,
+        "clinical_observations": clinical_observations
     }
     
     if prior_image_b64:
