@@ -283,7 +283,8 @@ def predict():
             "attention_region": derive_attention_region(rois, is_tb),
             "heatmap_coverage": 15.2 if is_tb else 0.0,
             "heatmaps": result_dict.get("heatmaps", {}),
-            "xai_results": xai_results
+            "xai_results": xai_results,
+            "clinical_observations": result_dict.get("clinical_observations", []) or []
         }
         
         if "delta_heatmap_b64" in result_dict:
@@ -326,6 +327,7 @@ def predict():
         response["heatmap_coverage"] = result_record["heatmap_coverage"]
         response["xai_results"]      = result_record["xai_results"]
         response["heatmaps"]         = result_record.get("heatmaps", {})
+        response["clinical_observations"] = result_record["clinical_observations"]
         return jsonify(response)
         
     except Exception as e:

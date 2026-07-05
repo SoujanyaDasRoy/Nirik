@@ -50,7 +50,24 @@ def init_db():
                     conn.execute("DROP TABLE IF EXISTS audit_trail")
                     conn.execute("DROP TABLE IF EXISTS notifications")
             except Exception as e:
-                logger.error(f"Migration check error: {e}")
+                logger.error(f"Phase 4 migration check error: {e}")
+
+            # Phase 5: Idempotent column add for clinical_observations_json.
+            # Old DBs that already have a `predictions` table get the new
+            # column added on startup. Fresh DBs pick it up via the CREATE
+            # TABLE statement below. Either path is safe to run repeatedly.
+            try:
+                pred_cursor = conn.execute("PRAGMA table_info(predictions)")
+                pred_cols = [row["name"] for row in pred_cursor.fetchall()]
+                if pred_cols and "clinical_observations_json" not in pred_cols:
+                    logger.info(
+                        "Migrating predictions table: adding clinical_observations_json column"
+                    )
+                    conn.execute(
+                        "ALTER TABLE predictions ADD COLUMN clinical_observations_json TEXT"
+                    )
+            except Exception as e:
+                logger.error(f"Phase 5 predictions migration error: {e}")
 
             # 0. institutions table (Phase 4)
             conn.execute("""
@@ -123,6 +140,7 @@ def init_db():
                     inference_time_ms REAL,
                     attention_region TEXT,
                     heatmap_coverage REAL,
+                    clinical_observations_json TEXT,
                     created_at TEXT,
                     FOREIGN KEY(study_id) REFERENCES studies(id)
                 )
@@ -381,14 +399,26 @@ def save_prediction_record(study_id: str, result: dict) -> None:
         rois = (result.get("xai_results") or {}).get("rois") or []
         attention = derive_attention_region(rois, bool(is_tb))
     coverage = result.get("heatmap_coverage", 15.2 if is_tb else 0.0)
-    
+
+    # Phase 5: persist the rich clinical_observations list (or empty list
+    # for old/legacy callers that don't supply it). Stored as JSON text
+    # so the frontend can re-hydrate the observations panel on a page
+    # refresh or after pulling a study from the audit/history APIs.
+    clinical_observations = result.get("clinical_observations") or []
+    try:
+        clinical_observations_json = json.dumps(clinical_observations)
+    except (TypeError, ValueError):
+        logger.warning("Could not serialize clinical_observations; storing []")
+        clinical_observations_json = "[]"
+
     with closing(get_connection()) as conn:
         with conn:
             conn.execute("""
                 INSERT INTO predictions (
                     study_id, confidence, is_tb, prediction, heatmap_image,
-                    inference_time_ms, attention_region, heatmap_coverage, created_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    inference_time_ms, attention_region, heatmap_coverage,
+                    clinical_observations_json, created_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (
                 study_id,
                 result.get("confidence", 0.0),
@@ -398,6 +428,7 @@ def save_prediction_record(study_id: str, result: dict) -> None:
                 result.get("inference_time_ms", 324.0),
                 attention,
                 coverage,
+                clinical_observations_json,
                 now_str
             ))
             # Automatically advance study status to 'ai_complete'
@@ -674,7 +705,8 @@ def get_history(patient_id: str) -> list:
         cursor = conn.execute("""
             SELECT s.id as study_id, s.patient_id, p_ref.name as patient_name, p_ref.age as patient_age, p_ref.sex as patient_sex, s.study_date, s.modality, s.original_image,
                    s.exposure, s.coverage, s.resolution, s.rotation, s.quality_score, s.suitability, s.warnings,
-                   p.confidence, p.is_tb, p.prediction, p.heatmap_image, p.created_at as timestamp,
+                   p.confidence, p.is_tb, p.prediction, p.heatmap_image,
+                   p.clinical_observations_json, p.created_at as timestamp,
                    r.comments as clinician_reason, r.clinician_note, r.status as clinician_override, r.annotation_b64
             FROM studies s
             INNER JOIN predictions p ON s.id = p.study_id
@@ -685,7 +717,7 @@ def get_history(patient_id: str) -> list:
             WHERE s.patient_id = ?
             ORDER BY p.id ASC
         """, (patient_id,))
-        
+
         records = []
         for r in cursor.fetchall():
             warnings_list = []
@@ -693,6 +725,13 @@ def get_history(patient_id: str) -> list:
                 warnings_list = json.loads(r["warnings"] or "[]")
             except Exception:
                 warnings_list = []
+            clinical_observations = []
+            try:
+                clinical_observations = json.loads(r["clinical_observations_json"] or "[]")
+                if not isinstance(clinical_observations, list):
+                    clinical_observations = []
+            except Exception:
+                clinical_observations = []
             records.append({
                 "study_id": r["study_id"],
                 "timestamp": r["timestamp"],
@@ -713,6 +752,7 @@ def get_history(patient_id: str) -> list:
                 "clinician_override": r["clinician_override"],
                 "annotation_b64": r["annotation_b64"] or "",
                 "clinician_reason": r["clinician_reason"] or "",
+                "clinical_observations": clinical_observations,
                 "image_quality": {
                     "exposure": r["exposure"] or "Adequate Exposure",
                     "coverage": r["coverage"] or "Full Lung Coverage",

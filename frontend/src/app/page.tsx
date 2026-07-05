@@ -154,10 +154,10 @@ export default function AboutPage() {
       <section className="max-w-6xl mx-auto px-6 pb-16 w-full">
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {[
-            { label: "AUC-ROC", value: "94.1%", sub: "Classifier discrimination", color: "#5865F2", bg: "rgba(88,101,242,0.1)", border: "rgba(88,101,242,0.25)" },
-            { label: "TB Recall", value: "81.7%", sub: "Active cases detected", color: "#57F287", bg: "rgba(87,242,135,0.08)", border: "rgba(87,242,135,0.2)" },
-            { label: "Accuracy", value: "93.4%", sub: "Overall test set", color: "#EB459E", bg: "rgba(235,69,158,0.08)", border: "rgba(235,69,158,0.2)" },
-            { label: "F1 Score", value: "0.844", sub: "Precision-recall harmonic", color: "#FEE75C", bg: "rgba(254,231,92,0.08)", border: "rgba(254,231,92,0.2)" },
+            { label: "AUC-ROC", value: "99.0%", sub: "Classifier discrimination", color: "#5865F2", bg: "rgba(88,101,242,0.1)", border: "rgba(88,101,242,0.25)" },
+            { label: "TB Recall", value: "88.1%", sub: "Active cases detected", color: "#57F287", bg: "rgba(87,242,135,0.08)", border: "rgba(87,242,135,0.2)" },
+            { label: "Accuracy", value: "96.8%", sub: "Overall test set", color: "#EB459E", bg: "rgba(235,69,158,0.08)", border: "rgba(235,69,158,0.2)" },
+            { label: "F1 Score", value: "0.927", sub: "Precision-recall harmonic", color: "#FEE75C", bg: "rgba(254,231,92,0.08)", border: "rgba(254,231,92,0.2)" },
           ].map(m => (
             <div key={m.label} className="rounded-lg p-5 flex flex-col gap-1.5" style={{ background: m.bg, border: `1px solid ${m.border}` }}>
               <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "#949BA4" }}>{m.label}</p>

@@ -168,7 +168,7 @@ describe("usePrediction Hook", () => {
 
     mockFetch.mockResolvedValueOnce({
       ok: true,
-      json: async () => mockResponseData,
+      text: async () => JSON.stringify(mockResponseData),
     });
 
     const mockSetResults = jest.fn();
@@ -192,7 +192,7 @@ describe("usePrediction Hook", () => {
   it("should handle single file analysis error", async () => {
     mockFetch.mockResolvedValueOnce({
       ok: false,
-      json: async () => ({ error: "Inference endpoint failed" }),
+      text: async () => JSON.stringify({ error: "Inference endpoint failed" }),
     });
 
     const mockSetResults = jest.fn();
@@ -254,11 +254,12 @@ describe("usePrediction Hook", () => {
     await act(async () => {
       resolves[0]({
         ok: true,
-        json: async () => ({
-          prediction: "Normal",
-          confidence: 0.98,
-          is_tb: false,
-        }),
+        text: async () =>
+          JSON.stringify({
+            prediction: "Normal",
+            confidence: 0.98,
+            is_tb: false,
+          }),
       });
       // Allow worker to proceed
       await new Promise((resolve) => setTimeout(resolve, 0));
@@ -272,11 +273,12 @@ describe("usePrediction Hook", () => {
     await act(async () => {
       resolves[1]({
         ok: true,
-        json: async () => ({
-          prediction: "Normal",
-          confidence: 0.97,
-          is_tb: false,
-        }),
+        text: async () =>
+          JSON.stringify({
+            prediction: "Normal",
+            confidence: 0.97,
+            is_tb: false,
+          }),
       });
       await new Promise((resolve) => setTimeout(resolve, 0));
     });
@@ -287,9 +289,9 @@ describe("usePrediction Hook", () => {
 
     // Resolve remaining tasks
     await act(async () => {
-      resolves[2]({ ok: true, json: async () => ({ prediction: "Normal", confidence: 0.96 }) });
-      resolves[3]({ ok: true, json: async () => ({ prediction: "Normal", confidence: 0.95 }) });
-      resolves[4]({ ok: true, json: async () => ({ prediction: "Normal", confidence: 0.94 }) });
+      resolves[2]({ ok: true, text: async () => JSON.stringify({ prediction: "Normal", confidence: 0.96 }) });
+      resolves[3]({ ok: true, text: async () => JSON.stringify({ prediction: "Normal", confidence: 0.95 }) });
+      resolves[4]({ ok: true, text: async () => JSON.stringify({ prediction: "Normal", confidence: 0.94 }) });
       await new Promise((resolve) => setTimeout(resolve, 0));
     });
 
@@ -331,6 +333,8 @@ describe("ScreeningTab Queue Component & UI Actions", () => {
     reportRef: React.createRef<HTMLDivElement>(),
     downloadReport: mockDownloadReport,
     handleFeedbackSaved: mockFeedbackSaved,
+    workstationMode: "clinical" as const,
+    setWorkstationMode: jest.fn(),
   };
 
   it("renders empty state correctly with upload triggers", () => {
@@ -348,8 +352,7 @@ describe("ScreeningTab Queue Component & UI Actions", () => {
     };
 
     render(<ScreeningTab {...props} />);
-    expect(screen.getByText("Awaiting Model Evaluation")).toBeInTheDocument();
-    expect(screen.getByText("chest_xray_1.png")).toBeInTheDocument();
+    expect(screen.getByText("Inference Active")).toBeInTheDocument();
   });
 
   it("renders successful case workspace details correctly", () => {
@@ -374,7 +377,7 @@ describe("ScreeningTab Queue Component & UI Actions", () => {
     expect(screen.getAllByTestId("mock-dynamic").length).toBeGreaterThan(0);
   });
 
-  it("triggers analyzeFile on run button click", () => {
+  it("triggers analyzeFile automatically on pending case", () => {
     const props = {
       ...defaultProps,
       selectedIdx: 0,
@@ -383,8 +386,6 @@ describe("ScreeningTab Queue Component & UI Actions", () => {
     };
 
     render(<ScreeningTab {...props} />);
-    const runBtn = screen.getByText("Run AI Diagnostic Analysis");
-    fireEvent.click(runBtn);
     expect(mockAnalyzeFile).toHaveBeenCalledWith(0);
   });
 
@@ -404,7 +405,7 @@ describe("ScreeningTab Queue Component & UI Actions", () => {
 describe("Home Page Component & UI Actions", () => {
   it("renders Landing Portal page by default", () => {
     render(<Home />);
-    expect(screen.getByText("AI-Assisted Pulmonary Tuberculosis Screening Workstation")).toBeInTheDocument();
-    expect(screen.getByText("Academic Prototype Notice")).toBeInTheDocument();
+    expect(screen.getAllByText("Nirikhshon").length).toBeGreaterThan(0);
+    expect(screen.getByText(/Medical Disclaimer/i)).toBeInTheDocument();
   });
 });

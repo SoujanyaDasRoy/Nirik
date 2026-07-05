@@ -616,7 +616,10 @@ export function ScreeningTab({
     const diagnosisObj = predictionService.getDiagnosis(activeResult.prediction || "Normal", activeResult.confidence || 0.0, activeResult.threshold_used);
     const observationsList = observationService.getObservations(
       activeResult.prediction || "Normal",
-      activeResult.xai_results ?? null
+      activeResult.xai_results ?? null,
+      224,
+      224,
+      activeResult.clinical_observations ?? null
     );
 
     const reviewData = {
@@ -673,7 +676,10 @@ export function ScreeningTab({
     const diagnosisObj = predictionService.getDiagnosis(activeResult.prediction || "Normal", activeResult.confidence || 0.0, activeResult.threshold_used);
     const observationsList = observationService.getObservations(
       activeResult.prediction || "Normal",
-      activeResult.xai_results ?? null
+      activeResult.xai_results ?? null,
+      224,
+      224,
+      activeResult.clinical_observations ?? null
     );
 
     const reviewData = {
@@ -706,7 +712,10 @@ export function ScreeningTab({
     const diagnosisObj = predictionService.getDiagnosis(activeResult.prediction || "Normal", activeResult.confidence || 0.0, activeResult.threshold_used);
     const observationsList = observationService.getObservations(
       activeResult.prediction || "Normal",
-      activeResult.xai_results ?? null
+      activeResult.xai_results ?? null,
+      224,
+      224,
+      activeResult.clinical_observations ?? null
     );
 
     const reviewData = {
@@ -963,13 +972,24 @@ export function ScreeningTab({
                           
                           {/* Minimalist Risk Badge */}
                           {activeResult.status === "success" && (
-                            <Badge className={`uppercase font-bold text-[10px] py-1 px-3 rounded-full border-0 ${
-                              activeDiagnosis?.riskLevel === "High" ? "bg-red-500/20 text-red-500" : "bg-blue-500/20 text-blue-500"
-                            }`}>
-                              {activeDiagnosis?.riskLevel === "High" ? "High Risk" :
-                               activeDiagnosis?.riskLevel === "Medium" ? "Medium Risk" :
-                               "Low Risk"}
-                            </Badge>
+                            <div className="flex gap-2 shrink-0">
+                              <Badge className={`uppercase font-bold text-[10px] py-1 px-3 rounded-full border-0 ${
+                                activeDiagnosis?.riskLevel === "High" ? "bg-red-500/20 text-red-500" : "bg-blue-500/20 text-blue-500"
+                              }`}>
+                                {activeDiagnosis?.riskLevel === "High" ? "High Risk" :
+                                 activeDiagnosis?.riskLevel === "Medium" ? "Medium Risk" :
+                                 "Low Risk"}
+                              </Badge>
+                              <Badge className={`uppercase font-bold text-[10px] py-1 px-3 rounded-full border-0 ${
+                                activeResult.segmentation_active 
+                                  ? "bg-emerald-500/20 text-emerald-500" 
+                                  : "bg-[#2b2d31] text-[#949ba4] border border-white/5"
+                              }`} title={activeResult.segmentation_active 
+                                ? "U-Net Lung Segmentation was successfully applied before evaluation" 
+                                : "Classifier evaluated raw radiograph input directly (No segmentation model)"}>
+                                {activeResult.segmentation_active ? "U-Net Segmented" : "Direct Input"}
+                              </Badge>
+                            </div>
                           )}
                         </div>
 

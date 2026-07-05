@@ -84,6 +84,70 @@ export interface AnalysisResult {
     interpretation: string;
     disease_overlap: string[];
   };
+  /**
+   * Phase 5: Rich clinical observations derived by the backend from the
+   * XAI ROI payload. Each entry carries a full multi-clause narrative
+   * sentence, recommended follow-up, and differential diagnoses — see
+   * backend/utils/observation_builder.py. May be empty for older records
+   * written before the column was added; the frontend falls back to the
+   * XAI-derived path in that case.
+   */
+  clinical_observations?: DetailedClinicalObservation[];
+}
+
+/**
+ * Backend-issued rich clinical observation. Mirrors the dict shape
+ * produced by `backend.utils.observation_builder.build_clinical_observations`.
+ */
+export interface DetailedClinicalObservation {
+  /** ROI label, e.g. "A", "B" */
+  id: string;
+  /** ICD-10-ish short code, e.g. "A15.0" (TB lung), "R91.1" (abnormal CXR) */
+  code: string;
+  /** Human-readable finding label, e.g. "Focal apical consolidation" */
+  label: string;
+  /** Free-form location string from the XAI ROI, e.g. "Right Upper Lung Zone" */
+  location: string;
+  /** Parsed laterality */
+  laterality: "Right" | "Left" | "Bilateral";
+  /** Parsed lung zone */
+  zone: "Upper" | "Middle" | "Lower" | "Pleural";
+  /** TB-pattern vs benign pattern */
+  descriptor: "TB-specific" | "Non-TB";
+  /** High/Moderate/Low clinical weight */
+  clinical_significance: "High" | "Moderate" | "Low";
+  /** 0..1 evidence score combining activation and contribution */
+  evidence_score: number;
+  /** 0..100 contribution share of total model attention */
+  contribution_pct: number;
+  /** 0..100 peak activation at the ROI centroid */
+  activation_score: number;
+  /** Severity bucket derived from activation */
+  severity: "Critical" | "Marked" | "Moderate" | "Mild" | "Background";
+  /** Bounding box in image coordinates: [x, y, w, h] */
+  bbox: [number, number, number, number];
+  /** Enclosing circle: [cx, cy, radius] */
+  circle: [number, number, number];
+  /** Polygon contour points: [[x, y], ...] */
+  contour: [number, number][];
+  /** Normalized centre: [nx, ny] in 0..1 */
+  center: [number, number];
+  /** Pan/zoom hint for DicomViewer (coords on the 224-grid) */
+  target_region: {
+    x1: number;
+    y1: number;
+    x2: number;
+    y2: number;
+    zoom: number;
+    panX: number;
+    panY: number;
+  };
+  /** Full multi-clause narrative sentence — never truncated */
+  narrative: string;
+  /** Recommended clinical follow-up actions */
+  recommended_followup: string[];
+  /** Differential diagnosis list */
+  differential_diagnoses: string[];
 }
 
 export function useFileUpload() {

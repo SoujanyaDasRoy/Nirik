@@ -10,7 +10,7 @@ import threading
 import random
 from PIL import Image
 
-OPTIMAL_THRESHOLD = 0.93 
+OPTIMAL_THRESHOLD = 0.5 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 MODEL_PATH = os.path.join(BASE_DIR, "tb_student_densenet121.keras")
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -73,6 +73,34 @@ IMG_SIZE = 224
 SEG_SIZE = 256  # U-Net lung segmenter input resolution
 UNET_MODEL_PATH = os.path.join(BASE_DIR, "unet_lung_segmenter.keras")
 
+# Batching configuration
+BATCH_SIZE = int(os.environ.get("BATCH_SIZE", "4"))
+BATCH_TIMEOUT = float(os.environ.get("BATCH_TIMEOUT", "0.01"))
+
+# Global Batcher instance and lock
+_batcher = None
+_batcher_lock = threading.Lock()
+
+def _process_fn(batch_tensors):
+    model = get_model()
+    if len(batch_tensors) == 0:
+        return []
+    batch = torch.stack(batch_tensors)
+    with torch.no_grad():
+        logits = model(batch)
+        if logits.dim() > 1:
+            logits = logits.squeeze(-1)
+        probs = torch.sigmoid(logits).flatten().tolist()
+    return probs
+
+def get_batcher():
+    global _batcher
+    if _batcher is None:
+        with _batcher_lock:
+            if _batcher is None:
+                _batcher = Batcher(batch_size=BATCH_SIZE, timeout=BATCH_TIMEOUT, process_fn=_process_fn)
+    return _batcher
+
 def pad_to_square(img: Image.Image, fill=0) -> Image.Image:
     w, h = img.size
     if w == h:
@@ -113,6 +141,9 @@ def get_model():
     if _model is None:
         with _model_lock:
             if _model is None:
+                device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+                if device.type == "cuda":
+                    torch.backends.cudnn.benchmark = True
                 # Check for quantized model override
                 use_quantized = os.environ.get("USE_QUANTIZED_MODEL", "false").lower() in ("true", "1")
                 if use_quantized:
@@ -120,7 +151,7 @@ def get_model():
                     if quantized_path:
                         try:
                             _model = torch.jit.load(quantized_path)
-                            _model.to(DEVICE)
+                            _model.to(device)
                             print(f"Loaded quantized model from {quantized_path}")
                             return _model
                         except Exception as e:
@@ -148,20 +179,18 @@ def get_model():
                             print(f"Loaded calibrated threshold from best_threshold.txt: {OPTIMAL_THRESHOLD}")
                         except Exception as e_thresh:
                             print(f"Failed to load threshold from best_threshold.txt: {e_thresh}")
-                            OPTIMAL_THRESHOLD = 0.93
+                            OPTIMAL_THRESHOLD = 0.5
                     else:
-                        OPTIMAL_THRESHOLD = 0.93
+                        OPTIMAL_THRESHOLD = 0.5
                         print(f"Metadata or threshold file not found. Defaulting to: {OPTIMAL_THRESHOLD}")
                     
                 if os.path.exists(MODEL_PATH):
                     try:
                         _model = keras.saving.load_model(MODEL_PATH)
-                        _model.to(DEVICE)
-                        print(f"Model loaded successfully on {DEVICE}")
-                        
+                        _model.to(device)
                         # Warm model compilation (warm-up dummy forward pass)
                         try:
-                            dummy_input = torch.zeros(1, IMG_SIZE, IMG_SIZE, 3).to(DEVICE)
+                            dummy_input = torch.zeros(1, IMG_SIZE, IMG_SIZE, 3).to(device)
                             _ = _model(dummy_input)
                             print("Model warm-up pass completed successfully ✓")
                         except Exception as warm_err:
