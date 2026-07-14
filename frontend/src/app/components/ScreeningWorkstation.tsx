@@ -32,8 +32,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 
 import { AnalysisResult } from "../hooks/useFileUpload";
-import { Box, LungZone } from "./AnnotationCanvas";
-
 import { predictionService } from "../services/predictionService";
 import { heatmapService } from "../services/heatmapService";
 import { observationService } from "../services/observationService";
@@ -161,10 +159,6 @@ export function ScreeningWorkstation({
   const [isComparing, setIsComparing] = useState(false);
 
   // Annotation state
-  const [boxes, setBoxes] = useState<Box[]>([]);
-  const [activeZone, setActiveZone] = useState<LungZone>("Apical");
-  const [annotateMode, setAnnotateMode] = useState(false);
-  const annotationCanvasRef = useRef<HTMLCanvasElement>(null);
   const [observationFocusRegion, setObservationFocusRegion] = useState<{
     x1: number;
     y1: number;
@@ -227,8 +221,6 @@ export function ScreeningWorkstation({
   useEffect(() => {
     setViewMode("original");
     setHeatmapOpacity(0.55);
-    setBoxes([]);
-    setAnnotateMode(false);
     setObservationFocusRegion(null);
     setClinicalReviewStatus(activeResult?.clinician_override ?? "confirm");
     setReviewComments(activeResult?.review_comments ?? "");
@@ -681,22 +673,10 @@ export function ScreeningWorkstation({
                   !!(activeResult?.heatmaps?.[xaiMethod] || activeResult?.heatmap_image)
                 }
                 label="Nirikshon Enterprise Viewport"
-                pixelSpacing={activeResult?.metadata?.pixel_spacing}
                 viewMode={viewMode}
                 heatmapOpacity={heatmapOpacity}
                 setHeatmapOpacity={setHeatmapOpacity}
-                boxes={boxes}
-                setBoxes={setBoxes}
-                activeZone={activeZone}
-                setActiveZone={setActiveZone}
-                annotateMode={annotateMode}
-                annotationCanvasRef={annotationCanvasRef}
-
-                priorImageSrc={priorImageSrc}
-                deltaHeatmapSrc={deltaHeatmapSrc}
                 observationFocusRegion={observationFocusRegion}
-                setViewMode={setViewMode}
-                setAnnotateMode={setAnnotateMode}
               />
             )}
           </div>
