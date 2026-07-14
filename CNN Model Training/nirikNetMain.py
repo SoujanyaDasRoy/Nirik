@@ -18,6 +18,42 @@ def _ensure_package(pkg_name, import_name=None):
 
 _ensure_package("pydot")
 
+_PINNED_TF = "2.15.1"
+_PINNED_KERAS = "2.15.0"
+
+
+def _ensure_pinned_tf_keras():
+    """Kaggle's default container often ships a newer TensorFlow/Keras than
+    this project's canonical tb_env spec (TF 2.15.1 / Keras 2.15.0 - see
+    CLAUDE.md). Pinning here matters for two reasons: (1) reproducibility -
+    the same notebook re-run months later on a drifted Kaggle image can
+    silently behave differently with nothing in the code explaining why, and
+    (2) tf2onnx's conversion path (used later to export the deployed student
+    model) is far more mature and tested against Keras 2's tf.keras
+    serialization format than Keras 3's newer multi-backend rewrite. Must run
+    before `import tensorflow` below - pip installing a different version
+    after the module is already imported in this process has no effect."""
+    try:
+        import tensorflow as _tf_check
+        import keras as _keras_check
+        if _tf_check.__version__ == _PINNED_TF and _keras_check.__version__ == _PINNED_KERAS:
+            return
+    except ImportError:
+        pass
+    print(f"Pinning tensorflow=={_PINNED_TF} keras=={_PINNED_KERAS} ...")
+    subprocess.run(
+        [sys.executable, "-m", "pip", "install", "-q",
+         f"tensorflow=={_PINNED_TF}", f"keras=={_PINNED_KERAS}"],
+        check=False,
+    )
+    print("If a different TF/Keras than this was already imported in this "
+          "kernel session, RESTART THE KERNEL now and re-run from the top - "
+          "a running Python process cannot hot-swap an already-imported "
+          "TensorFlow build.")
+
+
+_ensure_pinned_tf_keras()
+
 # %%
 # # Imports
 import os
@@ -145,7 +181,16 @@ class Config:
     da_dir: str = "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/da"
     db_dir: str = "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db"
 
-    # ---- Kaggle dataset paths: EXTERNAL TEST (never used for training) ------
+    # ---- Kaggle dataset paths: Montgomery + Shenzhen ---------------------------
+    # Previously held out entirely as a permanent "external test" set. Per
+    # project decision, now pooled into the same train/val/test split as
+    # every other source: a model trained on only 3 sources and never shown
+    # a single Montgomery/Shenzhen image has no way to learn those hospitals'
+    # scanner characteristics exist (Zech et al. 2018, cross-site CNN
+    # generalization). Held-out test-set accuracy under this design measures
+    # in-distribution generalization across all pooled sources, not
+    # generalization to a genuinely unseen hospital - a deliberate,
+    # documented trade-off, not an oversight.
     montgomery_dir: str = (
         "/kaggle/input/datasets/raddar/tuberculosis-chest-xrays-montgomery/images/images"
     )
@@ -160,6 +205,11 @@ class Config:
         "/kaggle/input/datasets/raddar/tuberculosis-chest-xrays-shenzhen/"
         "shenzhen_metadata.csv"
     )
+
+    # ---- Kaggle dataset paths: TBX11K (Simplified) -----------------------------
+    use_tbx11k: bool = True
+    tbx11k_dir: str = "/kaggle/input/datasets/vbookshelf/tbx11k-simplified/imgs"
+    tbx11k_meta: str = "/kaggle/input/datasets/vbookshelf/tbx11k-simplified/data.csv"
 
     # ---- Kaggle dataset paths: segmentation ----------------------------------
     seg_img_dir: str = (
@@ -212,7 +262,24 @@ class Config:
     # need re-validation against val AUC/F1 once retrained.
     distill_temperature: float = 3.0
     distill_alpha: float = 0.5
+    # label_smoothing is intentionally unused now that the hard-label loss
+    # is Focal Loss (see focal_loss_gamma/alpha below) - stacking label
+    # smoothing and focal loss is an atypical, unvalidated combination
+    # (both soften the loss but for different reasons: label smoothing
+    # hedges against label noise, focal loss sharpens focus on hard/
+    # minority examples). Kept as a field for reference, not wired in.
     label_smoothing: float = 0.1
+
+    # ---- Class imbalance: Focal Loss -------------------------------------------------------
+    # Normal:TB is roughly 3.4:1 in the pooled val split. Class-weighting
+    # alone only reweights the loss - it can't manufacture more diverse TB
+    # examples. Focal Loss (Lin et al. 2017, RetinaNet) complements it by
+    # down-weighting easy/majority examples so gradient concentrates on
+    # hard/minority cases. gamma=2.0, alpha=0.25 are the paper's original
+    # defaults - a reasonable starting point, not validated for this
+    # dataset yet; re-check against val F1/sensitivity once retrained.
+    focal_loss_gamma: float = 2.0
+    focal_loss_alpha: float = 0.25
 
     # ---- Lung crop padding ------------------------------------------------------------------
     # Fraction of the segmentation bounding box's height/width added as
@@ -247,6 +314,10 @@ class Config:
     aug_noise_stddev: float = 6.0
 
     # ---- Splits & sampling ------------------------------------------------------------------
+    # Patient-wise 70/15/15 (train/val/test) of the single pooled dataset -
+    # see split_dataframe(). val_split kept only for any legacy reference;
+    # train_split is what split_dataframe() actually reads.
+    train_split: float = 0.70
     val_split: float = 0.15
     max_per_class: int = 0
     max_seg_samples: int = 0
@@ -493,28 +564,31 @@ def discover_datasets(cfg=CFG):
     print("DATASET DISCOVERY")
     print("=" * 78)
     discovered = {
-        "tb": describe_directory("TB (train)", cfg.tb_dir),
-        "india": describe_directory("India (train)", cfg.india_dir),
-        "montgomery": describe_directory("Montgomery (EXTERNAL TEST)", cfg.montgomery_dir),
-        "shenzhen": describe_directory("Shenzhen (EXTERNAL TEST)", cfg.shenzhen_dir),
+        "tb": describe_directory("TB (pool)", cfg.tb_dir),
+        "india": describe_directory("India (pool)", cfg.india_dir),
+        "montgomery": describe_directory("Montgomery (pool)", cfg.montgomery_dir),
+        "shenzhen": describe_directory("Shenzhen (pool)", cfg.shenzhen_dir),
         "seg_images": describe_directory("SegImages", cfg.seg_img_dir),
         "seg_masks": describe_directory("SegMasks", cfg.seg_mask_dir),
     }
     if cfg.use_da_db:
-        discovered["da"] = describe_directory("DA (train)", cfg.da_dir)
-        discovered["db"] = describe_directory("DB (train)", cfg.db_dir)
+        discovered["da"] = describe_directory("DA (pool)", cfg.da_dir)
+        discovered["db"] = describe_directory("DB (pool)", cfg.db_dir)
+    if cfg.use_tbx11k:
+        discovered["tbx11k"] = describe_directory("TBX11K (pool)", cfg.tbx11k_dir)
     print("=" * 78)
     return discovered
 
 # %%
 # # Metadata Generation
-"""Cell 4 - Build the TRAINING POOL and EXTERNAL TEST dataframes separately.
+"""Cell 4 - Build ONE pooled dataframe across every labelled source.
 
 Label convention: 0 = Normal, 1 = Tuberculosis.
-TRAINING POOL: tawsifurrahman + India (+ optional DA/DB).
-EXTERNAL TEST (held out completely): Montgomery + Shenzhen. This is what
-lets you claim the model generalizes to populations/equipment it never
-saw in training, rather than just an in-distribution held-out split.
+POOL: tawsifurrahman + India + Montgomery + Shenzhen (+ optional DA/DB,
+TBX11K). Montgomery/Shenzhen are no longer held out as a permanent external
+test - see the comment on Config.montgomery_dir for why. split_dataframe()
+below produces a single patient-wise 70/15/15 train/val/test split of this
+pool.
 """
 
 _LABEL_COLUMN_CANDIDATES = (
@@ -561,10 +635,23 @@ def _read_metadata_csv(path):
         return None
 
 
+_PATIENT_COLUMN_CANDIDATES = (
+    "patient_id", "patientid", "patient", "subject_id", "subject",
+    "case_id", "study_id",
+)
+
+
 def _build_meta_lookup(meta_df):
-    lookup = {}
+    """Returns (label_lookup, patient_lookup), both keyed by lowercased
+    filename stem. patient_lookup is empty when the metadata CSV has no
+    recognizable patient/subject/case ID column - callers fall back to the
+    filename stem itself as a pseudo-patient-id in that case (see
+    _collect_folder_dataset), which is no worse than the previous
+    image-level split and enables true grouping wherever a real ID exists."""
+    label_lookup = {}
+    patient_lookup = {}
     if meta_df is None or meta_df.empty:
-        return lookup
+        return label_lookup, patient_lookup
     columns = {c.lower(): c for c in meta_df.columns}
     fname_col = None
     for cand in ("fname", "filename", "file", "image", "id", "study_id", "name"):
@@ -576,19 +663,29 @@ def _build_meta_lookup(meta_df):
         if cand in columns:
             label_col = columns[cand]
             break
-    if fname_col is None or label_col is None:
-        return lookup
+    patient_col = None
+    for cand in _PATIENT_COLUMN_CANDIDATES:
+        if cand in columns:
+            patient_col = columns[cand]
+            break
+    if fname_col is None:
+        return label_lookup, patient_lookup
     for _idx, row in meta_df.iterrows():
         stem = os.path.splitext(os.path.basename(str(row[fname_col])))[0].lower()
-        label = _label_from_value(row[label_col])
-        if label is not None:
-            lookup[stem] = label
-    return lookup
+        if label_col is not None:
+            label = _label_from_value(row[label_col])
+            if label is not None:
+                label_lookup[stem] = label
+        if patient_col is not None:
+            patient_val = str(row[patient_col]).strip()
+            if patient_val and patient_val.lower() not in ("nan", "none", ""):
+                patient_lookup[stem] = patient_val
+    return label_lookup, patient_lookup
 
 
 def _collect_folder_dataset(directory, source, meta_path=None, cfg=CFG):
     rows = []
-    meta_lookup = _build_meta_lookup(_read_metadata_csv(meta_path))
+    meta_lookup, patient_lookup = _build_meta_lookup(_read_metadata_csv(meta_path))
     fallback_paths = []
     for path in list_image_files(directory):
         stem = os.path.splitext(os.path.basename(path))[0].lower()
@@ -603,7 +700,16 @@ def _collect_folder_dataset(directory, source, meta_path=None, cfg=CFG):
             label = 0
             label_source = "assumed_normal"
             fallback_paths.append(path)
-        rows.append({"path": path, "label": int(label), "source": source, "label_source": label_source})
+        # No real patient/subject ID in the metadata CSV -> the filename
+        # stem itself is used as a pseudo-patient-id (still prevents the
+        # SAME file from ever being split across train/val/test, which a
+        # plain image-level random split does not guarantee when a real ID
+        # would have grouped multiple files together).
+        patient_id = patient_lookup.get(stem, f"{source}:{stem}")
+        rows.append({
+            "path": path, "label": int(label), "source": source,
+            "label_source": label_source, "patient_id": patient_id,
+        })
 
     if fallback_paths:
         print(f"  [{source}] {len(fallback_paths)} image(s) had no metadata match and no "
@@ -621,14 +727,18 @@ def _collect_folder_dataset(directory, source, meta_path=None, cfg=CFG):
 
 
 def _collect_tb_dataset(cfg):
-    """tawsifurrahman - class-folder structured (Normal/ and Tuberculosis/)."""
+    """tawsifurrahman - class-folder structured (Normal/ and Tuberculosis/).
+    No patient metadata available - filename stem used as pseudo-patient-id
+    (see _collect_folder_dataset for the same convention/rationale)."""
     rows = []
     class_dirs = {0: [os.path.join(cfg.tb_dir, "Normal")],
                   1: [os.path.join(cfg.tb_dir, "Tuberculosis")]}
     for label, dirs in class_dirs.items():
         for d in dirs:
             for path in list_image_files(d):
-                rows.append({"path": path, "label": label, "source": "tb"})
+                stem = os.path.splitext(os.path.basename(path))[0].lower()
+                rows.append({"path": path, "label": label, "source": "tb",
+                             "patient_id": f"tb:{stem}"})
     return rows
 
 
@@ -640,24 +750,30 @@ def _collect_da_db_dataset(cfg):
             label = _label_from_filename(path)
             if label is None:
                 label = 1
-            rows.append({"path": path, "label": label, "source": name})
+            stem = os.path.splitext(os.path.basename(path))[0].lower()
+            rows.append({"path": path, "label": label, "source": name,
+                         "patient_id": f"{name}:{stem}"})
     return rows
 
 
 def build_classification_dataframe(cfg=CFG):
-    """Assemble the TRAINING POOL only. See module docstring above."""
-    print("Generating TRAINING POOL metadata ...")
+    """Assemble the single pooled dataframe. See module docstring above."""
+    print("Generating POOLED dataset metadata ...")
     rows = []
     rows += _collect_tb_dataset(cfg)
     rows += _collect_folder_dataset(cfg.india_dir, "india", cfg.india_meta, cfg=cfg)
+    rows += _collect_folder_dataset(cfg.montgomery_dir, "montgomery", cfg.montgomery_meta, cfg=cfg)
+    rows += _collect_folder_dataset(cfg.shenzhen_dir, "shenzhen", cfg.shenzhen_meta, cfg=cfg)
     if cfg.use_da_db:
         rows += _collect_da_db_dataset(cfg)
+    if cfg.use_tbx11k:
+        rows += _collect_folder_dataset(cfg.tbx11k_dir, "tbx11k", cfg.tbx11k_meta, cfg=cfg)
 
     df = pd.DataFrame(rows).drop_duplicates(subset="path").reset_index(drop=True)
     if df.empty:
         raise RuntimeError(
-            "No labelled training images were discovered. Check that the "
-            "Kaggle datasets are attached and the paths in Config are correct."
+            "No labelled images were discovered. Check that the Kaggle "
+            "datasets are attached and the paths in Config are correct."
         )
 
     if cfg.max_per_class and cfg.max_per_class > 0:
@@ -672,40 +788,58 @@ def build_classification_dataframe(cfg=CFG):
     print("Per-source counts:")
     print(df.groupby(["source", "label"]).size())
     print("Per-class totals:", df["label"].value_counts().to_dict())
-    print("Total TRAINING POOL images:", len(df))
-    return df
-
-
-def build_external_test_dataframe(cfg=CFG):
-    """Assemble the EXTERNAL TEST set: Montgomery + Shenzhen. Never trained on."""
-    print("Generating EXTERNAL TEST metadata (Montgomery + Shenzhen) ...")
-    rows = []
-    rows += _collect_folder_dataset(cfg.montgomery_dir, "montgomery", cfg.montgomery_meta, cfg=cfg)
-    rows += _collect_folder_dataset(cfg.shenzhen_dir, "shenzhen", cfg.shenzhen_meta, cfg=cfg)
-
-    df = pd.DataFrame(rows).drop_duplicates(subset="path").reset_index(drop=True)
-    if df.empty:
-        raise RuntimeError(
-            "No labelled external-test images were discovered. Check that "
-            "Montgomery/Shenzhen are attached and paths in Config are correct."
-        )
-    df = df.sample(frac=1.0, random_state=SEED).reset_index(drop=True)
-    print("Per-source counts:")
-    print(df.groupby(["source", "label"]).size())
-    print("Per-class totals:", df["label"].value_counts().to_dict())
-    print("Total EXTERNAL TEST images:", len(df))
+    print("Unique patients:", df["patient_id"].nunique(), "  Total images:", len(df))
     return df
 
 
 def split_dataframe(df, cfg=CFG):
-    """Stratified train/validation split of the TRAINING POOL."""
-    train, val = train_test_split(
-        df, test_size=cfg.val_split, stratify=df["label"], random_state=SEED
-    )
-    train = train.reset_index(drop=True)
-    val = val.reset_index(drop=True)
-    print(f"Train: {len(train)}  Val: {len(val)}")
-    return train, val
+    """Patient-wise 70/15/15 train/val/test split of the pooled dataframe.
+
+    Plain image-level train_test_split (the previous approach) can put
+    different images of the SAME patient into different splits, letting a
+    model partially memorize patient-specific anatomy instead of genuinely
+    generalizing - CLAUDE.md's dataset rules require patient-wise splitting
+    for exactly this reason. GroupShuffleSplit guarantees every image
+    belonging to a given patient_id stays in exactly one split; done twice
+    (70/30, then the 30 split again 50/50) to get three groups. Stratification
+    by label is NOT exact under grouping (a patient's images are all one
+    class already in this dataset, so group-safety and class-balance mostly
+    coexist in practice, but aren't mathematically guaranteed together) -
+    group-safety is treated as the higher priority of the two per CLAUDE.md's
+    explicit leakage-prevention requirement.
+    """
+    from sklearn.model_selection import GroupShuffleSplit
+
+    groups = df["patient_id"].values
+    gss1 = GroupShuffleSplit(n_splits=1, test_size=(1.0 - cfg.train_split), random_state=SEED)
+    train_idx, rest_idx = next(gss1.split(df, groups=groups))
+    train = df.iloc[train_idx].reset_index(drop=True)
+    rest = df.iloc[rest_idx].reset_index(drop=True)
+
+    rest_groups = rest["patient_id"].values
+    gss2 = GroupShuffleSplit(n_splits=1, test_size=0.5, random_state=SEED)
+    val_idx, test_idx = next(gss2.split(rest, groups=rest_groups))
+    val = rest.iloc[val_idx].reset_index(drop=True)
+    test = rest.iloc[test_idx].reset_index(drop=True)
+
+    overlap_tv = set(train["patient_id"]) & set(val["patient_id"])
+    overlap_tt = set(train["patient_id"]) & set(test["patient_id"])
+    overlap_vt = set(val["patient_id"]) & set(test["patient_id"])
+    if overlap_tv or overlap_tt or overlap_vt:
+        raise RuntimeError(
+            f"Patient-wise split invariant violated - overlapping patient_ids "
+            f"found (train/val={len(overlap_tv)}, train/test={len(overlap_tt)}, "
+            f"val/test={len(overlap_vt)}). This should be impossible with "
+            f"GroupShuffleSplit; do not proceed with a leaking split."
+        )
+
+    print(f"Train: {len(train)} ({train['patient_id'].nunique()} patients)  "
+          f"Val: {len(val)} ({val['patient_id'].nunique()} patients)  "
+          f"Test: {len(test)} ({test['patient_id'].nunique()} patients)")
+    print("Train per-class:", train["label"].value_counts().to_dict())
+    print("Val per-class:", val["label"].value_counts().to_dict())
+    print("Test per-class:", test["label"].value_counts().to_dict())
+    return train, val, test
 
 # %%
 # # Data Integrity Check
@@ -746,67 +880,61 @@ def _hamming_distance(a, b):
     return bin(a ^ b).count("1")
 
 
-def check_dataset_leakage(train_df, val_df, external_test_df, cfg=CFG, hamming_threshold=5):
-    """Flag candidate near-duplicate images between the training pool
-    (train+val) and the external test set. O(train_pool_size x
-    external_test_size) - a few million comparisons, each a cheap XOR +
-    popcount, so this takes roughly a minute, run once."""
+def check_dataset_leakage(train_df, val_df, test_df, cfg=CFG, hamming_threshold=5):
+    """Flag candidate near-duplicate images across the train/val/test split.
+
+    patient_id-based grouping (split_dataframe) already guarantees no
+    filename is split across sets, but patient_id is derived per-source
+    (metadata patient column, or a source-prefixed filename fallback) - it
+    cannot catch the SAME underlying image appearing under different
+    filenames in two different pooled sources (a real risk now that
+    Montgomery/Shenzhen/TBX11K/DA-DB are all pooled together and some public
+    CXR datasets are known to overlap). This perceptual-hash check is the
+    independent, second-layer catch for that case."""
     print("=" * 78)
-    print("DATA LEAKAGE CHECK (perceptual hash: training pool vs external test)")
+    print("DATA LEAKAGE CHECK (perceptual hash across train/val/test)")
     print("=" * 78)
 
-    train_pool_paths = pd.concat([train_df, val_df])["path"].tolist()
-    train_hashes = compute_image_hashes(train_pool_paths)
-    test_hashes = compute_image_hashes(external_test_df["path"].tolist())
-    train_items = list(train_hashes.items())
+    pair_names = [("train", "val", train_df, val_df),
+                  ("train", "test", train_df, test_df),
+                  ("val", "test", val_df, test_df)]
 
-    flagged = []
-    for test_path, test_hash in test_hashes.items():
-        for train_path, train_hash in train_items:
-            if _hamming_distance(test_hash, train_hash) <= hamming_threshold:
-                flagged.append({"external_test_image": test_path, "training_image": train_path})
+    all_flagged = []
+    for name_a, name_b, df_a, df_b in pair_names:
+        hashes_a = compute_image_hashes(df_a["path"].tolist())
+        hashes_b = compute_image_hashes(df_b["path"].tolist())
+        items_a = list(hashes_a.items())
+        for path_b, hash_b in hashes_b.items():
+            for path_a, hash_a in items_a:
+                if _hamming_distance(hash_a, hash_b) <= hamming_threshold:
+                    all_flagged.append({
+                        "split_a": name_a, "image_a": path_a,
+                        "split_b": name_b, "image_b": path_b,
+                    })
 
-    if flagged:
-        print(f"WARNING: {len(flagged)} candidate near-duplicate pairs found between "
-              f"the external test set and the training pool. These are CANDIDATES "
-              f"for manual visual review, not confirmed duplicates.")
-
-        # A genuine leaked image shows up as one-to-one matches. A single
-        # training image matching MANY different external images is the
-        # signature of a perceptual-hash false positive (usually an
-        # unusually blank/low-detail image producing a generic hash) -
-        # this summary makes that pattern visible at a glance instead of
-        # something you have to notice by scanning the raw pair list.
-        match_counts = pd.Series(
-            [pair["training_image"] for pair in flagged]
-        ).value_counts()
-        print("Training images by number of external matches (high counts here "
-              "suggest a false-positive hash, not real leakage - worth a visual check):")
-        for train_path, count in match_counts.items():
-            flag = "  <-- check this one" if count >= 3 else ""
-            print(f"  {count:3d}x  {train_path}{flag}")
-
-        for pair in flagged[:20]:
-            print(f"  external: {pair['external_test_image']}")
-            print(f"  training: {pair['training_image']}")
-        if len(flagged) > 20:
-            print(f"  ... and {len(flagged) - 20} more (full list in leakage_check.json).")
+    if all_flagged:
+        print(f"WARNING: {len(all_flagged)} candidate near-duplicate pairs found across "
+              f"splits. These are CANDIDATES for manual visual review, not confirmed "
+              f"duplicates - a single image matching many others usually indicates an "
+              f"unusually blank/low-detail perceptual-hash false positive, not real leakage.")
+        for pair in all_flagged[:20]:
+            print(f"  {pair['split_a']}: {pair['image_a']}  <->  {pair['split_b']}: {pair['image_b']}")
+        if len(all_flagged) > 20:
+            print(f"  ... and {len(all_flagged) - 20} more (full list in leakage_check.json).")
     else:
-        print(f"No candidate near-duplicates found (hamming_threshold={hamming_threshold}). "
-              "Your external-test generalization numbers are measuring what they're "
-              "supposed to.")
+        print(f"No candidate near-duplicates found across train/val/test "
+              f"(hamming_threshold={hamming_threshold}).")
 
     report_path = cfg.out("leakage_check.json")
     with open(report_path, "w") as f:
         json.dump({
             "hamming_threshold": hamming_threshold,
-            "training_pool_size": len(train_pool_paths),
-            "external_test_size": len(external_test_df),
-            "num_flagged_pairs": len(flagged),
-            "flagged_pairs": flagged,
+            "train_size": len(train_df), "val_size": len(val_df), "test_size": len(test_df),
+            "num_flagged_pairs": len(all_flagged),
+            "flagged_pairs": all_flagged,
         }, f, indent=2)
     print(f"Saved leakage check report -> {report_path}")
-    return flagged
+    return all_flagged
 
 # %%
 # # Lung Segmentation (Attention U-Net)
@@ -1042,11 +1170,19 @@ def apply_clahe(gray):
     return _CLAHE.apply(uint8_img).astype("float32")
 
 
-def preprocess_xray(path, unet, cfg=CFG, normalize=True):
-    """Full preprocessing pipeline for a single X-ray.
+def preprocess_xray(path, unet, cfg=CFG):
+    """Full preprocessing pipeline for a single X-ray. Returns a canonical
+    0-255 float32 RGB tensor - NOT backbone-normalized.
 
-    normalize=True -> ResNet-50-normalized tensor for model input.
-    normalize=False -> 0-255 RGB image, for display in figures.
+    Teacher (ResNet50) and student (DenseNet121) need different input
+    normalization (Caffe-style BGR mean-subtraction vs. ImageNet mean/std),
+    and knowledge distillation needs both models to see the exact same input
+    tensor in the same training step (DistillationModel calls both on the
+    same `x`). Rather than maintaining parallel per-model datasets, each
+    model owns a `Lambda(preprocess_input)` layer as its first layer (see
+    build_teacher / build_densenet_student) and normalizes internally - so
+    this function, the tf.data pipeline, and augmentation all operate on one
+    shared canonical representation regardless of which model consumes it.
     """
     gray = read_image_grayscale(path)
 
@@ -1062,12 +1198,7 @@ def preprocess_xray(path, unet, cfg=CFG, normalize=True):
     enhanced = apply_clahe(cropped)
     resized = cv2.resize(enhanced, (cfg.img_size, cfg.img_size), interpolation=cv2.INTER_AREA)
     rgb = np.stack([resized, resized, resized], axis=-1).astype("float32")
-
-    if not normalize:
-        return rgb
-
-    rgb = keras.applications.resnet50.preprocess_input(rgb)
-    return rgb.astype("float32")
+    return rgb
 
 # %%
 # # Dataset Pipeline
@@ -1168,7 +1299,10 @@ def compute_class_weights(df):
 
 
 def build_teacher(input_shape, num_classes, weights="imagenet"):
-    """Construct the ResNet-50 teacher model."""
+    """Construct the ResNet-50 teacher model. Takes canonical 0-255 RGB
+    input directly - normalizes internally via a Lambda layer, so the
+    shared tf.data pipeline never needs to know which backbone is
+    consuming its output (see preprocess_xray)."""
     base = keras.applications.ResNet50(
         input_shape=input_shape,
         include_top=False,
@@ -1176,7 +1310,9 @@ def build_teacher(input_shape, num_classes, weights="imagenet"):
     )
     base.trainable = False
     inputs = keras.Input(shape=input_shape, name="teacher_input")
-    x = base(inputs, training=False)
+    x = layers.Lambda(keras.applications.resnet50.preprocess_input,
+                       name="teacher_preprocess")(inputs)
+    x = base(x, training=False)
     x = layers.GlobalAveragePooling2D(name="avg_pool")(x)
     x = layers.BatchNormalization(name="teacher_bn")(x)
     x = layers.Dropout(0.2, name="teacher_dropout")(x)
@@ -1186,65 +1322,51 @@ def build_teacher(input_shape, num_classes, weights="imagenet"):
     return keras.Model(inputs, outputs, name="resnet50_teacher")
 
 # %%
-# # Student Network (NirikNet Custom CNN, ~2.1M params)
-"""Cell 9 - Student network: Custom CNN (NirikNet), depthwise-separable, 4 stages."""
+# # Student Network (DenseNet121, ImageNet-pretrained)
+"""Cell 9 - Student network: DenseNet121.
+
+Replaces the earlier from-scratch custom CNN (NirikNet). Rationale, decided
+across several rounds of review:
+  - NirikNet trained from random initialization - a real overfitting risk on
+    a training pool of only a few thousand images. DenseNet121 starts from
+    ImageNet weights, sidestepping that problem without needing a separate
+    proxy-pretraining stage.
+  - Capacity gap to the ResNet50 teacher shrinks from ~11x (23.6M -> 2.1M)
+    to ~3.35x (23.6M -> 7.04M), addressing the teacher/student capacity-gap
+    degradation documented in Mirzadeh et al. 2020 ("Improved Knowledge
+    Distillation via Teacher Assistant").
+  - CheXNet (Rajpurkar et al. 2017) established DenseNet121 specifically as
+    a strong chest-radiograph classifier, unlike a from-scratch bespoke
+    architecture with no domain precedent.
+  - Known trade-off, measured directly on this project's hardware: CPU
+    inference is SLOWER than the old NirikNet student (~493ms/image vs.
+    ~262ms/image, architecture-only benchmark) because dense-block
+    concatenation doesn't parallelize as cheaply as a plain conv chain
+    despite having far fewer parameters. Deemed acceptable for a
+    non-real-time screening upload, not a live feed.
+"""
 
 
-def _sep_block(x, filters, name):
-    """Depthwise-separable conv block: SeparableConv2D + BN + activation."""
-    x = layers.SeparableConv2D(
-        filters, 3, padding="same", use_bias=False,
-        depthwise_initializer="he_normal", pointwise_initializer="he_normal",
-        name=name + "_sepconv",
-    )(x)
-    x = layers.BatchNormalization(name=name + "_bn")(x)
-    x = layers.Activation("gelu", name=name + "_act")(x)
-    return x
-
-
-def build_niriknet(input_shape, num_classes):
-    """Construct the NirikNet student CNN (~2.1M parameters).
-
-    4 downsampling stages so the final feature map before GAP is 7x7, not
-    3x3 - keeps Grad-CAM localized. Depthwise-separable convs throughout
-    (except the 3-channel stem and the 1x1 pre-GAP widening layer) keep this
-    ~12x smaller than a same-depth standard-conv design.
-    """
+def build_densenet_student(input_shape, num_classes, weights="imagenet"):
+    """Construct the DenseNet121 student model. Same canonical-0-255-RGB
+    input contract as build_teacher, same logits/softmax head split for
+    distillation-safe KD math (see DistillationModel)."""
+    base = keras.applications.DenseNet121(
+        input_shape=input_shape,
+        include_top=False,
+        weights=weights,
+    )
     inputs = keras.Input(shape=input_shape, name="student_input")
-
-    x = layers.Conv2D(64, 3, strides=2, padding="same", use_bias=False,
-                       kernel_initializer="he_normal", name="stem_conv")(inputs)
-    x = layers.BatchNormalization(name="stem_bn")(x)
-    x = layers.Activation("gelu", name="stem_act")(x)
-
-    x = _sep_block(x, 128, "s1b1")
-    x = _sep_block(x, 128, "s1b2")
-    x = layers.MaxPooling2D(2, name="s1_pool")(x)
-
-    x = _sep_block(x, 256, "s2b1")
-    x = _sep_block(x, 256, "s2b2")
-    x = layers.MaxPooling2D(2, name="s2_pool")(x)
-
-    x = _sep_block(x, 512, "s3b1")
-    x = _sep_block(x, 512, "s3b2")
-    x = layers.MaxPooling2D(2, name="s3_pool")(x)
-
-    x = _sep_block(x, 768, "s4b1")
-    x = _sep_block(x, 768, "s4b2")
-    x = layers.MaxPooling2D(2, name="s4_pool")(x)
-
-    x = layers.Conv2D(768, 1, padding="same", use_bias=False,
-                       kernel_initializer="he_normal", name="pregap_conv")(x)
-    x = layers.BatchNormalization(name="pregap_bn")(x)
-    x = layers.Activation("gelu", name="pregap_act")(x)
-
-    x = layers.GlobalAveragePooling2D(name="gap")(x)
-    x = layers.Dropout(0.3, name="head_dropout")(x)
+    x = layers.Lambda(keras.applications.densenet.preprocess_input,
+                       name="student_preprocess")(inputs)
+    x = base(x, training=True)
+    x = layers.GlobalAveragePooling2D(name="student_avg_pool")(x)
+    x = layers.BatchNormalization(name="student_bn")(x)
+    x = layers.Dropout(0.3, name="student_dropout")(x)
     logits = layers.Dense(num_classes, activation=None, dtype="float32",
                            name="student_logits")(x)
     outputs = layers.Activation("softmax", dtype="float32", name="student_output")(logits)
-
-    return keras.Model(inputs, outputs, name="niriknet")
+    return keras.Model(inputs, outputs, name="densenet121_student")
 
 # %%
 # # Knowledge Distillation Implementation
@@ -1295,8 +1417,8 @@ class DistillationModel(keras.Model):
         self._teacher_logits_model = _logits_submodel(teacher, "teacher_logits")
         self.T = temperature
         self.alpha = alpha
-        self.loss_fn = keras.losses.CategoricalCrossentropy(
-            from_logits=False, label_smoothing=CFG.label_smoothing
+        self.loss_fn = keras.losses.CategoricalFocalCrossentropy(
+            from_logits=False, gamma=CFG.focal_loss_gamma, alpha=CFG.focal_loss_alpha
         )
         self.loss_tracker = keras.metrics.Mean(name="loss")
         self.accuracy_tracker = keras.metrics.CategoricalAccuracy(name="accuracy")
@@ -1456,7 +1578,7 @@ def train_teacher_head(train_df, val_df, train_ds, val_ds, cfg=CFG):
 
     teacher.compile(
         optimizer=keras.optimizers.AdamW(learning_rate=lr_schedule, weight_decay=cfg.weight_decay),
-        loss=keras.losses.CategoricalCrossentropy(from_logits=False, label_smoothing=cfg.label_smoothing),
+        loss=keras.losses.CategoricalFocalCrossentropy(from_logits=False, gamma=cfg.focal_loss_gamma, alpha=cfg.focal_loss_alpha),
         metrics=["accuracy"],
     )
 
@@ -1523,7 +1645,7 @@ def train_teacher_finetune(train_df, val_df, train_ds, val_ds, head_teacher, cfg
 
     head_teacher.compile(
         optimizer=keras.optimizers.AdamW(learning_rate=lr_schedule, weight_decay=cfg.weight_decay),
-        loss=keras.losses.CategoricalCrossentropy(from_logits=False, label_smoothing=cfg.label_smoothing),
+        loss=keras.losses.CategoricalFocalCrossentropy(from_logits=False, gamma=cfg.focal_loss_gamma, alpha=cfg.focal_loss_alpha),
         metrics=["accuracy"],
     )
 
@@ -1552,7 +1674,7 @@ def train_student(train_df, val_df, train_ds, val_ds, teacher, cfg=CFG):
     print("=" * 78)
 
     input_shape = (cfg.img_size, cfg.img_size, 3)
-    student = build_niriknet(input_shape, cfg.num_classes)
+    student = build_densenet_student(input_shape, cfg.num_classes)
 
     total_steps = max(1, (len(train_df) // cfg.batch_size) * cfg.student_epochs)
     warmup_steps = max(1, (len(train_df) // cfg.batch_size) * cfg.student_warmup_epochs)
@@ -1876,30 +1998,39 @@ def _get_grad_model(model, layer_name):
     usable directly inside a GradientTape.
 
     Two cases:
-    1. `layer_name` is a top-level layer of `model` itself (e.g. NirikNet's
-       own conv layers) - Keras's standard get_layer()-based sub-model
-       reconstruction works fine here.
-    2. `layer_name` is a nested submodel (e.g. the teacher's ResNet50
-       backbone, wrapped as a single layer by build_teacher). Reconstructing
-       via get_layer(...).output raises a disconnected-graph KeyError at
-       call time for this case - confirmed by testing, not a typo - so
-       instead the backbone is called directly on the input and the
-       remaining layers (GAP -> BN -> Dropout -> Dense) are manually
-       re-applied in sequence. This stays purely eager/tape-based and
-       sidesteps Keras's static graph reconstruction machinery entirely.
+    1. `layer_name` is a top-level layer of `model` itself - Keras's
+       standard get_layer()-based sub-model reconstruction works fine here.
+    2. `layer_name` is a nested submodel (e.g. the teacher's ResNet50 or the
+       student's DenseNet121 backbone, wrapped as a single layer). Both
+       models also have a Lambda preprocessing layer BEFORE the backbone
+       (canonical 0-255 RGB in, backbone-normalized out - see build_teacher /
+       build_densenet_student) and a small classifier head AFTER it.
+       Reconstructing via get_layer(...).output raises a disconnected-graph
+       KeyError at call time for this case - confirmed by testing, not a
+       typo - so instead the layers before the target (preprocessing) and
+       after it (GAP -> BN -> Dropout -> Dense -> Activation) are replayed
+       manually in their original graph order, split by the target's index
+       in `model.layers` rather than assumed to all come after it. This
+       stays purely eager/tape-based and sidesteps Keras's static graph
+       reconstruction machinery entirely.
     """
     target = model.get_layer(layer_name)
 
     if isinstance(target, keras.Model):
-        other_layers = [
-            l for l in model.layers
-            if l is not target and not isinstance(l, keras.layers.InputLayer)
+        target_idx = model.layers.index(target)
+        pre_layers = [
+            l for l in model.layers[1:target_idx]
+            if not isinstance(l, keras.layers.InputLayer)
         ]
+        post_layers = model.layers[target_idx + 1:]
 
         def call(inputs):
-            conv_out = target(inputs, training=False)
+            x = inputs
+            for layer in pre_layers:
+                x = layer(x, training=False)
+            conv_out = target(x, training=False)
             x = conv_out
-            for layer in other_layers:
+            for layer in post_layers:
                 x = layer(x, training=False)
             return conv_out, x
 
@@ -2016,8 +2147,10 @@ def explain_predictions(model, unet, df, cfg=CFG, model_name="Model", target_lay
     model_inputs, display_images, paths = [], [], []
     for _, row in sample_df.iterrows():
         try:
-            model_input = preprocess_xray(row["path"], unet, cfg, normalize=True)
-            display_img = preprocess_xray(row["path"], unet, cfg, normalize=False)
+            # Same canonical tensor serves both uses now - the model itself
+            # normalizes internally, so no separate "normalized" variant.
+            model_input = preprocess_xray(row["path"], unet, cfg)
+            display_img = model_input
             model_inputs.append(model_input)
             display_images.append(display_img)
             paths.append(row["path"])
@@ -2214,14 +2347,14 @@ def plot_pipeline_overview(cfg=CFG):
     """Hand-drawn flowchart of the full multi-stage pipeline - the
     'overall architecture, every stage' figure for the report."""
     stages = [
-        ("Data Sources", "tawsifurrahman + India + DA/DB\n(train)  |  Montgomery + Shenzhen\n(external test, held out)"),
-        ("Preprocessing", "U-Net lung mask -> crop -> CLAHE\n-> resize 224x224 -> ResNet-50 norm"),
+        ("Data Sources", "tawsifurrahman + India + DA/DB +\nMontgomery + Shenzhen (+ TBX11K)\npooled, patient-wise 70/15/15"),
+        ("Preprocessing", "U-Net lung mask -> crop -> CLAHE\n-> resize 224x224 (canonical RGB,\nper-model norm applied internally)"),
         ("Attention U-Net", "Lung segmentation\n4-level encoder-decoder,\nattention gates on every skip"),
-        ("Teacher: ResNet-50", "ImageNet-pretrained, ~25.6M params\nStage 1: frozen backbone\nStage 2: unfreeze conv5_block* only"),
-        ("Knowledge Distillation", "Hard-label loss + KL(teacher || student)\nT = 4.0, alpha = 0.3"),
-        ("Student: NirikNet", "Custom CNN, ~2.1M params\n4 stages, depthwise-separable,\ntrained from scratch"),
+        ("Teacher: ResNet-50", "ImageNet-pretrained, ~23.6M params\nStage 1: frozen backbone\nStage 2: unfreeze conv4+conv5 blocks"),
+        ("Knowledge Distillation", "Hard-label focal loss + KL(teacher || student)\nT = 3.0, alpha = 0.5"),
+        ("Student: DenseNet121", "ImageNet-pretrained, ~7.0M params\nfull fine-tune via distillation"),
         ("Explainability", "Grad-CAM, Grad-CAM++,\nLayer-CAM, Eigen-CAM"),
-        ("Evaluation", "Accuracy, sensitivity, specificity,\nROC/PR-AUC, MCC, kappa\non validation + external test"),
+        ("Evaluation", "Accuracy, sensitivity, specificity,\nROC/PR-AUC, MCC, kappa\non held-out pooled test split"),
     ]
     colors = ["#B0BEC5", "#90CAF9", "#64B5F6", "#FFAB91", "#CE93D8", "#80CBC4", "#FFF59D", "#A5D6A7"]
 
@@ -2257,13 +2390,13 @@ def plot_pipeline_overview(cfg=CFG):
     print(f"Saved pipeline overview -> {filepath}")
 
 
-def plot_dataset_composition(train_df, val_df, external_test_df, cfg=CFG):
+def plot_dataset_composition(train_df, val_df, test_df, cfg=CFG):
     """Bar charts: images per split, class balance per split, and per-source
     breakdown of the training pool."""
     fig, axes = plt.subplots(1, 3, figsize=(18, 5))
 
-    splits = ["Train", "Val", "External Test"]
-    dfs = [train_df, val_df, external_test_df]
+    splits = ["Train", "Val", "Test"]
+    dfs = [train_df, val_df, test_df]
     sizes = [len(d) for d in dfs]
     bars = axes[0].bar(splits, sizes, color=["#64B5F6", "#81C784", "#E57373"])
     axes[0].set_title("Images per Split")
@@ -2285,7 +2418,7 @@ def plot_dataset_composition(train_df, val_df, external_test_df, cfg=CFG):
 
     source_counts = train_df["source"].value_counts()
     axes[2].bar(source_counts.index, source_counts.values, color="#9575CD")
-    axes[2].set_title("Training Pool by Source")
+    axes[2].set_title("Train Split by Source")
     axes[2].set_ylabel("Count")
     axes[2].tick_params(axis="x", rotation=30)
 
@@ -2342,7 +2475,7 @@ def plot_augmentation_preview(df, unet, cfg=CFG, n=3):
         axes = axes.reshape(2, 1)
 
     for i, path in enumerate(sample_paths):
-        original = preprocess_xray(path, unet, cfg, normalize=False)
+        original = preprocess_xray(path, unet, cfg)
         # _AUG_LAYERS is a shared module-level object first used (unbatched)
         # inside make_dataset()'s tf.data pipeline, which locks in its
         # expected input shape as (224,224,3) with no batch dim. Calling it
@@ -2369,8 +2502,8 @@ def plot_augmentation_preview(df, unet, cfg=CFG, n=3):
 def plot_model_comparison(teacher_val, student_val, teacher_ext, student_ext,
                            teacher_params, student_params, cfg=CFG):
     """Bar charts comparing teacher vs. student: key metrics on both val and
-    external test, plus parameter-count / compression-ratio chart. This is
-    the central figure for the distillation results section."""
+    the held-out test split, plus parameter-count / compression-ratio chart.
+    This is the central figure for the distillation results section."""
     fig, axes = plt.subplots(1, 2, figsize=(14, 5.5))
 
     metric_keys = ["accuracy", "sensitivity", "specificity", "roc_auc"]
@@ -2379,8 +2512,8 @@ def plot_model_comparison(teacher_val, student_val, teacher_ext, student_ext,
 
     axes[0].bar(x - 1.5 * width, [teacher_val[k] for k in metric_keys], width, label="Teacher (Val)")
     axes[0].bar(x - 0.5 * width, [student_val[k] for k in metric_keys], width, label="Student (Val)")
-    axes[0].bar(x + 0.5 * width, [teacher_ext[k] for k in metric_keys], width, label="Teacher (External)")
-    axes[0].bar(x + 1.5 * width, [student_ext[k] for k in metric_keys], width, label="Student (External)")
+    axes[0].bar(x + 0.5 * width, [teacher_ext[k] for k in metric_keys], width, label="Teacher (Test)")
+    axes[0].bar(x + 1.5 * width, [student_ext[k] for k in metric_keys], width, label="Student (Test)")
     axes[0].set_xticks(x)
     axes[0].set_xticklabels(metric_keys, rotation=20)
     axes[0].set_ylim(0, 1.05)
@@ -2388,7 +2521,7 @@ def plot_model_comparison(teacher_val, student_val, teacher_ext, student_ext,
     axes[0].legend(fontsize=8)
     axes[0].grid(axis="y", alpha=0.3)
 
-    names = ["Teacher\n(ResNet-50)", "Student\n(NirikNet)"]
+    names = ["Teacher\n(ResNet-50)", "Student\n(DenseNet121)"]
     params = [teacher_params, student_params]
     bars = axes[1].bar(names, params, color=["#EF9A9A", "#80CBC4"])
     ratio = teacher_params / max(student_params, 1)
@@ -2405,6 +2538,83 @@ def plot_model_comparison(teacher_val, student_val, teacher_ext, student_ext,
     print(f"Saved teacher vs student comparison -> {filepath}")
 
 # %%
+# # ONNX Export (deployment artifact)
+"""Cell 14b - Export ONLY the student (the model that actually gets
+deployed - the teacher never ships) to ONNX, then validate the export
+against the original Keras model before trusting it.
+
+Why: the Kaggle training environment's TF/Keras version and the backend's
+serving environment (a mix of TF/Keras and PyTorch, per the repo's current
+state) don't reliably agree - a Keras-3-saved model isn't guaranteed to
+load cleanly under Keras 2, and there is no first-party Keras->PyTorch
+loader at all. ONNX decouples training-framework version churn from
+serving entirely: the serving container only needs onnxruntime, not
+tensorflow/keras or torch. ONNX Runtime's CPU execution provider is also
+typically faster than either native TF or PyTorch eager execution, which
+directly helps the CPU-only HF Spaces deployment target.
+
+Never assume a format conversion is lossless without checking - the
+validation step below is not optional."""
+
+
+def export_student_to_onnx(student, cfg=CFG, n_validation_samples=8, atol=1e-4):
+    print("=" * 78)
+    print("STAGE: ONNX EXPORT (student model only)")
+    print("=" * 78)
+
+    _ensure_package("tf2onnx")
+    _ensure_package("onnxruntime")
+    import tf2onnx
+    import onnxruntime as ort
+
+    input_signature = [tf.TensorSpec(
+        (None, cfg.img_size, cfg.img_size, 3), tf.float32, name="student_input"
+    )]
+    onnx_path = cfg.out("densenet121_student.onnx")
+    model_proto, _ = tf2onnx.convert.from_keras(
+        student, input_signature=input_signature, output_path=onnx_path, opset=13,
+    )
+    print(f"Exported ONNX model -> {onnx_path}")
+
+    # Validation: same random canonical-range (0-255) input through both the
+    # original Keras model and the ONNX Runtime session, compare outputs.
+    rng = np.random.default_rng(SEED)
+    sample = (rng.random((n_validation_samples, cfg.img_size, cfg.img_size, 3)) * 255.0).astype("float32")
+
+    keras_output = student.predict(sample, verbose=0)
+
+    session = ort.InferenceSession(onnx_path, providers=["CPUExecutionProvider"])
+    input_name = session.get_inputs()[0].name
+    onnx_output = session.run(None, {input_name: sample})[0]
+
+    max_abs_diff = float(np.max(np.abs(keras_output - onnx_output)))
+    matches = bool(np.allclose(keras_output, onnx_output, atol=atol))
+    print(f"Validation: max abs diff = {max_abs_diff:.2e} (tolerance {atol:.0e}), "
+          f"match = {matches}")
+
+    if not matches:
+        raise RuntimeError(
+            f"ONNX export validation FAILED - Keras and ONNX Runtime outputs diverge "
+            f"by up to {max_abs_diff:.2e}, exceeding tolerance {atol:.0e}. Do not deploy "
+            f"this ONNX file until the discrepancy is understood - a silent divergence "
+            f"here means production predictions would not match what was evaluated."
+        )
+
+    validation_report = {
+        "onnx_path": onnx_path,
+        "opset": 13,
+        "n_validation_samples": n_validation_samples,
+        "max_abs_diff": max_abs_diff,
+        "tolerance": atol,
+        "passed": matches,
+    }
+    report_path = cfg.out("onnx_export_validation.json")
+    with open(report_path, "w") as f:
+        json.dump(validation_report, f, indent=2)
+    print(f"Saved ONNX export validation report -> {report_path}")
+    return onnx_path
+
+# %%
 # # Main Execution
 """Cell 15 - Orchestrator that runs the full pipeline end-to-end, generating
 every report figure along the way into `CFG.figures_dir`."""
@@ -2412,9 +2622,10 @@ every report figure along the way into `CFG.figures_dir`."""
 
 def main():
     """Full pipeline: segmentation -> teacher (ResNet-50) -> student
-    (NirikNet, via distillation) -> evaluation on both in-distribution
-    validation AND the external Montgomery+Shenzhen test set ->
-    explainability -> report figures throughout.
+    (DenseNet121, via distillation) -> evaluation on a patient-wise
+    held-out test split of the pooled dataset -> explainability -> report
+    figures throughout. See Config.montgomery_dir's comment for why there is
+    no longer a permanently-held-out external test set.
     """
     start_time = time.time()
     print("=" * 78)
@@ -2429,10 +2640,9 @@ def main():
     discover_datasets()
 
     df = build_classification_dataframe()
-    train_df, val_df = split_dataframe(df)
-    external_test_df = build_external_test_dataframe()
-    plot_dataset_composition(train_df, val_df, external_test_df)
-    check_dataset_leakage(train_df, val_df, external_test_df)
+    train_df, val_df, test_df = split_dataframe(df)
+    plot_dataset_composition(train_df, val_df, test_df)
+    check_dataset_leakage(train_df, val_df, test_df)
 
     class_weights = compute_class_weights(train_df) if CFG.use_class_weights else None
 
@@ -2443,6 +2653,7 @@ def main():
 
     train_ds = make_dataset(train_df, unet, cfg=CFG, training=True, class_weights=class_weights)
     val_ds = make_dataset(val_df, unet, cfg=CFG, training=False)
+    test_ds = make_dataset(test_df, unet, cfg=CFG, training=False)
     plot_augmentation_preview(train_df, unet, cfg=CFG)
 
     teacher_head, _th_history = train_teacher_head(train_df, val_df, train_ds, val_ds)
@@ -2450,57 +2661,54 @@ def main():
     plot_architecture_diagram(teacher, CFG.fig("teacher_architecture"))
 
     student, _s_history = train_student(train_df, val_df, train_ds, val_ds, teacher)
-    plot_architecture_diagram(student, CFG.fig("niriknet_architecture"))
+    plot_architecture_diagram(student, CFG.fig("densenet121_student_architecture"))
 
     plot_pipeline_overview()
 
     teacher_val_metrics, _, _ = evaluate_model(teacher, val_ds, "Teacher_Val", cfg=CFG)
     student_val_metrics, student_val_y_true, student_val_y_prob = evaluate_model(
-        student, val_ds, "NirikNet_Val", cfg=CFG
+        student, val_ds, "DenseNet121Student_Val", cfg=CFG
     )
 
-    ext_ds = make_dataset(external_test_df, unet, cfg=CFG, training=False)
-    teacher_ext_metrics, _, _ = evaluate_model(teacher, ext_ds, "Teacher_ExternalTest", cfg=CFG)
-    student_ext_metrics, student_ext_y_true, student_ext_y_prob = evaluate_model(
-        student, ext_ds, "NirikNet_ExternalTest", cfg=CFG
+    teacher_test_metrics, _, _ = evaluate_model(teacher, test_ds, "Teacher_Test", cfg=CFG)
+    student_test_metrics, student_test_y_true, student_test_y_prob = evaluate_model(
+        student, test_ds, "DenseNet121Student_Test", cfg=CFG
     )
 
     # Threshold analysis on the STUDENT specifically - it's the deployed
     # model, so its decision threshold is the one that's actually
     # operationally relevant.
     student_val_thresholds = analyze_decision_thresholds(
-        student_val_y_true, student_val_y_prob, "NirikNet_Val", cfg=CFG
+        student_val_y_true, student_val_y_prob, "DenseNet121Student_Val", cfg=CFG
     )
-    student_ext_thresholds = analyze_decision_thresholds(
-        student_ext_y_true, student_ext_y_prob, "NirikNet_ExternalTest", cfg=CFG
+    student_test_thresholds = analyze_decision_thresholds(
+        student_test_y_true, student_test_y_prob, "DenseNet121Student_Test", cfg=CFG
     )
 
     # Operational threshold: chosen via Youden's J on validation data ONLY,
-    # then frozen and applied identically to the external test set. This is
-    # the actual clinical operating point (vs. the exploratory 0.3/0.5/0.7
-    # sweep above), and the external-test number here reflects genuine
-    # cross-domain generalization with no threshold leakage.
+    # then frozen and applied identically to the test set - never fit on the
+    # data it's then scored against.
     student_youden_threshold = select_youden_threshold(
-        student_val_y_true, student_val_y_prob, "NirikNet_Val", cfg=CFG
+        student_val_y_true, student_val_y_prob, "DenseNet121Student_Val", cfg=CFG
     )
     student_val_at_youden = evaluate_at_threshold(
         student_val_y_true, student_val_y_prob, student_youden_threshold,
-        "NirikNet_Val_YoudenThreshold", cfg=CFG
+        "DenseNet121Student_Val_YoudenThreshold", cfg=CFG
     )
-    student_ext_at_youden = evaluate_at_threshold(
-        student_ext_y_true, student_ext_y_prob, student_youden_threshold,
-        "NirikNet_ExternalTest_YoudenThreshold", cfg=CFG
+    student_test_at_youden = evaluate_at_threshold(
+        student_test_y_true, student_test_y_prob, student_youden_threshold,
+        "DenseNet121Student_Test_YoudenThreshold", cfg=CFG
     )
 
     teacher_params = int(teacher.count_params())
     student_params = int(student.count_params())
     plot_model_comparison(
-        teacher_val_metrics, student_val_metrics, teacher_ext_metrics, student_ext_metrics,
+        teacher_val_metrics, student_val_metrics, teacher_test_metrics, student_test_metrics,
         teacher_params, student_params, cfg=CFG,
     )
 
     teacher_latency = benchmark_inference_latency(teacher, "Teacher (ResNet-50)", cfg=CFG)
-    student_latency = benchmark_inference_latency(student, "Student (NirikNet)", cfg=CFG)
+    student_latency = benchmark_inference_latency(student, "Student (DenseNet121)", cfg=CFG)
 
     all_metrics = {
         "config": {
@@ -2514,18 +2722,18 @@ def main():
         },
         "teacher_val": teacher_val_metrics,
         "student_val": student_val_metrics,
-        "teacher_external_test": teacher_ext_metrics,
-        "student_external_test": student_ext_metrics,
+        "teacher_test": teacher_test_metrics,
+        "student_test": student_test_metrics,
         "teacher_params": teacher_params,
         "student_params": student_params,
         "compression_ratio": teacher_params / max(student_params, 1),
         "teacher_cpu_latency": teacher_latency,
         "student_cpu_latency": student_latency,
         "student_threshold_analysis_val": student_val_thresholds,
-        "student_threshold_analysis_external": student_ext_thresholds,
+        "student_threshold_analysis_test": student_test_thresholds,
         "student_youden_threshold": student_youden_threshold,
         "student_val_at_youden_threshold": student_val_at_youden,
-        "student_external_at_youden_threshold": student_ext_at_youden,
+        "student_test_at_youden_threshold": student_test_at_youden,
     }
 
     metrics_path = CFG.out("metrics.json")
@@ -2533,8 +2741,10 @@ def main():
         json.dump(all_metrics, f, indent=2)
     print(f"Saved metrics to {metrics_path}")
 
-    explain_predictions(teacher, unet, external_test_df, cfg=CFG, model_name="Teacher")
-    explain_predictions(student, unet, external_test_df, cfg=CFG, model_name="NirikNet")
+    explain_predictions(teacher, unet, test_df, cfg=CFG, model_name="Teacher")
+    explain_predictions(student, unet, test_df, cfg=CFG, model_name="DenseNet121Student")
+
+    export_student_to_onnx(student, cfg=CFG)
 
     end_time = time.time()
     hours, rem = divmod(end_time - start_time, 3600)
