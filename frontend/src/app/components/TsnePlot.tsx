@@ -61,7 +61,7 @@ export default function TsnePlot() {
 
   if (error) {
     return (
-      <Card className="border border-destructive/25 bg-[#2B2D31] h-64 flex flex-col items-center justify-center p-6 text-center shadow-lg rounded-2xl">
+      <Card className="border border-destructive/25 bg-[#141414] h-64 flex flex-col items-center justify-center p-6 text-center shadow-lg rounded-2xl">
         <div className="w-10 h-10 rounded-full bg-destructive/10 flex items-center justify-center mb-3">
           <svg className="w-5 h-5 text-destructive" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
@@ -73,7 +73,7 @@ export default function TsnePlot() {
         </p>
         <button
           onClick={handleRetry}
-          className="px-4 py-2 rounded-lg text-xs font-semibold bg-destructive/15 hover:bg-destructive/25 text-destructive border border-destructive/20 transition-all cursor-pointer"
+          className="px-4 py-2 rounded-[15px] text-xs font-semibold bg-destructive/15 hover:bg-destructive/25 text-destructive border border-destructive/20 transition-all cursor-pointer"
         >
           Retry t-SNE Projection
         </button>
@@ -115,13 +115,13 @@ export default function TsnePlot() {
             {Object.entries(datasetColors).map(([ds, color]) => (
               <div key={ds} className="flex items-center gap-1.5 bg-black/15 px-2 py-1 rounded-md border border-white/5">
                 <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: color }} />
-                <span className="text-[#949BA4]">{ds}</span>
+                <span className="text-[#999999]">{ds}</span>
               </div>
             ))}
           </div>
         </div>
 
-        <div className="relative w-full aspect-video bg-black/40 rounded-lg border border-white/5 overflow-hidden">
+        <div className="relative w-full aspect-video bg-black/40 rounded-[15px] border border-white/5 overflow-hidden">
           <svg viewBox={`${minX} ${minY} ${maxX - minX} ${maxY - minY}`} className="w-full h-full" style={{ transform: "scaleY(-1)" }}>
             {data.map((p, i) => (
               <circle

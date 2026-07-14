@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { AnalysisResult } from "./useFileUpload";
 
 export function getCookie(name: string): string | null {
@@ -17,6 +17,71 @@ export function usePrediction(
 ) {
   const [isBatchProcessing, setIsBatchProcessing] = useState(false);
   const inFlight = useRef<Set<number>>(new Set());
+  // Track object URLs to revoke them when no longer needed
+  const objectUrls = useRef<Map<number, string>>(new Map());
+  // Track previous file and result lengths to detect removals
+  const prevFilesLength = useRef(files.length);
+  const prevResultsLength = useRef(results.length);
+
+  // Clean up object URLs when component unmounts or dependencies change
+  useEffect(() => {
+    return () => {
+      objectUrls.current.forEach(url => {
+        try {
+          URL.revokeObjectURL(url);
+        } catch (e) {
+          console.warn('Failed to revoke object URL:', e);
+        }
+      });
+      objectUrls.current.clear();
+    };
+  }, []);
+
+  // Detect when files are removed and clean up their object URLs
+  useEffect(() => {
+    if (files.length < prevFilesLength.current) {
+      // Files were removed, find which indices were removed and clean up their URLs
+      const oldIndices = new Array(prevFilesLength.current).fill(0).map((_, i) => i);
+      const newIndices = new Array(files.length).fill(0).map((_, i) => i);
+      const removedIndices = oldIndices.filter(i => !newIndices.includes(i));
+
+      removedIndices.forEach(index => {
+        const url = objectUrls.current.get(index);
+        if (url) {
+          try {
+            URL.revokeObjectURL(url);
+          } catch (e) {
+            console.warn('Failed to revoke object URL for removed file:', e);
+          }
+          objectUrls.current.delete(index);
+        }
+      });
+    }
+    prevFilesLength.current = files.length;
+  }, [files]);
+
+  // Detect when results are removed and clean up their object URLs
+  useEffect(() => {
+    if (results.length < prevResultsLength.current) {
+      // Results were removed, find which indices were removed and clean up their URLs
+      const oldIndices = new Array(prevResultsLength.current).fill(0).map((_, i) => i);
+      const newIndices = new Array(results.length).fill(0).map((_, i) => i);
+      const removedIndices = oldIndices.filter(i => !newIndices.includes(i));
+
+      removedIndices.forEach(index => {
+        const url = objectUrls.current.get(index);
+        if (url) {
+          try {
+            URL.revokeObjectURL(url);
+          } catch (e) {
+            console.warn('Failed to revoke object URL for removed result:', e);
+          }
+          objectUrls.current.delete(index);
+        }
+      });
+    }
+    prevResultsLength.current = results.length;
+  }, [results]);
 
   const analyzeFile = useCallback(async (idx: number) => {
     const file = files[idx];
@@ -28,18 +93,27 @@ export function usePrediction(
     if (inFlight.current.has(idx)) return;
     inFlight.current.add(idx);
     try {
-      // Create a local preview URL immediately so DicomViewer shows the image
+      // Revoke previous object URL for this index if it exists
+      const prevUrl = objectUrls.current.get(idx);
+      if (prevUrl) {
+        try {
+          URL.revokeObjectURL(prevUrl);
+        } catch (e) {
+          console.warn('Failed to revoke previous object URL:', e);
+        }
+      }
+
+      // Create a local preview URL and DicomViewer shows the image
       // while backend processes.
       const localPreviewUrl = URL.createObjectURL(file);
-      setResults(prev => {
-        const next = [...prev];
-        next[idx] = { ...next[idx], status: "loading", original_image: localPreviewUrl };
-        return next;
-      });
+      // Store the URL so we can revoke it later
+      objectUrls.current.set(idx, localPreviewUrl);
 
       const API = process.env.NEXT_PUBLIC_API_URL || "https://projectmantra-nirikshon-backend.hf.space";
       const fd = new FormData();
       fd.append("file", file);
+      // Always request explainability data since backend is already computing it
+      fd.append("explain", "true");
 
       try {
         const res = await fetch(`${API}/predict`, {
@@ -70,6 +144,17 @@ export function usePrediction(
 
         setResults(prev => {
           const next = [...prev];
+          // Revoke the object URL for this index since we're replacing it with backend data
+          const prevUrl = objectUrls.current.get(idx);
+          if (prevUrl) {
+            try {
+              URL.revokeObjectURL(prevUrl);
+            } catch (e) {
+              console.warn('Failed to revoke object URL on success:', e);
+            }
+            objectUrls.current.delete(idx);
+          }
+
           next[idx] = {
             filename: file.name,
             status: "success",
@@ -86,7 +171,9 @@ export function usePrediction(
             heatmaps: data.heatmaps,
             xai_results: data.xai_results,
             demo_mode: data.demo_mode,
-            saliency_fallback: data.saliency_fallback
+            saliency_fallback: data.saliency_fallback,
+            findings: data.findings,
+            report: data.report
           };
           return next;
         });

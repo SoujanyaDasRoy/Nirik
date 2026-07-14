@@ -51,7 +51,7 @@ export default function AdminConsole() {
       </div>
 
       {/* Academic prototype notice */}
-      <div className="flex items-start gap-3 p-4 border border-blue-500/20 bg-blue-500/5 rounded-xl text-xs">
+      <div className="flex items-start gap-3 p-4 border border-blue-500/20 bg-blue-500/5 rounded-[20px] text-xs">
         <Info className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" strokeWidth={1.5} />
         <div>
           <p className="font-bold text-blue-700 dark:text-blue-400">Academic Prototype</p>
@@ -67,7 +67,7 @@ export default function AdminConsole() {
         <Card className="shadow-none border border-border bg-card">
           <CardContent className="p-5 space-y-4">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+              <div className="w-8 h-8 rounded-[15px] bg-primary/10 flex items-center justify-center">
                 <Server className="w-4 h-4 text-primary" strokeWidth={1.5} />
               </div>
               <h4 className="font-bold text-sm">Flask API Server</h4>
@@ -101,7 +101,7 @@ export default function AdminConsole() {
         <Card className="shadow-none border border-border bg-card">
           <CardContent className="p-5 space-y-4">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+              <div className="w-8 h-8 rounded-[15px] bg-primary/10 flex items-center justify-center">
                 <Activity className="w-4 h-4 text-primary" strokeWidth={1.5} />
               </div>
               <h4 className="font-bold text-sm">AI Model (DenseNet-121)</h4>
@@ -137,7 +137,7 @@ export default function AdminConsole() {
         <Card className="shadow-none border border-border bg-card">
           <CardContent className="p-5 space-y-4">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+              <div className="w-8 h-8 rounded-[15px] bg-primary/10 flex items-center justify-center">
                 <Database className="w-4 h-4 text-primary" strokeWidth={1.5} />
               </div>
               <h4 className="font-bold text-sm">Database (SQLite)</h4>
@@ -168,7 +168,7 @@ export default function AdminConsole() {
         <Card className="shadow-none border border-border bg-card">
           <CardContent className="p-5 space-y-4">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+              <div className="w-8 h-8 rounded-[15px] bg-primary/10 flex items-center justify-center">
                 <Shield className="w-4 h-4 text-primary" strokeWidth={1.5} />
               </div>
               <h4 className="font-bold text-sm">Authentication</h4>

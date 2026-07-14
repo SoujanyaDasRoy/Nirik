@@ -63,7 +63,7 @@ export default function FhirPanel({ onPatientSelect }: FhirPanelProps) {
   return (
     <div className="space-y-4">
       {/* Demo data notice */}
-      <div className="flex items-start gap-2 p-3 rounded-lg border border-blue-500/20 bg-blue-500/5 text-xs">
+      <div className="flex items-start gap-2 p-3 rounded-[15px] border border-blue-500/20 bg-blue-500/5 text-xs">
         <Info className="w-3.5 h-3.5 text-blue-500 flex-shrink-0 mt-0.5" strokeWidth={1.5} />
         <p className="text-blue-700 dark:text-blue-400 leading-relaxed">
           <strong>Demo Patient Registry.</strong> Patients shown are simulated records for demonstration. No real EHR connection is active.
@@ -76,7 +76,7 @@ export default function FhirPanel({ onPatientSelect }: FhirPanelProps) {
         <input
           type="text" value={search} onChange={e => setSearch(e.target.value)}
           placeholder="Search by patient name or MRN…"
-          className="w-full pl-10 pr-10 py-2.5 text-sm rounded-lg border border-border bg-card text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition h-11"
+          className="w-full pl-10 pr-10 py-2.5 text-sm rounded-[15px] border border-border bg-card text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition h-11"
         />
         {isSearching && (
           <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 animate-spin h-4 w-4 text-primary" strokeWidth={1.5} />
@@ -87,7 +87,7 @@ export default function FhirPanel({ onPatientSelect }: FhirPanelProps) {
         <div className="space-y-2 max-h-[260px] overflow-y-auto pr-1">
           {patients.map(p => (
             <button key={p.id} onClick={() => { setSelectedPatient(p); onPatientSelect?.(p); }}
-              className={`w-full text-left p-3 rounded-lg border transition text-sm cursor-pointer ${
+              className={`w-full text-left p-3 rounded-[15px] border transition text-sm cursor-pointer ${
                 selectedPatient?.id === p.id
                   ? "border-primary bg-primary/5"
                   : "border-border hover:border-primary/30 hover:bg-muted/40"
@@ -108,7 +108,7 @@ export default function FhirPanel({ onPatientSelect }: FhirPanelProps) {
       )}
 
       {selectedPatient && (
-        <Card className="border border-primary/30 bg-primary/5 rounded-lg shadow-none">
+        <Card className="border border-primary/30 bg-primary/5 rounded-[15px] shadow-none">
           <CardContent className="p-4 space-y-3">
             <div className="flex justify-between items-start">
               <div>

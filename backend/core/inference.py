@@ -1,6 +1,4 @@
 import os
-# Force Keras to use PyTorch as its backend
-os.environ["KERAS_BACKEND"] = "torch"
 
 import keras
 import torch
@@ -8,13 +6,20 @@ import numpy as np
 import cv2
 import threading
 import random
+import hashlib
+import json
 from PIL import Image
+import datetime
+from datetime import timezone
+import tensorflow as tf
 
-OPTIMAL_THRESHOLD = 0.5 
+OPTIMAL_THRESHOLD = 0.5
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-MODEL_PATH = os.path.join(BASE_DIR, "tb_student_densenet121.keras")
+MODEL_PATH = os.path.join(BASE_DIR, "..", "results", "student_best.weights.h5")
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f"Using device: {DEVICE}")
+# Disable automatic fallback to demo mode during development; set to False to re-enable fallback.
+DEMO_FALLBACK_ENABLED = False
 
 # ResNet50 / caffe-style BGR mean pixel values (used by tf.keras ResNet50
 # preprocess_input in 'caffe' mode). See keras.applications.resnet50.
@@ -25,15 +30,17 @@ def preprocess_for_classifier(gray_arr: np.ndarray, unet_active: bool):
     """Preprocess a grayscale padded image array into a (1, H, W, 3) tensor
     suitable for the DenseNet-121 classifier.
 
-    The grayscale image is stacked 3× to produce a degenerate RGB input
-    (all three channels carry the same value). For Generation 2 (U-Net
-    deployed) we apply ImageNet/torch mean-and-std normalisation per
-    channel. For Generation 1 (no U-Net, matches the legacy training bug
-    of using ResNet50/caffe preprocessing) we apply a uniform global bias
-    equal to the AVERAGE of the BGR means so the three channels stay equal
-    after preprocessing — subtracting different per-channel means would
-    destroy channel equality on a grayscale input and bias the network
-    toward artefacts unrelated to lung tissue.
+    For Generation 1 (no U-Net): we simply stack the grayscale channel 3×
+    to produce a degenerate RGB input and rely on the model's Rescaling layer.
+
+    For Generation 2 (with U-Net): we reproduce the original evaluation pipeline:
+        - Run U-Net to get lung mask at original resolution
+        - Compute bounding box of mask with 8.5% padding
+        - Crop the grayscale padded image to that bounding box
+        - Resize cropped region to (IMG_SIZE, IMG_SIZE)
+        - Stack to 3 channels and convert to tensor.
+    No additional normalisation is applied; the model's Rescaling layer
+    handles scaling to [0,1].
 
     Args:
         gray_arr: float32 numpy array of shape (H, W), values in [0, 255].
@@ -42,36 +49,136 @@ def preprocess_for_classifier(gray_arr: np.ndarray, unet_active: bool):
     Returns:
         torch.Tensor of shape (1, H, W, 3).
     """
-    # Stack grayscale channel 3× to produce degenerate RGB for ImageNet backbone
-    x = np.stack([gray_arr, gray_arr, gray_arr], axis=-1)  # (H, W, 3)
+    if not unet_active:
+        # Generation 1: no U-Net, legacy behaviour
+        x = np.stack([gray_arr, gray_arr, gray_arr], axis=-1)  # (H, W, 3)
+        x_batch = np.expand_dims(x, axis=0)  # (1, H, W, 3)
+        return tf.convert_to_tensor(x_batch, dtype=tf.float32)
 
-    if unet_active:
-        # Generation 2 — DenseNet correct preprocessing (mode='torch')
-        # Matches tf.keras.applications.densenet.preprocess_input().
-        # Because the input is grayscale stacked 3× (all channels equal),
-        # we apply the channel-AVERAGED mean and std uniformly so the
-        # three channels stay equal. Subtracting distinct per-channel means
-        # on an equal-channel input would break channel equality and bias
-        # the network toward artefacts unrelated to lung tissue.
-        x /= 255.0
-        mean = (0.485 + 0.456 + 0.406) / 3.0
-        std = (0.229 + 0.224 + 0.225) / 3.0
-        x = (x - mean) / std
+    # Generation 2: with U-Net, replicate original evaluation pipeline
+    # We need to compute the lung mask at the original resolution
+    unet = get_unet()
+    if unet is None:
+        # Fallback to no-U-Net behaviour
+        x = np.stack([gray_arr, gray_arr, gray_arr], axis=-1)
+        x_batch = np.expand_dims(x, axis=0)
+        return tf.convert_to_tensor(x_batch, dtype=tf.float32)
+
+    h_orig, w_orig = gray_arr.shape[:2]
+    # Normalise to [0, 1] and batch for U-Net input (N, H, W, C)
+    img_norm = cv2.resize(gray_arr, (SEG_SIZE, SEG_SIZE)).astype(np.float32) / 255.0
+    seg_tensor = torch.tensor(
+        img_norm[np.newaxis, :, :, np.newaxis],  # (1, SEG_SIZE, SEG_SIZE, 1)
+        dtype=torch.float32, device=DEVICE
+    )
+
+    with torch.no_grad():
+        pred = unet(seg_tensor)  # (1, SEG_SIZE, SEG_SIZE, 1)
+
+    pred_np = (
+        pred.detach().cpu().numpy()
+        if hasattr(pred, "detach")
+        else np.array(pred)
+    )[0, :, :, 0]  # (SEG_SIZE, SEG_SIZE)
+
+    binary_mask = (pred_np > 0.5).astype(np.uint8)
+
+    # Scale mask back to the padded image resolution
+    mask_full = cv2.resize(binary_mask, (w_orig, h_orig), interpolation=cv2.INTER_NEAREST)
+
+    # Compute bounding box of mask with 8.5% padding
+    # Find contours of the mask
+    contours, _ = cv2.findContours(mask_full, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    if not contours:
+        # Fallback: use whole image
+        x, y, w, h = 0, 0, w_orig, h_orig
     else:
-        # Generation 1 — ResNet50/caffe preprocessing (matches training bug)
-        # BGR mean subtraction, no division, no std normalisation.
-        # We apply the AVERAGE of the three means uniformly across all
-        # channels so the grayscale input preserves channel equality.
-        mean_shift = float(RESNET50_BGR_MEAN.mean())
-        x -= mean_shift
+        # Combine all contours to get overall bounding box
+        x_min = w_orig
+        y_min = h_orig
+        x_max = 0
+        y_max = 0
+        for cnt in contours:
+            x, y, w, h = cv2.boundingRect(cnt)
+            x_min = min(x_min, x)
+            y_min = min(y_min, y)
+            x_max = max(x_max, x + w)
+            y_max = max(y_max, y + h)
+        # Add padding
+        pad_x = int(0.085 * (x_max - x_min))
+        pad_y = int(0.085 * (y_max - y_min))
+        x_min = max(0, x_min - pad_x)
+        y_min = max(0, y_min - pad_y)
+        x_max = min(w_orig, x_max + pad_x)
+        y_max = min(h_orig, y_max + pad_y)
+        x, y, w, h = x_min, y_min, x_max - x_min, y_max - y_min
 
-    return torch.tensor(x).unsqueeze(0).to(DEVICE)  # shape: (1, H, W, 3) NHWC
+    # Crop the grayscale padded image to the bounding box
+    gray_uint8 = np.clip(gray_arr, 0, 255).astype(np.uint8)
+    cropped = gray_uint8[y:y+h, x:x+w]
+
+    # Resize cropped region to classifier input size
+    resized_crop = cv2.resize(cropped, (IMG_SIZE, IMG_SIZE)).astype(np.float32)
+
+    # Stack to 3 channels
+    x = np.stack([resized_crop, resized_crop, resized_crop], axis=-1)  # (IMG_SIZE, IMG_SIZE, 3)
+    x_batch = np.expand_dims(x, axis=0)  # (1, IMG_SIZE, IMG_SIZE, 3)
+    return tf.convert_to_tensor(x_batch, dtype=tf.float32)
 
 IMAGENET_MEAN = np.array([0.485, 0.456, 0.406], dtype=np.float32)
 IMAGENET_STD = np.array([0.229, 0.224, 0.225], dtype=np.float32)
 IMG_SIZE = 224
 SEG_SIZE = 256  # U-Net lung segmenter input resolution
-UNET_MODEL_PATH = os.path.join(BASE_DIR, "unet_lung_segmenter.keras")
+UNET_MODEL_PATH = os.path.join(BASE_DIR, "..", "results", "attention_unet.keras")
+
+def _sep_block(x, filters, name):
+    """Depthwise-separable conv block: SeparableConv2D + BN + activation."""
+    x = tf.keras.layers.SeparableConv2D(
+        filters, 3, padding="same", use_bias=False,
+        depthwise_initializer="he_normal", pointwise_initializer="he_normal",
+        name=name + "_sepconv",
+    )(x)
+    x = tf.keras.layers.BatchNormalization(name=name + "_bn")(x)
+    x = tf.keras.layers.Activation("gelu", name=name + "_act")(x)
+    return x
+
+def build_niriknet(input_shape, num_classes):
+    """Construct the NirikNet student CNN."""
+    inputs = tf.keras.Input(shape=input_shape, name="student_input")
+
+    x = tf.keras.layers.Conv2D(64, 3, strides=2, padding="same", use_bias=False,
+                       kernel_initializer="he_normal", name="stem_conv")(inputs)
+    x = tf.keras.layers.BatchNormalization(name="stem_bn")(x)
+    x = tf.keras.layers.Activation("gelu", name="stem_act")(x)
+
+    x = _sep_block(x, 128, "s1b1")
+    x = _sep_block(x, 128, "s1b2")
+    x = tf.keras.layers.MaxPooling2D(2, name="s1_pool")(x)
+
+    x = _sep_block(x, 256, "s2b1")
+    x = _sep_block(x, 256, "s2b2")
+    x = tf.keras.layers.MaxPooling2D(2, name="s2_pool")(x)
+
+    x = _sep_block(x, 512, "s3b1")
+    x = _sep_block(x, 512, "s3b2")
+    x = tf.keras.layers.MaxPooling2D(2, name="s3_pool")(x)
+
+    x = _sep_block(x, 768, "s4b1")
+    x = _sep_block(x, 768, "s4b2")
+    x = tf.keras.layers.MaxPooling2D(2, name="s4_pool")(x)
+
+    x = tf.keras.layers.Conv2D(768, 1, padding="same", use_bias=False,
+                       kernel_initializer="he_normal", name="pregap_conv")(x)
+    x = tf.keras.layers.BatchNormalization(name="pregap_bn")(x)
+    x = tf.keras.layers.Activation("gelu", name="pregap_act")(x)
+
+    x = tf.keras.layers.GlobalAveragePooling2D(name="gap")(x)
+    x = tf.keras.layers.Dropout(0.3, name="head_dropout")(x)
+    outputs = tf.keras.layers.Dense(num_classes, activation="softmax", dtype="float32",
+                            name="student_output")(x)
+
+    return tf.keras.Model(inputs, outputs, name="niriknet")
+
 
 # Batching configuration
 BATCH_SIZE = int(os.environ.get("BATCH_SIZE", "4"))
@@ -85,12 +192,30 @@ def _process_fn(batch_tensors):
     model = get_model()
     if len(batch_tensors) == 0:
         return []
-    batch = torch.stack(batch_tensors)
-    with torch.no_grad():
-        logits = model(batch)
-        if logits.dim() > 1:
-            logits = logits.squeeze(-1)
-        probs = torch.sigmoid(logits).flatten().tolist()
+    # Convert list of tensors to a batched tensor
+    if hasattr(batch_tensors[0], 'numpy'):
+        # TensorFlow tensors
+        batch = tf.stack(batch_tensors, axis=0)
+    else:
+        # PyTorch tensors
+        import torch
+        batch = torch.stack(batch_tensors)
+
+    # Run inference - no gradient tracking needed for inference
+    if hasattr(batch, 'numpy'):
+        # TensorFlow model
+        logits = model(batch, training=False)
+        if len(logits.shape) > 1 and logits.shape[-1] == 1:
+            logits = tf.squeeze(logits, axis=-1)
+        probs = tf.sigmoid(logits).numpy().flatten().tolist()
+    else:
+        # PyTorch model
+        import torch
+        with torch.no_grad():
+            logits = model(batch)
+            if logits.dim() > 1:
+                logits = logits.squeeze(-1)
+            probs = torch.sigmoid(logits).flatten().tolist()
     return probs
 
 def get_batcher():
@@ -183,11 +308,19 @@ def get_model():
                     else:
                         OPTIMAL_THRESHOLD = 0.5
                         print(f"Metadata or threshold file not found. Defaulting to: {OPTIMAL_THRESHOLD}")
-                    
+
                 if os.path.exists(MODEL_PATH):
                     try:
-                        _model = keras.saving.load_model(MODEL_PATH)
-                        _model.to(device)
+                        # Patch Dense layer to ignore quantization_config if present
+                        from tensorflow.keras.layers import Dense
+                        original_dense_init = Dense.__init__
+                        def patched_dense_init(self, *args, **kwargs):
+                            kwargs.pop('quantization_config', None)
+                            return original_dense_init(self, *args, **kwargs)
+                        Dense.__init__ = patched_dense_init
+                        _model = build_niriknet((IMG_SIZE, IMG_SIZE, 3), 2)
+                        _model.load_weights(MODEL_PATH)
+                        # _model.to(device)  # Removed because Keras model doesn't have .to()
                         # Warm model compilation (warm-up dummy forward pass)
                         try:
                             dummy_input = torch.zeros(1, IMG_SIZE, IMG_SIZE, 3).to(device)
@@ -218,7 +351,7 @@ def get_unet():
                 try:
                     dummy = torch.zeros(1, SEG_SIZE, SEG_SIZE, 1).to(DEVICE)
                     _ = _unet(dummy)
-                    print("U-Net warm-up pass completed \u2713")
+                    print("U-Net warm-up pass completed ✓")
                 except Exception as wu_err:
                     print(f"U-Net warm-up warning: {wu_err}")
             except Exception as load_err:
@@ -284,22 +417,22 @@ def _generate_density_heatmap(original_img: Image.Image, is_tb: bool) -> Image.I
     else:
         gray = orig_np.copy()
         orig_np = cv2.cvtColor(orig_np, cv2.COLOR_GRAY2RGB)
-        
+
     # Create a mask for left and right lung fields (excluding heart, spine, and abdomen)
     mask = np.zeros_like(gray)
     # Left lung field
     cv2.ellipse(mask, (int(w*0.30), int(h*0.48)), (int(w*0.14), int(h*0.30)), 0, 0, 360, 255, -1)
     # Right lung field
     cv2.ellipse(mask, (int(w*0.70), int(h*0.48)), (int(w*0.14), int(h*0.30)), 0, 0, 360, 255, -1)
-    
+
     # Initialize activation map
     activation = np.zeros_like(gray, dtype=np.float32)
-    
+
     # Extract structural chest density within lung fields
     _, thresholded = cv2.threshold(gray, 130, 255, cv2.THRESH_TOZERO)
     focused = cv2.bitwise_and(thresholded, mask)
     activation += (focused.astype(np.float32) / 255.0) * 0.4
-    
+
     if is_tb:
         # Simulate active consolidations in upper/apical lobes (clinically accurate for TB)
         tb_sim = np.zeros_like(gray, dtype=np.float32)
@@ -309,20 +442,20 @@ def _generate_density_heatmap(original_img: Image.Image, is_tb: bool) -> Image.I
         cv2.circle(tb_sim, (int(w * 0.68), int(h * 0.32)), int(min(w, h) * 0.08), 0.7, -1)
         tb_sim = cv2.GaussianBlur(tb_sim, (45, 45), 0)
         activation += tb_sim * 1.5
-        
+
     # Smooth the result for a clean, clinical heat signature
     blurred = cv2.GaussianBlur(activation, (51, 51), 0)
-    
+
     # Filter out low-level noise to keep edges crisp
     blurred = np.where(blurred >= 0.12, blurred, 0.0)
-    
+
     # Normalize
     b_min, b_max = blurred.min(), blurred.max()
     if b_max > b_min:
         norm_blurred = (blurred - b_min) / (b_max - b_min + 1e-8)
     else:
         norm_blurred = blurred
-        
+
     heatmap_8bit = (norm_blurred * 255).astype(np.uint8)
     color_heatmap = cv2.applyColorMap(heatmap_8bit, cv2.COLORMAP_JET)
     color_heatmap_rgb = cv2.cvtColor(color_heatmap, cv2.COLOR_BGR2RGB)
@@ -352,41 +485,50 @@ def generate_saliency_heatmap(model, tensor, original_img: Image.Image, is_tb: b
                 # Normal scan: diffuse symmetrical low-level activity
                 cv2.ellipse(cam_np, (int(w*0.35), int(h*0.5)), (25, 45), 0, 0, 360, 0.25, -1)
                 cv2.ellipse(cam_np, (int(w*0.65), int(h*0.5)), (25, 45), 0, 0, 360, 0.25, -1)
-            
+
             cam_np = cv2.GaussianBlur(cam_np, (31, 31), 0)
             cam_np = (cam_np - cam_np.min()) / (cam_np.max() - cam_np.min() + 1e-8)
         else:
-            # ── Grad-CAM / Grad-CAM++ via Keras-native GradientTape ──────────────
-            #
-            # Architecture note (DenseNet121, verified from config.json):
-            #
-            #   conv5_block16_2_conv  → 32-ch slice  (WRONG target — pre-norm, pre-concat)
-            #   conv5_block16_concat  → 1024-ch concatenated tensor
-            #   bn                    → BatchNorm
-            #   relu                  ← CORRECT target: 1024-ch, feeds avg_pool directly
-            #   avg_pool              → GlobalAveragePooling2D
-            #   dense_1               → sigmoid output
-            #
-            # Targeting "relu" covers all 1024 channels that the Dense layer actually
-            # sees, including everything accumulated across all four dense blocks.
-            # Targeting "conv5_block16_2_conv" would explain only 32 of those 1024
-            # channels — the pre-normalization slice from the final layer alone.
-            import keras
-            import torch
+            # ── Grad-CAM / Grad-CAM++ via TensorFlow/Keras GradientTape ──────────────
+            import tensorflow as tf
 
             # Resolve and validate the target layer once; log it for auditability
-            TARGET_LAYER = "relu"
-            try:
-                last_conv_layer = model.get_layer(TARGET_LAYER)
-            except ValueError:
-                # Fallback: find the last activation layer before global pooling
+            # Prefer convolutional layers, then fallback to other activation layers
+            last_conv_layer = None
+            TARGET_LAYER = None
+
+            # First pass: look for convolutional layers (prefer later layers)
+            for layer in reversed(model.layers):
+                if isinstance(layer, tf.keras.layers.Conv2D):
+                    last_conv_layer = layer
+                    TARGET_LAYER = layer.name
+                    break
+
+            # Second pass: if no conv layer found, look for any layer with activation
+            if last_conv_layer is None:
                 for layer in reversed(model.layers):
-                    if hasattr(layer, "activation") or "activation" in layer.name.lower():
+                    if hasattr(layer, "activation") and layer.activation is not None:
+                        # Skip activation layers that are just 'linear' or similar
+                        if hasattr(layer.activation, '__name__'):
+                            if layer.activation.__name__ not in ['linear', None]:
+                                last_conv_layer = layer
+                                TARGET_LAYER = layer.name
+                                break
+                        elif 'activation' in layer.name.lower() and 'linear' not in layer.name.lower():
+                            last_conv_layer = layer
+                            TARGET_LAYER = layer.name
+                            break
+
+            # Final fallback: look for any layer with trainable weights
+            if last_conv_layer is None:
+                for layer in reversed(model.layers):
+                    if len(layer.trainable_weights) > 0:
                         last_conv_layer = layer
                         TARGET_LAYER = layer.name
                         break
-                else:
-                    raise RuntimeError("Could not locate a suitable Grad-CAM target layer")
+
+            if last_conv_layer is None:
+                raise RuntimeError("Could not locate a suitable Grad-CAM target layer")
 
             print(
                 f"[GradCAM] Target layer: '{TARGET_LAYER}' | "
@@ -397,43 +539,52 @@ def generate_saliency_heatmap(model, tensor, original_img: Image.Image, is_tb: b
                 inputs=model.inputs,
                 outputs=[last_conv_layer.output, model.output]
             )
-            grad_model.eval()
 
-            # Convert PyTorch tensor → NumPy → PyTorch tensor for autograd tracking
-            np_input = tensor.detach().cpu().numpy()
+            # Convert tensor to numpy array (works for both TF and PyTorch tensors)
+            if hasattr(tensor, 'numpy'):
+                # TensorFlow tensor
+                np_input = tensor.numpy()
+            else:
+                # PyTorch tensor
+                np_input = tensor.numpy()
             if np_input.ndim == 4 and np_input.shape[1] in (1, 3):
                 np_input = np_input.transpose(0, 2, 3, 1)
-            torch_input = torch.tensor(np_input, dtype=torch.float32, device=DEVICE, requires_grad=True)
+            tf_input = tf.convert_to_tensor(np_input, dtype=tf.float32)
 
-            act, logit = grad_model(torch_input)
-            
-            # Target the class score: if TB, positive logit. If Normal, negative logit (so we differentiate -logit)
-            if is_tb:
-                score = torch.mean(logit)
-            else:
-                score = torch.mean(-logit)
+            # Use GradientTape
+            with tf.GradientTape() as tape:
+                # We want to compute the gradient of the score with respect to the conv layer output
+                conv_output, logit = grad_model(tf_input, training=False)
+                if is_tb:
+                    score = tf.reduce_mean(logit)
+                else:
+                    score = tf.reduce_mean(-logit)
 
-            grads = torch.autograd.grad(score, act)[0]
+            # Compute gradients of the score with respect to the conv layer output
+            grads = tape.gradient(score, conv_output)
 
-            # Convert to float32 numpy for consistent downstream processing
-            act_np   = act.detach().cpu().numpy()[0].astype(np.float32)    # (H, W, C)
-            grads_np = grads.detach().cpu().numpy()[0].astype(np.float32)  # (H, W, C)
+            # Convert to numpy arrays
+            conv_output_np = conv_output.numpy()
+            grads_np = grads.numpy()
+
+            # We have batch size 1, so take the first element
+            act_np = conv_output_np[0]   # (H, W, C)
+            grads_np = grads_np[0]       # (H, W, C)
 
             if method == "gradcam":
                 # Standard Grad-CAM: global-average-pool the gradients → per-channel weights
-                # spatial dims are axes 0,1 for (H,W,C) layout
-                weights = np.mean(grads_np, axis=(0, 1))          # (C,)
+                weights = np.mean(grads_np, axis=(0, 1))   # (C,)
                 cam = np.sum(act_np * weights[np.newaxis, np.newaxis, :], axis=-1)  # (H, W)
                 cam = np.maximum(cam, 0)
             else:
                 # Grad-CAM++ — second/third-order gradient approximation
-                grads_sq  = grads_np ** 2
-                grads_cu  = grads_np ** 3
-                sum_act   = np.sum(act_np, axis=(0, 1), keepdims=True)  # (1,1,C)
-                denom     = 2.0 * grads_sq + sum_act * grads_cu
-                denom     = np.where(denom != 0.0, denom, np.ones_like(denom))
-                alpha     = grads_sq / denom                             # (H,W,C)
-                weights   = np.sum(alpha * np.maximum(grads_np, 0), axis=(0, 1))  # (C,)
+                grads_sq = grads_np ** 2
+                grads_cu = grads_np ** 3
+                sum_act = np.sum(act_np, axis=(0, 1), keepdims=True)   # (1,1,C)
+                denom = 2.0 * grads_sq + sum_act * grads_cu
+                denom = np.where(denom != 0.0, denom, np.ones_like(denom))
+                alpha = grads_sq / denom
+                weights = np.sum(alpha * np.maximum(grads_np, 0), axis=(0, 1))   # (C,)
                 cam = np.sum(act_np * weights[np.newaxis, np.newaxis, :], axis=-1)  # (H, W)
                 cam = np.maximum(cam, 0)
 
@@ -441,9 +592,8 @@ def generate_saliency_heatmap(model, tensor, original_img: Image.Image, is_tb: b
             if cam_max > cam_min:
                 cam = (cam - cam_min) / (cam_max - cam_min + 1e-8)
 
-            cam_np = cam  # (H, W) normalized float32
+            cam_np = cam   # (H, W) normalized float32
 
-            
         # Apply specific XAI post-processing to the normalized cam_np map
         if method == "attention":
             # High-pass filter for edge focused attention highlights
@@ -464,26 +614,26 @@ def generate_saliency_heatmap(model, tensor, original_img: Image.Image, is_tb: b
                 for c in range(0, grid_w, 2):
                     val = np.mean(cam_np[r:r+2, c:c+2])
                     cam_np[r:r+2, c:c+2] = val
-                    
+
         # Apply low-activation thresholding to filter out diffuse background noise (except coverage/attention)
         if method not in ["coverage", "attention"]:
             cam_np = np.where(cam_np >= 0.22, cam_np, 0.0)
-            
+
         # Resize to original image size
         w, h = original_img.size
         heatmap_resized = cv2.resize(cam_np, (w, h))
-        
+
         if method not in ["coverage", "attention"]:
             heatmap_blurred = cv2.GaussianBlur(heatmap_resized, (15, 15), 0)
         else:
             heatmap_blurred = heatmap_resized
-            
+
         h_min, h_max = heatmap_blurred.min(), heatmap_blurred.max()
         if h_max > h_min:
             heatmap_blurred = (heatmap_blurred - h_min) / (h_max - h_min + 1e-8)
-            
+
         heatmap_8bit = (heatmap_blurred * 255).astype(np.uint8)
-        
+
         # Select colormap based on method
         if method == "attention":
             color_heatmap = cv2.applyColorMap(heatmap_8bit, cv2.COLORMAP_COOL)
@@ -493,7 +643,7 @@ def generate_saliency_heatmap(model, tensor, original_img: Image.Image, is_tb: b
             color_heatmap = cv2.applyColorMap(heatmap_8bit, cv2.COLORMAP_HOT)
         else:
             color_heatmap = cv2.applyColorMap(heatmap_8bit, cv2.COLORMAP_JET)
-            
+
         orig_np = np.array(original_img)
         if len(orig_np.shape) == 2:
             orig_np = cv2.cvtColor(orig_np, cv2.COLOR_GRAY2RGB)
@@ -521,7 +671,7 @@ def generate_saliency_heatmap(model, tensor, original_img: Image.Image, is_tb: b
         if return_raw:
             return Image.fromarray(blended), False, heatmap_blurred
         return Image.fromarray(blended), False
-        
+
     except Exception as e:
         print(f"Explainable AI mapping failed for {method}: {e}. Falling back to density.")
         fallback_img = _generate_density_heatmap(original_img, is_tb)
@@ -533,7 +683,7 @@ def generate_saliency_heatmap(model, tensor, original_img: Image.Image, is_tb: b
         else:
             cv2.circle(fallback_raw, (int(w * 0.5), int(h * 0.5)), int(min(w, h) * 0.25), 0.25, -1)
         fallback_raw = cv2.GaussianBlur(fallback_raw, (31, 31), 0)
-        
+
         if return_raw:
             return fallback_img, True, fallback_raw
         return fallback_img, True
@@ -558,40 +708,40 @@ def extract_xai_rois(heatmap_blurred: np.ndarray, is_tb: bool) -> list:
     relative_thresh = 0.60 if is_tb else 0.70
     thresh_val = max(0.15, max_val * relative_thresh)
     _, mask = cv2.threshold((heatmap_blurred * 255).astype(np.uint8), int(thresh_val * 255), 255, cv2.THRESH_BINARY)
-    
+
     contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    
+
     rois = []
     total_activation_sum = 0.0
-    
+
     # Process each contour
     for idx, contour in enumerate(contours):
         if cv2.contourArea(contour) < 15: # Filter very small noise
             continue
-            
+
         x, y, cw, ch = cv2.boundingRect(contour)
-        
+
         # Enclosing circle
         (cx, cy), radius = cv2.minEnclosingCircle(contour)
-        
+
         # Simplified contour for rendering
         epsilon = 0.015 * cv2.arcLength(contour, True)
         approx = cv2.approxPolyDP(contour, epsilon, True)
         contour_pts = [[int(pt[0][0]), int(pt[0][1])] for pt in approx]
-        
+
         # Calculate mean activation in this contour
         contour_mask = np.zeros_like(mask)
         cv2.drawContours(contour_mask, [contour], -1, 255, -1)
         mean_val = cv2.mean(heatmap_blurred, mask=contour_mask)[0]
-        
+
         # Calculate sum of activation as proxy for contribution
         sum_val = cv2.sumElems(cv2.multiply(heatmap_blurred, contour_mask.astype(np.float32)/255.0))[0]
         total_activation_sum += sum_val
-        
+
         # Map center to anatomical zones
         nx = (x + cw/2.0) / w
         ny = (y + ch/2.0) / h
-        
+
         side = "Right" if nx < 0.50 else "Left"
         if ny < 0.40:
             zone = "Upper"
@@ -599,9 +749,9 @@ def extract_xai_rois(heatmap_blurred: np.ndarray, is_tb: bool) -> list:
             zone = "Middle"
         else:
             zone = "Lower"
-            
+
         location = f"{side} {zone} Lung Zone"
-        
+
         rois.append({
             "id": chr(65 + idx),
             "activation_score": float(mean_val),
@@ -612,10 +762,10 @@ def extract_xai_rois(heatmap_blurred: np.ndarray, is_tb: bool) -> list:
             "contour": contour_pts,
             "center": [float(nx), float(ny)]
         })
-        
+
     # Sort ROIs by sum activation (descending)
     rois.sort(key=lambda x: x["sum_activation"], reverse=True)
-    
+
     # Calculate relative contribution percentage
     final_rois = []
     for idx, r in enumerate(rois[:6]): # Limit to top 6 ROIs
@@ -624,11 +774,11 @@ def extract_xai_rois(heatmap_blurred: np.ndarray, is_tb: bool) -> list:
         r["id"] = chr(65 + idx)
         r["contribution_pct"] = round(contrib, 1)
         r["activation_score"] = round(r["activation_score"] * 100.0, 1)
-        
+
         # Delete temporary field
         del r["sum_activation"]
         final_rois.append(r)
-        
+
     return final_rois
 
 def generate_xai_clinical_summary(rois: list, is_tb: bool, confidence: float) -> str:
@@ -637,12 +787,12 @@ def generate_xai_clinical_summary(rois: list, is_tb: bool, confidence: float) ->
     """
     if not rois:
         return "No significant focal abnormalities or salient opacities detected. Radiographic features appear within normal limits."
-        
+
     top_roi = rois[0]
     loc = top_roi["location"]
     contrib = top_roi["contribution_pct"]
     act = top_roi["activation_score"]
-    
+
     if is_tb:
         summary = (
             f"CAD assessment indicates a high-probability focal opacity localized to the {loc} (Region {top_roi['id']}), "
@@ -665,27 +815,27 @@ def compute_xai_payload(is_tb: bool, prob: float, heatmap_blurred: np.ndarray, q
     """Assemble final Explainable AI payload structures."""
     rois = extract_xai_rois(heatmap_blurred, is_tb)
     summary = generate_xai_clinical_summary(rois, is_tb, prob)
-    
+
     ranking = [
         {"region_id": r["id"], "location": r["location"], "contribution_pct": r["contribution_pct"]}
         for r in rois
     ]
-    
+
     calibrated_conf = calibrate_confidence(prob, OPTIMAL_THRESHOLD, is_tb)
-    
-    reliability = "High" if quality_score >= 85 else "Medium" if quality_score >= 60 else "Low"
-    
+
+    reliability = "High" if quality_score >= 8550 else "Medium" if quality_score >= 60 else "Low"
+
     # Calculate uncertainty
     diff = abs(calibrated_conf - 0.50)
     uncertainty = "Low" if diff >= 0.35 else "Medium" if diff >= 0.15 else "High"
-    
+
     metrics = {
         "tb_probability": round(prob * 100.0, 1),
         "calibrated_confidence": round(calibrated_conf * 100.0, 1),
         "reliability": reliability,
         "uncertainty": uncertainty
     }
-    
+
     return {
         "rois": rois,
         "summary": summary,
@@ -693,101 +843,291 @@ def compute_xai_payload(is_tb: bool, prob: float, heatmap_blurred: np.ndarray, q
         "metrics": metrics
     }
 
-def get_mock_xai_payload(img_size: tuple, is_tb: bool, prob: float, quality_score=85) -> dict:
-    """Generate mock XAI results payload for demo run consistency."""
-    w, h = img_size
-    calibrated_conf = calibrate_confidence(prob, OPTIMAL_THRESHOLD, is_tb)
-    reliability = "High" if quality_score >= 85 else "Medium"
-    
-    diff = abs(calibrated_conf - 0.50)
-    uncertainty = "Low" if diff >= 0.35 else "Medium" if diff >= 0.15 else "High"
-    
-    metrics = {
-        "tb_probability": round(prob * 100.0, 1),
-        "calibrated_confidence": round(calibrated_conf * 100.0, 1),
-        "reliability": reliability,
-        "uncertainty": uncertainty
-    }
-    
-    if is_tb:
-        rois = [
-            {
-                "id": "A",
-                "activation_score": 92.4,
-                "contribution_pct": 82.0,
-                "location": "Right Upper Lung Zone",
-                "bbox": [int(w * 0.18), int(h * 0.15), int(w * 0.22), int(h * 0.25)],
-                "circle": [int(w * 0.29), int(h * 0.27), int(w * 0.12)],
-                "contour": [
-                    [int(w * 0.18), int(h * 0.15)],
-                    [int(w * 0.40), int(h * 0.15)],
-                    [int(w * 0.40), int(h * 0.40)],
-                    [int(w * 0.18), int(h * 0.40)]
-                ],
-                "center": [0.29, 0.27]
-            },
-            {
-                "id": "B",
-                "activation_score": 78.1,
-                "contribution_pct": 18.0,
-                "location": "Left Mid Lung Zone",
-                "bbox": [int(w * 0.58), int(h * 0.38), int(w * 0.20), int(h * 0.22)],
-                "circle": [int(w * 0.68), int(h * 0.49), int(w * 0.10)],
-                "contour": [
-                    [int(w * 0.58), int(h * 0.38)],
-                    [int(w * 0.78), int(h * 0.38)],
-                    [int(w * 0.78), int(h * 0.60)],
-                    [int(w * 0.58), int(h * 0.60)]
-                ],
-                "center": [0.68, 0.49]
-            }
-        ]
+def validate_explainability(raw_heatmap: np.ndarray, lung_mask: np.ndarray, method_name: str) -> dict:
+    """
+    Validate explainability heatmap against lung mask.
+    Input: raw_heatmap (normalized [0,1]), lung_mask (binary 0/1), method_name.
+    Output: dict with status, reason, metrics.
+    """
+    import cv2  # cv2 already imported at top
+    # Ensure inputs are numpy arrays
+    if raw_heatmap is None or lung_mask is None:
+        return {
+            "status": "Unavailable",
+            "reason": "Missing heatmap or lung mask",
+            "metrics": {}
+        }
+    # Ensure same shape
+    if raw_heatmap.shape != lung_mask.shape:
+        # Resize lung_mask to match heatmap
+        lung_mask = cv2.resize(lung_mask.astype(np.uint8), (raw_heatmap.shape[1], raw_heatmap.shape[0]), interpolation=cv2.INTER_NEAREST)
+    # Convert lung_mask to boolean
+    lung_mask_bool = lung_mask > 0.5
+    total_activation = np.sum(raw_heatmap)
+    if total_activation == 0:
+        activation_inside = 0.0
     else:
-        rois = [
-            {
-                "id": "A",
-                "activation_score": 32.5,
-                "contribution_pct": 60.0,
-                "location": "Left Lower Lung Zone",
-                "bbox": [int(w * 0.55), int(h * 0.60), int(w * 0.22), int(h * 0.22)],
-                "circle": [int(w * 0.66), int(h * 0.71), int(w * 0.11)],
-                "contour": [
-                    [int(w * 0.55), int(h * 0.60)],
-                    [int(w * 0.77), int(h * 0.60)],
-                    [int(w * 0.77), int(h * 0.82)],
-                    [int(w * 0.55), int(h * 0.82)]
-                ],
-                "center": [0.66, 0.71]
-            },
-            {
-                "id": "B",
-                "activation_score": 28.2,
-                "contribution_pct": 40.0,
-                "location": "Right Lower Lung Zone",
-                "bbox": [int(w * 0.22), int(h * 0.58), int(w * 0.20), int(h * 0.22)],
-                "circle": [int(w * 0.32), int(h * 0.69), int(w * 0.10)],
-                "contour": [
-                    [int(w * 0.22), int(h * 0.58)],
-                    [int(w * 0.42), int(h * 0.58)],
-                    [int(w * 0.42), int(h * 0.80)],
-                    [int(w * 0.22), int(h * 0.80)]
-                ],
-                "center": [0.32, 0.69]
-            }
-        ]
-        
-    ranking = [
-        {"region_id": r["id"], "location": r["location"], "contribution_pct": r["contribution_pct"]}
-        for r in rois
-    ]
-    summary = generate_xai_clinical_summary(rois, is_tb, prob)
-    
+        activation_inside = np.sum(raw_heatmap * lung_mask_bool)
+    activation_outside = total_activation - activation_inside
+    activation_overlap_ratio = activation_inside / total_activation if total_activation > 0 else 0.0
+    outside_lung_percentage = (activation_outside / total_activation * 100) if total_activation > 0 else 0.0
+    lung_coverage = (activation_inside / np.sum(lung_mask_bool)) * 100 if np.sum(lung_mask_bool) > 0 else 0.0
+    activation_density = activation_inside / np.sum(lung_mask_bool) if np.sum(lung_mask_bool) > 0 else 0.0
+    # Determine status
+    if np.sum(lung_mask_bool) == 0:
+        status = "Unavailable"
+        reason = "No lung segmentation available."
+    elif activation_overlap_ratio >= 0.80 and outside_lung_percentage <= 20.0:
+        status = "Valid"
+        reason = "High activation overlap with lungs and low outside activation."
+    elif activation_overlap_ratio >= 0.60 and outside_lung_percentage <= 40.0:
+        status = "Questionable"
+        reason = "Moderate activation overlap with lungs moderate outside activation."
+    else:
+        status = "Invalid"
+        reason = "Low activation overlap with lungs or high outside activation."
     return {
-        "rois": rois,
-        "summary": summary,
-        "ranking": ranking,
-        "metrics": metrics
+        "status": status,
+        "reason": reason,
+        "metrics": {
+            "activation_overlap_ratio": float(round(activation_overlap_ratio * 100, 1)),  # percentage
+            "outside_lung_percentage": float(round(outside_lung_percentage, 1)),
+            "lung_coverage_percentage": float(round(lung_coverage, 1)),
+            "activation_density": float(round(activation_density, 4))
+        }
     }
+
+def extract_evidence(is_tb: bool, prob: float, raw_map_np: np.ndarray, unet_mask: np.ndarray, heatmap_blurred: np.ndarray, validation=None, quadrant_analysis=None) -> dict:
+    """
+    Extract structured evidence from prediction and explainability outputs.
+    Returns a dictionary suitable for inclusion in API response under 'evidence' key.
+    """
+    # Validation
+    if validation is None:
+        validation = validate_explainability(raw_map_np, unet_mask if unet_mask is not None else np.zeros_like(raw_map_np), "gradcam_plusplus")
+    # ROI metrics
+    rois = extract_xai_rois(heatmap_blurred, is_tb)
+    roi_count = len(rois)
+    total_activation = sum(r["activation_score"] for r in rois)  # activation_score is percentage 0-100
+    avg_activation = total_activation / roi_count if roi_count > 0 else 0.0
+    # Geometry: average bbox size
+    if rois:
+        avg_width = sum(r["bbox"][2] for r in rois) / roi_count
+        avg_height = sum(r["bbox"][3] for r in rois) / roi_count
+    else:
+        avg_width = 0.0
+        avg_height = 0.0
+    # Location from quadrant analysis (use precomputed if available)
+    if quadrant_analysis is None:
+        quadrant = compute_quadrant_analysis(raw_map_np, unet_mask)
+    else:
+        quadrant = quadrant_analysis
+    dominant_zone = quadrant["dominant_zone"]
+    # Heatmap stats
+    hm_min = float(np.min(raw_map_np))
+    hm_max = float(np.max(raw_map_np))
+    hm_mean = float(np.mean(raw_map_np))
+    hm_std = float(np.std(raw_map_np))
+    # Timing placeholder (we could compute actual time but skip)
+    timestamp = datetime.datetime.utcnow().isoformat() + "Z"
+    # Confidence calibration
+    calibrated_conf = calibrate_confidence(prob, OPTIMAL_THRESHOLD, is_tb)
+    # Evidence confidence: combine prediction confidence, validation quality, ROI quality, and localization quality.
+    # Formula: evidence_confidence = 0.5 * calibrated_conf + 0.3 * val_score + 0.1 * roi_score + 0.1 * loc_score
+    # where:
+    #   val_score = 1.0 if validation status is "Valid", 0.5 if "Questionable", 0.0 otherwise
+    #   roi_score = min(roi_count / 3.0, 1.0)  # up to 3 ROIs considered full score
+    #   loc_score = 1.0 if dominant_zone is not "mixed", else 0.5
+    val_score = 1.0 if validation["status"] == "Valid" else 0.5 if validation["status"] == "Questionable" else 0.0
+    roi_score = min(roi_count / 3.0, 1.0)  # up to 3 ROIs considered full
+    loc_score = 1.0 if dominant_zone != "mixed" else 0.5
+    evidence_confidence = (calibrated_conf * 0.5 + val_score * 0.3 + roi_score * 0.1 + loc_score * 0.1)  # weighted sum, ensure <=1
+    evidence_confidence = max(0.0, min(1.0, evidence_confidence))
+    # Build evidence dict (note: prediction, is_tb, and raw_probability are omitted to avoid duplication with root response)
+    evidence = {
+        "version": "1.0",
+        "timestamp": timestamp,
+        "calibrated_confidence": calibrated_conf,
+        "validation": validation,
+        "roi_metrics": {
+            "count": roi_count,
+            "total_activation": round(total_activation, 1),
+            "average_activation": round(avg_activation, 1),
+            "average_bbox_width": round(avg_width, 1),
+            "average_bbox_height": round(avg_height, 1)
+        },
+        "geometry": {
+            "dominant_zone": dominant_zone,
+            "quadrant_scores": quadrant["quadrant_scores"],
+            "upper_fraction": quadrant["upper_fraction"],
+            "lower_fraction": quadrant["lower_fraction"]
+        },
+        "heatmap_stats": {
+            "min": round(hm_min, 4),
+            "max": round(hm_max, 4),
+            "mean": round(hm_mean, 4),
+            "std": round(hm_std, 4)
+        },
+        "evidence_confidence": round(evidence_confidence, 4),
+        # Relationships: we could include references but skip for brevity
+        "_note": "Evidence object aggregates validation, ROI, localization, and heatmap statistics. Prediction and confidence are available in the root response."
+    }
+    return evidence
+
+def generate_clinical_reasoning(evidence: dict, prediction: str, prob: float, is_tb: bool, validation: dict, rois: list, quadrant_analysis: dict) -> dict:
+    """
+    Generate structured clinical reasoning from evidence.
+    Returns a dictionary suitable for inclusion in API response under 'reasoning' key.
+    """
+    import hashlib
+    import json
+
+    # Generate a deterministic reasoning ID based on evidence content
+    # We'll use a hash of the evidence dict (excluding timestamp to avoid changes every second)
+    evidence_for_hash = evidence.copy()
+    if 'timestamp' in evidence_for_hash:
+        del evidence_for_hash['timestamp']
+    evidence_str = json.dumps(evidence_for_hash, sort_keys=True)
+    hash_obj = hashlib.md5(evidence_str.encode())
+    reasoning_id = hash_obj.hexdigest()[:16]  # 16-char hex string
+
+    supporting_evidence = []
+    conflicting_evidence = []
+    limitations = []
+
+    # Validation-based rules
+    val_status = validation.get('status', 'Unavailable')
+    if val_status == 'Valid':
+        supporting_evidence.append('Validation_Valid')
+    elif val_status == 'Invalid':
+        conflicting_evidence.append('Validation_Invalid')
+    # Questionable: neutral, no addition
+
+    # Activation overlap ratio
+    overlap_ratio = validation.get('metrics', {}).get('activation_overlap_ratio', 0.0)
+    if overlap_ratio >= 80.0:
+        supporting_evidence.append('HighActivationOverlap')
+    elif overlap_ratio < 60.0:
+        conflicting_evidence.append('LowActivationOverlap')
+
+    # Outside lung activation percentage
+    outside_pct = validation.get('metrics', {}).get('outside_lung_activation_percentage', 100.0)
+    if outside_pct <= 20.0:
+        supporting_evidence.append('LowOutsideActivation')
+    elif outside_pct >= 40.0:
+        conflicting_evidence.append('HighOutsideActivation')
+
+    # Lung coverage percentage
+    lung_cov = validation.get('metrics', {}).get('lung_coverage_percentage', 0.0)
+    if lung_cov >= 30.0:
+        supporting_evidence.append('AdequateLungCoverage')
+    elif lung_cov < 10.0:
+        conflicting_evidence.append('LowLungCoverage')
+        limitations.append('Low lung coverage')
+
+    # Activation density
+    act_dens = validation.get('metrics', {}).get('activation_density', 0.0)
+    # No fixed thresholds; we'll use relative to typical values? Skip for now.
+
+    # ROI-based rules
+    roi_count = evidence.get('roi_metrics', {}).get('count', 0)
+    if roi_count > 0:
+        supporting_evidence.append('ROIsPresent')
+        # Optionally add specific ROI IDs if we want to list them
+        for roi in rois:
+            supporting_evidence.append(f'ROI_{roi["id"]}')
+    else:
+        conflicting_evidence.append('NoROIsDetected')
+        limitations.append('No regions of interest detected')
+
+    # Average activation (percentage)
+    avg_act = evidence.get('roi_metrics', {}).get('average_activation', 0.0)
+    if avg_act >= 50.0:
+        supporting_evidence.append('HighAverageActivation')
+    elif avg_act < 20.0:
+        conflicting_evidence.append('LowAverageActivation')
+
+    # Geometry: dominant zone
+    dominant_zone = evidence.get('geometry', {}).get('dominant_zone', 'mixed')
+    if is_tb and dominant_zone == 'upper':
+        supporting_evidence.append('UpperLobePredominance')  # TB often upper lobe
+    elif is_tb and dominant_zone == 'lower':
+        conflicting_evidence.append('LowerLobePredominance')  # less typical for TB
+    elif not is_tb and dominant_zone == 'lower':
+        supporting_evidence.append('LowerLobePredominance_Normal')  # pneumonia etc.
+    # Mixed: neutral
+
+    # Quadrant balance
+    upper_frac = evidence.get('geometry', {}).get('upper_fraction', 0.0)
+    lower_frac = evidence.get('geometry', {}).get('lower_fraction', 0.0)
+    if abs(upper_frac - lower_frac) > 0.3:  # significant imbalance
+        if upper_frac > lower_frac:
+            supporting_evidence.append('UpperLobePredominance_Quantitative')
+        else:
+            supporting_evidence.append('LowerLobePredominance_Quantitative')
+    else:
+        # roughly balanced
+        pass
+
+    # Heatmap statistics: standard deviation as indicator of focality
+    hm_std = evidence.get('heatmap_stats', {}).get('std', 0.0)
+    if hm_std > 0.2:  # arbitrary threshold, indicating focal hotspots
+        supporting_evidence.append('FocalActivationPattern')
+    elif hm_std < 0.05:
+        conflicting_evidence.append('DiffuseActivationPattern')
+        # For TB, focal is expected; diffuse less typical
+
+    # Evidence confidence
+    evid_conf = evidence.get('evidence_confidence', 0.0)
+    if evid_conf >= 0.7:
+        supporting_evidence.append('HighEvidenceConfidence')
+    elif evid_conf < 0.3:
+        conflicting_evidence.append('LowEvidenceConfidence')
+        limitations.append('Low evidence confidence')
+
+    # Calibrated confidence (prediction confidence)
+    cal_conf = evidence.get('calibrated_confidence', 0.0)
+    if cal_conf >= 0.8:
+        supporting_evidence.append('HighPredictionConfidence')
+    elif cal_conf < 0.5:
+        conflicting_evidence.append('LowPredictionConfidence')
+        limitations.append('Low prediction confidence')
+
+    # Consistency prediction and evidence
+    # If prediction is TB but evidence supports TB but evidence suggests normal, etc.
+    # We'll rely on the above rules.
+
+    # Remove duplicates
+    supporting_evidence = list(dict.fromkeys(supporting_evidence))
+    conflicting_evidence = list(dict.fromkeys(conflicting_evidence))
+    limitations = list(dict.fromkeys(limitations))
+
+    # Compute reasoning confidence: weighted combination of evidence confidence and prediction confidence
+    # We'll also factor in validation quality.
+    # Simple average of evidence_confidence and calibrated_confidence, clamped.
+    reasoning_confidence = (evid_conf * 0.6 + cal_conf * 0.4)
+    reasoning_confidence = max(0.0, min(1.0, reasoning_confidence))
+
+    # Uncertainty: we define as 1 - reasoning_confidence, but also add ignorance if evidence missing.
+    # Base uncertainty
+    uncertainty = 1.0 - reasoning_confidence
+    # Increase uncertainty if critical data missing
+    if validation.get('status') == 'Unavailable':
+        uncertainty = min(1.0, uncertainty + 0.3)
+    if roi_count == 0:
+        uncertainty = min(1.0, uncertainty + 0.2)
+    uncertainty = max(0.0, min(1.0, uncertainty))
+
+    # Build reasoning object
+    reasoning = {
+        "reasoning_id": reasoning_id,
+        "supporting_evidence": supporting_evidence,
+        "conflicting_evidence": conflicting_evidence,
+        "confidence": round(reasoning_confidence, 4),
+        "uncertainty": round(uncertainty, 4),
+        "limitations": limitations
+    }
+    return reasoning
 
 # ── Main Prediction Flow ─────────────────────────────────────
 
@@ -806,13 +1146,13 @@ def compute_quadrant_analysis(raw_map_np: np.ndarray, unet_mask_np: np.ndarray =
             heatmap = raw_map_np
     else:
         heatmap = raw_map_np
-    
+
     # Split into 4 quadrants
     upper_left  = heatmap[:H//2, :W//2]
     upper_right = heatmap[:H//2, W//2:]
     lower_left  = heatmap[H//2:, :W//2]
     lower_right = heatmap[H//2:, W//2:]
-    
+
     total = heatmap.sum()
     if total < 1e-5:
         # Default flat score if no activation exists
@@ -829,10 +1169,10 @@ def compute_quadrant_analysis(raw_map_np: np.ndarray, unet_mask_np: np.ndarray =
             "lower_left":  float(lower_left.sum() / total),
             "lower_right": float(lower_right.sum() / total),
         }
-    
+
     upper_frac = scores["upper_left"] + scores["upper_right"]
     lower_frac = scores["lower_left"] + scores["lower_right"]
-    
+
     # Clinical interpretation
     if upper_frac >= 0.55:
         zone = "upper"
@@ -846,7 +1186,7 @@ def compute_quadrant_analysis(raw_map_np: np.ndarray, unet_mask_np: np.ndarray =
         zone = "mixed"
         interpretation = "Anomalies distributed across multiple zones — findings are non-specific. Differential includes miliary TB, sarcoidosis, or systemic fungal infections."
         disease_overlap = ["Tuberculosis (Miliary/Disseminated)", "Sarcoidosis", "Fungal Infection", "Lymphoma"]
-    
+
     return {
         "quadrant_scores": {k: round(v * 100, 1) for k, v in scores.items()},
         "upper_fraction": round(upper_frac * 100, 1),
@@ -864,13 +1204,16 @@ def predict_image(img: Image.Image, prior_image_b64: str = None):
     from io import BytesIO
 
     if model is None:
+        if not DEMO_Fallback_ENABLED:
+            raise RuntimeError("Model not loaded and demo fallback disabled.")
         # Mock/Demo mode fallback to keep the application fully testable without the weight file
         prob = random.uniform(0.15, 0.88)
         is_tb = prob >= OPTIMAL_THRESHOLD
-        
+        prediction = "Tuberculosis" if is_tb else "Normal"
+
         # Aspect ratio preserving padding for fallback heatmap
         padded_img = pad_to_square(img)
-        
+
         # Generate all 5 heatmaps for demo mode
         heatmaps_b64 = {}
         for method in ["gradcam", "gradcam_plusplus", "attention", "coverage", "attribution"]:
@@ -880,7 +1223,7 @@ def predict_image(img: Image.Image, prior_image_b64: str = None):
 
         gradcam_plusplus_img, _ = generate_saliency_heatmap(None, None, padded_img, is_tb, method="gradcam_plusplus")
         gradcam_plusplus_cropped = crop_to_original(gradcam_plusplus_img, img.size)
-        
+
         # Generate mock raw heatmap for demo mode quadrant analysis
         w, h = img.size
         mock_raw = np.zeros((h, w), dtype=np.float32)
@@ -894,7 +1237,7 @@ def predict_image(img: Image.Image, prior_image_b64: str = None):
         mock_raw = cv2.GaussianBlur(mock_raw, (45, 45), 0)
         norm_mock_raw = (mock_raw - mock_raw.min()) / (mock_raw.max() - mock_raw.min() + 1e-8)
         quadrant_analysis = compute_quadrant_analysis(norm_mock_raw)
-        
+
         xai_payload = get_mock_xai_payload(img.size, is_tb, prob)
 
         # Phase 5: rich clinical_observations list derived from the XAI ROIs.
@@ -902,6 +1245,47 @@ def predict_image(img: Image.Image, prior_image_b64: str = None):
         clinical_observations = build_clinical_observations(
             xai_payload, is_tb=is_tb, confidence=prob
         )
+
+        # Compute validation and evidence for demo mode
+        # Create a mock lung mask (all ones for simplicity in demo)
+        mock_lung_mask = np.ones_like(norm_mock_raw)
+        validation = validate_explainability(norm_mock_raw, mock_lung_mask, "gradcam_plusplus")
+        evidence = extract_evidence(is_tb, prob, norm_mock_raw, mock_lung_mask, norm_mock_raw, validation=validation, quadrant_analysis=quadrant_analysis)
+        rois = xai_payload["rois"]
+        reasoning = generate_clinical_reasoning(evidence, prediction, prob, is_tb, validation, rois, quadrant_analysis)
+
+        # Generate findings and report
+        reasoning_id = reasoning["reasoning_id"]
+        findings = []
+        for idx, roi in enumerate(xai_payload["rois"]):
+            location = roi["location"]
+            parts = location.split()
+            if len(parts) >= 3:
+                lung = parts[0]
+                zone = parts[1]
+            else:
+                lung = "Unknown"
+                zone = "Unknown"
+
+            finding = {
+                "id": f"F{idx+1:03d}",
+                "title": f"Activation detected in {location}",
+                "lung": lung,
+                "zone": zone,
+                "confidence": roi["activation_score"] / 100.0,   # convert percentage to fraction
+                "reasoning_id": reasoning_id,
+                "roi_id": roi["id"],
+                "evidence_ids": []   # placeholder
+            }
+            findings.append(finding)
+
+        report = {
+            "summary": xai_payload["summary"],
+            "limitations": reasoning["limitations"],
+            "disclaimer": "This is an AI-assisted screening tool. The results are for informational purposes only and not a definitive diagnosis. Clinical correlation is required.",
+            "generated_at": datetime.utcnow().isoformat() + "Z",
+            "version": "1.0"
+        }
 
         result_dict = {
             "prediction": "Tuberculosis" if is_tb else "Normal",
@@ -914,29 +1298,34 @@ def predict_image(img: Image.Image, prior_image_b64: str = None):
             "heatmaps": heatmaps_b64,
             "xai_results": xai_payload,
             "quadrant_analysis": quadrant_analysis,
-            "clinical_observations": clinical_observations
+            "clinical_observations": clinical_observations,
+            "validation": validation,
+            "evidence": evidence,
+            "reasoning": reasoning,
+            "findings": findings,
+            "report": report
         }
-        
+
         if prior_image_b64:
             try:
                 prior_data = base64.b64decode(prior_image_b64.split(",")[1] if "," in prior_image_b64 else prior_image_b64)
                 prior_img = Image.open(BytesIO(prior_data)).convert('RGB')
                 prior_dict, prior_heatmap_img = predict_image(prior_img, None)
-                
+
                 curr_np = np.array(gradcam_plusplus_cropped.convert('RGB'))
                 prior_np = cv2.resize(np.array(prior_heatmap_img.convert('RGB')), (curr_np.shape[1], curr_np.shape[0]))
                 delta_np = cv2.absdiff(curr_np, prior_np)
-                
+
                 # Boost the delta signal slightly for visibility
                 delta_np = cv2.convertScaleAbs(delta_np, alpha=1.5, beta=0)
-                
+
                 result_dict["delta_heatmap_b64"] = image_to_base64(Image.fromarray(delta_np))
             except Exception as e:
                 import logging
                 logging.error(f"Error computing delta heatmap: {e}")
-                
+
         return result_dict, gradcam_plusplus_cropped
-        
+
     # ── Preprocessing ─────────────────────────────────────────────────────────
     #
     # Preprocessing pipeline auto-selects based on which model generation is
@@ -966,16 +1355,34 @@ def predict_image(img: Image.Image, prior_image_b64: str = None):
     arr = segment_lungs(gray_arr)  # (IMG_SIZE, IMG_SIZE) float32
 
     tensor = preprocess_for_classifier(arr, unet_active=unet_active)
-    
-    # Check prediction
-    with torch.no_grad():
-        logit = model(tensor)
-        if logit.dim() > 1:
-            logit = logit.squeeze(1)
-        prob = torch.sigmoid(logit).item() if logit.dim() == 0 else torch.sigmoid(logit)[0].item()
-        
+
+    # Check prediction - handle both TF and PyTorch models
+    if isinstance(model, tf.keras.Model):
+        # TensorFlow model
+        logit = model(tensor, training=False)
+        # Apply softmax to get probabilities for both classes
+        probs = tf.nn.softmax(logit, axis=1)
+        # According to debugging, class 0 is TB, class 1 is Normal
+        prob_tb = float(probs[0][0])
+        prob_normal = float(probs[0][1])
+    else:
+        # PyTorch model (e.g., TorchScript)
+        import torch
+        # Convert TensorFlow tensor to PyTorch tensor
+        tensor_torch = torch.from_numpy(tensor.numpy())
+        with torch.no_grad():
+            logit = model(tensor_torch)
+            # Apply softmax to get probabilities for both classes
+            probs = torch.softmax(logit, dim=1)
+            # According to debugging, class 0 is TB, class 1 is Normal
+            prob_tb = float(probs[0][0])
+            prob_normal = float(probs[0][1])
+    # Probability of TB (class 0)
+    prob = prob_tb
+
     is_tb = prob >= OPTIMAL_THRESHOLD
-    
+    prediction = "Tuberculosis" if is_tb else "Normal"
+
     # Generate all 5 heatmaps for actual model runs
     heatmaps_b64 = {}
     any_fallback = False
@@ -985,14 +1392,14 @@ def predict_image(img: Image.Image, prior_image_b64: str = None):
         heatmaps_b64[method] = image_to_base64(h_cropped)
         if is_fb:
             any_fallback = True
-        
+
     gradcam_plusplus_img, is_fb, raw_map = generate_saliency_heatmap(model, tensor, padded_img, is_tb, method="gradcam_plusplus", return_raw=True)
     gradcam_plusplus_cropped = crop_to_original(gradcam_plusplus_img, img.size)
-    
+
     # Crop raw heatmap to preserve original aspect ratio bounding box alignments
     raw_map_cropped = crop_to_original(Image.fromarray((raw_map * 255).astype(np.uint8)), img.size)
     raw_map_np = np.array(raw_map_cropped, dtype=np.float32) / 255.0
-    
+
     # Fetch actual U-Net lung mask resized to match raw_map_np size for exact overlapping if active
     unet_mask = None
     if unet_active:
@@ -1010,7 +1417,7 @@ def predict_image(img: Image.Image, prior_image_b64: str = None):
             unet_mask = cv2.resize(binary_mask, img.size, interpolation=cv2.INTER_NEAREST)
         except Exception:
             pass
-            
+
     quadrant_analysis = compute_quadrant_analysis(raw_map_np, unet_mask)
 
     xai_payload = compute_xai_payload(is_tb, prob, raw_map_np)
@@ -1023,6 +1430,45 @@ def predict_image(img: Image.Image, prior_image_b64: str = None):
         xai_payload, is_tb=is_tb, confidence=prob
     )
 
+    # Compute validation and evidence
+    validation = validate_explainability(raw_map_np, unet_mask if unet_mask is not None else np.zeros_like(raw_map_np), "gradcam_plusplus")
+    evidence = extract_evidence(is_tb, prob, raw_map_np, unet_mask, raw_map_np, validation=validation, quadrant_analysis=quadrant_analysis)
+    rois = xai_payload["rois"]
+    reasoning = generate_clinical_reasoning(evidence, prediction, prob, is_tb, validation, rois, quadrant_analysis)
+
+    # Generate findings and report
+    reasoning_id = reasoning["reasoning_id"]
+    findings = []
+    for idx, roi in enumerate(xai_payload["rois"]):
+        location = roi["location"]
+        parts = location.split()
+        if len(parts) >= 3:
+            lung = parts[0]
+            zone = parts[1]
+        else:
+            lung = "Unknown"
+            zone = "Unknown"
+
+        finding = {
+            "id": f"F{idx+1:03d}",
+            "title": f"Activation detected in {location}",
+            "lung": lung,
+            "zone": zone,
+            "confidence": roi["activation_score"] / 100.0,   # convert percentage to fraction
+            "reasoning_id": reasoning_id,
+            "roi_id": roi["id"],
+            "evidence_ids": []   # placeholder
+        }
+        findings.append(finding)
+
+    report = {
+        "summary": xai_payload["summary"],
+        "limitations": reasoning["limitations"],
+        "disclaimer": "This is an AI-assisted screening tool. The results are for informational purposes only and not a definitive diagnosis. Clinical correlation is required.",
+        "generated_at": datetime.datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+        "version": "1.0"
+    }
+
     result_dict = {
         "prediction": "Tuberculosis" if is_tb else "Normal",
         "confidence": float(prob),
@@ -1034,20 +1480,25 @@ def predict_image(img: Image.Image, prior_image_b64: str = None):
         "heatmaps": heatmaps_b64,
         "xai_results": xai_payload,
         "quadrant_analysis": quadrant_analysis,
-        "clinical_observations": clinical_observations
+        "clinical_observations": clinical_observations,
+        "validation": validation,
+        "evidence": evidence,
+        "reasoning": reasoning,
+        "findings": findings,
+        "report": report
     }
-    
+
     if prior_image_b64:
         try:
             prior_data = base64.b64decode(prior_image_b64.split(",")[1] if "," in prior_image_b64 else prior_image_b64)
             prior_img = Image.open(BytesIO(prior_data)).convert('RGB')
             prior_dict, prior_heatmap_img = predict_image(prior_img, None)
-            
+
             curr_np = np.array(gradcam_plusplus_cropped.convert('RGB'))
             prior_np = cv2.resize(np.array(prior_heatmap_img.convert('RGB')), (curr_np.shape[1], curr_np.shape[0]))
             delta_np = cv2.absdiff(curr_np, prior_np)
             delta_np = cv2.convertScaleAbs(delta_np, alpha=1.5, beta=0)
-            
+
             result_dict["delta_heatmap_b64"] = image_to_base64(Image.fromarray(delta_np))
         except Exception as e:
             import logging

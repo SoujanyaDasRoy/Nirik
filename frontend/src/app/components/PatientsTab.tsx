@@ -257,7 +257,7 @@ export function PatientsTab({ onSelectStudy }: PatientsTabProps) {
               Loading cohort registry...
             </div>
           ) : patients.length === 0 ? (
-            <div className="p-8 text-center text-xs text-muted-foreground bg-muted/10 rounded-xl border border-dashed border-border">
+            <div className="p-8 text-center text-xs text-muted-foreground bg-muted/10 rounded-[20px] border border-dashed border-border">
               No patients found matching criteria.
             </div>
           ) : (
@@ -294,7 +294,7 @@ export function PatientsTab({ onSelectStudy }: PatientsTabProps) {
         {selectedPatient ? (
           <div className="space-y-6 animate-fadein">
             {/* Demographics Card */}
-            <Card className="border border-border bg-card rounded-xl shadow-none">
+            <Card className="border border-border bg-card rounded-[20px] shadow-none">
               <CardContent className="p-6 space-y-4">
                 <div className="flex justify-between items-start">
                   <div className="space-y-1">
@@ -342,7 +342,7 @@ export function PatientsTab({ onSelectStudy }: PatientsTabProps) {
                 {/* Notes */}
                 <div className="space-y-1">
                   <span className="text-[10px] text-muted-foreground font-medium uppercase">Clinical Intake Notes</span>
-                  <p className="text-xs text-muted-foreground leading-relaxed bg-muted/20 border border-border/40 p-3 rounded-lg">
+                  <p className="text-xs text-muted-foreground leading-relaxed bg-muted/20 border border-border/40 p-3 rounded-[15px]">
                     {selectedPatient.notes || "No clinician observations recorded for this patient profile."}
                   </p>
                 </div>
@@ -359,7 +359,7 @@ export function PatientsTab({ onSelectStudy }: PatientsTabProps) {
                   Querying studies...
                 </div>
               ) : studies.length === 0 ? (
-                <div className="p-8 text-center text-xs text-muted-foreground bg-muted/10 rounded-xl border border-dashed border-border">
+                <div className="p-8 text-center text-xs text-muted-foreground bg-muted/10 rounded-[20px] border border-dashed border-border">
                   No Chest Radiograph studies logged for this patient.
                 </div>
               ) : (
@@ -367,7 +367,7 @@ export function PatientsTab({ onSelectStudy }: PatientsTabProps) {
                   {studies.map(study => {
                     const isTB = study.prediction?.toLowerCase().includes("tuberculosis") || study.is_tb;
                     return (
-                      <Card key={study.study_id} className="border border-border bg-card rounded-xl shadow-none">
+                      <Card key={study.study_id} className="border border-border bg-card rounded-[20px] shadow-none">
                         <CardContent className="p-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 text-xs font-medium">
                           <div className="space-y-1">
                             <div className="flex items-center gap-2 flex-wrap">
@@ -404,7 +404,7 @@ export function PatientsTab({ onSelectStudy }: PatientsTabProps) {
             </div>
           </div>
         ) : (
-          <div className="p-16 text-center text-xs text-muted-foreground bg-muted/10 border border-dashed border-border rounded-xl space-y-3">
+          <div className="p-16 text-center text-xs text-muted-foreground bg-muted/10 border border-dashed border-border rounded-[20px] space-y-3">
             <Users className="w-8 h-8 text-muted-foreground/50 mx-auto" strokeWidth={1} />
             <h4 className="font-bold text-foreground">Select Patient Record</h4>
             <p className="max-w-xs mx-auto leading-relaxed">
@@ -417,7 +417,7 @@ export function PatientsTab({ onSelectStudy }: PatientsTabProps) {
       {/* CREATE PATIENT MODAL */}
       {showCreateModal && (
         <div className="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <Card className="w-full max-w-md border border-border bg-card rounded-xl overflow-hidden shadow-lg animate-scalein">
+          <Card className="w-full max-w-md border border-border bg-card rounded-[20px] overflow-hidden shadow-lg animate-scalein">
             <CardContent className="p-6 space-y-4">
               <div className="flex justify-between items-center">
                 <h4 className="font-bold text-sm uppercase tracking-wider text-foreground">Create Patient Record</h4>
@@ -428,7 +428,7 @@ export function PatientsTab({ onSelectStudy }: PatientsTabProps) {
               <Separator />
 
               {formError && (
-                <div className="p-3 bg-destructive/5 border border-destructive/20 rounded-xl text-xs text-destructive flex items-start gap-2">
+                <div className="p-3 bg-destructive/5 border border-destructive/20 rounded-[20px] text-xs text-destructive flex items-start gap-2">
                   <Info className="w-4 h-4 mt-0.5 flex-shrink-0" />
                   <span>{formError}</span>
                 </div>
@@ -497,7 +497,7 @@ export function PatientsTab({ onSelectStudy }: PatientsTabProps) {
                     onChange={e => setFormNotes(e.target.value)}
                     placeholder="Enter patient notes, clinical records..."
                     rows={3}
-                    className="w-full p-4 border border-border rounded-xl bg-card text-foreground focus:ring-1 focus:ring-primary outline-none"
+                    className="w-full p-4 border border-border rounded-[20px] bg-card text-foreground focus:ring-1 focus:ring-primary outline-none"
                   />
                 </div>
 
@@ -518,7 +518,7 @@ export function PatientsTab({ onSelectStudy }: PatientsTabProps) {
       {/* EDIT PATIENT MODAL */}
       {showEditModal && (
         <div className="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <Card className="w-full max-w-md border border-border bg-card rounded-xl overflow-hidden shadow-lg animate-scalein">
+          <Card className="w-full max-w-md border border-border bg-card rounded-[20px] overflow-hidden shadow-lg animate-scalein">
             <CardContent className="p-6 space-y-4">
               <div className="flex justify-between items-center">
                 <h4 className="font-bold text-sm uppercase tracking-wider text-foreground">Edit Patient Record</h4>
@@ -529,7 +529,7 @@ export function PatientsTab({ onSelectStudy }: PatientsTabProps) {
               <Separator />
 
               {formError && (
-                <div className="p-3 bg-destructive/5 border border-destructive/20 rounded-xl text-xs text-destructive flex items-start gap-2">
+                <div className="p-3 bg-destructive/5 border border-destructive/20 rounded-[20px] text-xs text-destructive flex items-start gap-2">
                   <Info className="w-4 h-4 mt-0.5 flex-shrink-0" />
                   <span>{formError}</span>
                 </div>
@@ -596,7 +596,7 @@ export function PatientsTab({ onSelectStudy }: PatientsTabProps) {
                     onChange={e => setFormNotes(e.target.value)}
                     placeholder="Enter patient notes, clinical records..."
                     rows={3}
-                    className="w-full p-4 border border-border rounded-xl bg-card text-foreground focus:ring-1 focus:ring-primary outline-none"
+                    className="w-full p-4 border border-border rounded-[20px] bg-card text-foreground focus:ring-1 focus:ring-primary outline-none"
                   />
                 </div>
 

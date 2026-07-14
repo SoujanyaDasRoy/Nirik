@@ -1,24 +1,48 @@
-# Flask Web Application Dependencies
-# Verified latest stable versions as of June 2026
-# Install with: pip install -r requirements.txt
+# =============================================================================
+# Nirikhshon — Canonical Python Environment (tb_env)
+# =============================================================================
+# Interpreter : Python 3.10.11  (created via `py -3.10 -m venv tb_env`)
+# Platform    : Windows x86-64, native (CPU-only TensorFlow/PyTorch)
+# Purpose     : Direct, intentional dependencies with justification.
+#
+# This file lists ONLY direct dependencies. For an exact, reproducible
+# rebuild of the full environment (all transitive pins), use:
+#     pip install -r requirements.lock.txt
+#
+# Rebuild from scratch:
+#     py -3.10 -m venv tb_env
+#     tb_env/Scripts/python.exe -m pip install --upgrade pip setuptools wheel
+#     tb_env/Scripts/python.exe -m pip install -r requirements.txt
+# =============================================================================
 
-flask==3.1.3
-flask-cors==6.0.2
-
-# PyTorch & TorchVision MUST be installed together
-# These versions are paired — do not mix versions
-torch==2.11.0
-torchvision==0.27.0
-
-# Image Processing
-Pillow==12.2.0
-pydicom==2.4.5
-
-# Scientific Computing
+# --- Numerical core ----------------------------------------------------------
+# Pinned <2.0 because TensorFlow 2.15 is not compatible with NumPy 2.x.
 numpy==1.26.4
-scikit-learn==1.9.0
 
-# DICOM Decompression Codecs
-pylibjpeg==1.4.0
-pylibjpeg-libjpeg==1.3.4
-pylibjpeg-openjpeg==1.3.2
+# --- Deep learning: classification (canonical student_cnn.keras) -------------
+# TF 2.15.1 vendors Keras 2.15 as tf.keras. The standalone keras pin is kept
+# identical so `import keras` and `tf.keras` agree — this prevents the Keras 3
+# mismatch that breaks loading of .keras models.
+tensorflow==2.15.1
+keras==2.15.0
+
+# --- Deep learning: PyTorch (segmentation / auxiliary work) ------------------
+# CPU builds on native Windows (torch==2.2.2+cpu, torchvision==0.17.2+cpu).
+torch==2.2.2
+torchvision==0.17.2
+
+# --- Computer vision / preprocessing (CLAHE, normalization, resizing) --------
+opencv-python==4.10.0.84
+pillow==12.2.0
+
+# --- Classical ML / metrics (ROC-AUC, PR-AUC, confusion matrix, splitting) ---
+scikit-learn==1.4.2
+
+# --- Medical imaging (DICOM I/O + compressed transfer-syntax decoding) -------
+pydicom==3.0.2
+pylibjpeg==2.1.0
+pylibjpeg-libjpeg==2.2.0
+pylibjpeg-openjpeg==2.3.0
+
+# --- Backend async networking (Flask / SocketIO worker) ----------------------
+eventlet==0.41.0

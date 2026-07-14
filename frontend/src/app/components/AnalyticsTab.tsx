@@ -14,14 +14,14 @@ export function AnalyticsTab({ files, results }: AnalyticsTabProps) {
     <div className="max-w-4xl mx-auto space-y-6">
       {/* Stats overview */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="stat-card p-5 bg-card border border-border rounded-lg shadow-none">
+        <div className="stat-card p-5 bg-card border border-border rounded-[15px] shadow-none">
           <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Session Total</p>
           <h4 className="text-3xl font-bold text-foreground mt-1 font-mono tnum-data">
             {results.filter(r => r.status === "success").length}
           </h4>
           <p className="text-xs text-muted-foreground mt-1">Processed radiographs</p>
         </div>
-        <div className="stat-card p-5 bg-card border border-border rounded-lg shadow-none">
+        <div className="stat-card p-5 bg-card border border-border rounded-[15px] shadow-none">
           <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">TB Detection Rate</p>
           <h4 className="text-3xl font-bold text-amber-600 dark:text-amber-500 mt-1 font-mono tnum-data">
             {(() => {
@@ -33,7 +33,7 @@ export function AnalyticsTab({ files, results }: AnalyticsTabProps) {
           </h4>
           <p className="text-xs text-muted-foreground mt-1">Positive classification ratio</p>
         </div>
-        <div className="stat-card p-5 bg-card border border-border rounded-lg shadow-none">
+        <div className="stat-card p-5 bg-card border border-border rounded-[15px] shadow-none">
           <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Override Rate</p>
           <h4 className="text-3xl font-bold text-primary mt-1 font-mono tnum-data">
             {(() => {
@@ -50,7 +50,7 @@ export function AnalyticsTab({ files, results }: AnalyticsTabProps) {
       {/* Graphic breakdown */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* AI Agreement Consensus Chart */}
-        <Card className="p-5 space-y-4 border border-border bg-card rounded-lg shadow-none">
+        <Card className="p-5 space-y-4 border border-border bg-card rounded-[15px] shadow-none">
           <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Clinician / AI Consensus</p>
           <div className="h-44 flex flex-col justify-center space-y-4">
             {(() => {
@@ -83,7 +83,7 @@ export function AnalyticsTab({ files, results }: AnalyticsTabProps) {
         </Card>
 
         {/* Modality distribution */}
-        <Card className="p-5 space-y-4 border border-border bg-card rounded-lg shadow-none">
+        <Card className="p-5 space-y-4 border border-border bg-card rounded-[15px] shadow-none">
           <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Ingested Formats</p>
           <div className="h-44 flex flex-col justify-center space-y-4">
             {(() => {

@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
 from functools import wraps
 from contextlib import closing
-from utils.patient_db import get_connection, get_dashboard_stats, list_studies
+from .utils.patient_db import get_connection, get_dashboard_stats, list_studies
 import logging
 
 api_v1 = Blueprint('api_v1', __name__, url_prefix='/api/v1')
@@ -13,7 +13,7 @@ def require_api_key(f):
         api_key = request.headers.get("X-API-Key")
         if not api_key:
             return jsonify({"error": "Missing X-API-Key header"}), 401
-        
+
         with closing(get_connection()) as conn:
             cursor = conn.execute("SELECT * FROM api_keys WHERE key_hash = ?", (api_key,))
             key_record = cursor.fetchone()

@@ -93,7 +93,7 @@ export function NotificationsPanel() {
 
       {/* Popover Dropdown list */}
       {open && (
-        <div className="absolute right-0 mt-2.5 w-80 bg-card border border-border rounded-xl shadow-lg z-50 overflow-hidden animate-fadein">
+        <div className="absolute right-0 mt-2.5 w-80 bg-card border border-border rounded-[20px] shadow-lg z-50 overflow-hidden animate-fadein">
           {/* Header */}
           <div className="p-4 flex items-center justify-between bg-muted/10">
             <div className="flex items-center gap-1.5">

@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 export function DocsTab() {
   return (
     <div className="max-w-4xl mx-auto space-y-6">
-      <Card className="border border-border bg-card rounded-lg shadow-none">
+      <Card className="border border-border bg-card rounded-[15px] shadow-none">
         <CardContent className="p-6 space-y-5">
           <div className="flex items-start justify-between">
             <h3 className="text-lg font-bold text-foreground">Nirikhshon — System Reference</h3>

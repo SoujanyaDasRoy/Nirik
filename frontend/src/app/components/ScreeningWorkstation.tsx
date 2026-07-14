@@ -3,7 +3,6 @@
 import { useState, useEffect, useRef } from "react";
 import dynamic from "next/dynamic";
 import { getCookie } from "../hooks/usePrediction";
-
 import {
   Activity,
   Eye,
@@ -25,7 +24,6 @@ import {
   LayoutDashboard,
   Search,
 } from "lucide-react";
-
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -49,7 +47,7 @@ import LlmAssistant from "./LlmAssistant";
 
 const DicomViewer = dynamic(() => import("./DicomViewer"), { ssr: false });
 
-interface ScreeningTabProps {
+interface ScreeningWorkstationProps {
   files: File[];
   results: AnalysisResult[];
   setResults: React.Dispatch<React.SetStateAction<AnalysisResult[]>>;
@@ -66,8 +64,7 @@ interface ScreeningTabProps {
   clearAll: () => void;
   globalNote: string;
   setGlobalNote: (note: string) => void;
-  reportRef: React.RefObject<HTMLDivElement | null>;
-  downloadReport: () => Promise<void>;
+
   handleFeedbackSaved: (
     override: string | null,
     note: string,
@@ -79,7 +76,7 @@ interface ScreeningTabProps {
   setWorkstationMode: (mode: "clinical" | "xai") => void;
 }
 
-export function ScreeningTab({
+export function ScreeningWorkstation({
   files,
   results,
   setResults,
@@ -96,12 +93,11 @@ export function ScreeningTab({
   clearAll,
   globalNote,
   setGlobalNote,
-  reportRef,
-  downloadReport,
+
   handleFeedbackSaved,
   workstationMode,
   setWorkstationMode,
-}: ScreeningTabProps) {
+}: ScreeningWorkstationProps) {
   const activeResult = selectedIdx !== null ? results[selectedIdx] : null;
 
   // Quality metrics helper
@@ -597,21 +593,21 @@ export function ScreeningTab({
   // ---------- Render ----------
 
   return (
-    <div className="w-full min-h-[calc(100vh-4rem)] bg-[#0A1F44] text-[#F8FAFC]">
-      {/* Main container: flex row */}
-      <div className="flex h-full w-full p-4 lg:p-6 gap-4">
-        {/* 1. LEFT DOCK (fixed width icons) */}
+    <div className="w-full min-h-[calc(100vh-4rem)] bg-[#090909] text-[#ffffff] overflow-y-auto overflow-x-hidden">
+      {/* Main container: flex-col on mobile, flex-row on extra large screens */}
+      <div className="flex flex-col xl:flex-row h-full xl:min-h-[calc(100vh-6rem)] w-full p-4 lg:p-6 gap-4">
+        {/* 1. LEFT DOCK (horizontal on mobile, vertical on xl) */}
         <aside
-          className="w-[70px] lg:w-[80px] shrink-0 flex flex-col items-center py-6 bg-black/40 backdrop-blur-2xl border border-white/10 rounded-[30px] shadow-2xl relative z-20"
+          className="w-full xl:w-[80px] shrink-0 flex flex-row xl:flex-col justify-center xl:justify-start items-center p-3 xl:py-6 gap-4 bg-[#141414] backdrop-blur-2xl border border-[#262626] rounded-3xl xl:rounded-[30px] shadow-2xl relative z-20"
         >
-          <div className="space-y-4">
+          <div className="flex flex-row xl:flex-col gap-4">
             {/* Clinical View button */}
             <button
               onClick={() => setWorkstationMode("clinical")}
-              className={`p-3.5 lg:p-4 rounded-2xl transition-all duration-300 relative z-10 ${
+              className={`p-3.5 lg:p-4 rounded-full transition-all duration-300 relative z-10 ${
                 workstationMode === "clinical"
-                  ? "bg-primary text-primary-foreground shadow-[0_0_20px_rgba(var(--primary),0.5)] scale-105"
-                  : "bg-white/5 text-muted-foreground hover:bg-white/10 hover:text-white"
+                  ? "bg-[#ffffff] text-[#000000] shadow-[0_0_20px_rgba(var(--primary),0.5)] scale-105"
+                  : "bg-[#1c1c1c] text-[#999999] hover:bg-[#262626] hover:text-white"
               }`}
               title="Clinical View"
             >
@@ -620,10 +616,10 @@ export function ScreeningTab({
             {/* AI Observations button */}
             <button
               onClick={() => setWorkstationMode("xai")}
-              className={`p-3.5 lg:p-4 rounded-2xl transition-all duration-300 relative z-10 ${
+              className={`p-3.5 lg:p-4 rounded-full transition-all duration-300 relative z-10 ${
                 workstationMode === "xai"
-                  ? "bg-primary text-primary-foreground shadow-[0_0_20px_rgba(var(--primary),0.5)] scale-105"
-                  : "bg-white/5 text-muted-foreground hover:bg-white/10 hover:text-white"
+                  ? "bg-[#ffffff] text-[#000000] shadow-[0_0_20px_rgba(var(--primary),0.5)] scale-105"
+                  : "bg-[#1c1c1c] text-[#999999] hover:bg-[#262626] hover:text-white"
               }`}
               title="AI Observations"
             >
@@ -631,9 +627,9 @@ export function ScreeningTab({
             </button>
           </div>
 
-          <div className="mt-auto space-y-4">
+          <div className="ml-auto xl:mt-auto xl:ml-0 space-y-4">
             <button
-              className="p-3.5 lg:p-4 rounded-2xl bg-white/5 text-muted-foreground hover:bg-white/10 hover:text-white transition-all duration-300"
+              className="p-3.5 lg:p-4 rounded-full bg-[#1c1c1c] text-[#999999] hover:bg-[#262626] hover:text-white transition-all duration-300"
               title="Workspace Settings"
             >
               <Settings className="w-5 h-5 lg:w-6 lg:h-6" />
@@ -643,17 +639,17 @@ export function ScreeningTab({
 
         {/* 2. CENTRAL WORKSPACE */}
         <section
-          className="flex-1 flex flex-col h-full relative rounded-[30px] overflow-hidden bg-black/20 border border-white/5 shadow-2xl"
+          className="flex-1 flex flex-col min-h-[60vh] xl:min-h-0 relative rounded-3xl xl:rounded-[30px] overflow-hidden bg-[#1c1c1c] border border-[#262626] shadow-2xl"
         >
           {/* Floating status bars */}
           {activeResult?.demo_mode && (
-            <div className="absolute top-5 left-5 z-50 px-4 py-2 border border-yellow-500/20 bg-yellow-500/10 text-yellow-500 rounded-full flex items-center gap-2 backdrop-blur-md text-[10px] uppercase font-bold tracking-widest animate-fadein shadow-lg">
+            <div className="absolute top-5 left-5 z-50 px-4 py-2 border border-yellow-500/20 bg-yellow-500/10 text-yellow-500 rounded-full flex items-center gap-2 backdrop-blur-md text-[10px] uppercase font-bold tracking-tighter animate-fadein shadow-lg">
               <ShieldAlert className="w-4 h-4" />
               Demo Mode
             </div>
           )}
           {activeResult?.study_id && activeResult.study_id !== "N/A" && (
-            <div className="absolute top-5 right-5 z-50 px-5 py-2 border border-white/10 bg-black/40 text-foreground rounded-full backdrop-blur-md text-[11px] font-mono font-bold tracking-wider animate-fadein shadow-lg flex items-center gap-2">
+            <div className="absolute top-5 right-5 z-50 px-5 py-2 border border-[#262626] bg-[#141414] text-[#ffffff] rounded-full backdrop-blur-md text-[11px] font-mono font-bold tracking-tight animate-fadein shadow-lg flex items-center gap-2">
               <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
               STUDY: {activeResult.study_id}
             </div>
@@ -682,10 +678,7 @@ export function ScreeningTab({
                 }
                 hasHeatmap={
                   activeResult?.status === "success" &&
-                  !!(
-                    activeResult?.heatmaps?.[xaiMethod] ||
-                    activeResult?.heatmap_image
-                  )
+                  !!(activeResult?.heatmaps?.[xaiMethod] || activeResult?.heatmap_image)
                 }
                 label="Nirikshon Enterprise Viewport"
                 pixelSpacing={activeResult?.metadata?.pixel_spacing}
@@ -711,25 +704,25 @@ export function ScreeningTab({
 
         {/* 3. RIGHT PANEL */}
         <aside
-          className="w-[350px] lg:w-[420px] shrink-0 flex flex-col h-full bg-black/40 backdrop-blur-2xl border border-white/10 rounded-[30px] shadow-2xl overflow-hidden relative z-20"
+          className="w-full xl:w-[420px] shrink-0 flex flex-col xl:h-full bg-[#141414] backdrop-blur-2xl border border-[#262626] rounded-3xl xl:rounded-[30px] shadow-2xl overflow-hidden relative z-20"
         >
           {/* Verdict Header */}
-          <div className="p-6 border-b border-white/10 relative overflow-hidden shrink-0 bg-gradient-to-b from-white/[0.02] to-transparent">
+          <div className="p-6 border-b border-[#262626] relative overflow-hidden shrink-0 bg-gradient-to-b from-white/[0.02] to-transparent">
             <div className={`absolute -top-10 -right-10 w-48 h-48 blur-[60px] opacity-20 rounded-full pointer-events-none transition-colors duration-1000 ${
               activeResult?.status === "loading" ||
               activeResult?.status === "pending"
-                ? "bg-primary"
+                ? "bg-[#ffffff]"
                 : activeDiagnosis?.riskLevel === "High"
                 ? "bg-red-500"
                 : "bg-blue-500"
             }`} />
-            <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-3 relative z-10 flex items-center gap-2">
+            <p className="text-[10px] font-bold uppercase tracking-tighter text-[#999999] mb-3 relative z-10 flex items-center gap-2">
               <Activity className="w-3.5 h-3.5" />
               AI Classification
             </p>
 
             {activeResult?.status === "error" ? (
-              <div className="space-y-3 relative z-10 bg-destructive/10 border border-destructive/25 p-4 rounded-[20px]">
+              <div className="space-y-3 relative z-10 bg-destructive/10 border border-destructive/25 p-4 rounded-3xl">
                 <div className="flex items-center gap-2 text-destructive font-semibold text-sm">
                   <AlertCircle className="w-4 h-4" />
                   <span>{activeResult.errorMsg || "Internal server error"}</span>
@@ -738,7 +731,7 @@ export function ScreeningTab({
                   onClick={() =>
                     selectedIdx !== null && analyzeFile(selectedIdx)
                   }
-                  className="w-full py-2 rounded-xl text-xs font-bold bg-destructive/20 hover:bg-destructive/30 text-destructive border border-destructive/30 transition-all cursor-pointer"
+                  className="w-full py-2 rounded-full text-xs font-bold bg-destructive/20 hover:bg-destructive/30 text-destructive border border-destructive/30 transition-all cursor-pointer"
                 >
                   Retry Inference
                 </button>
@@ -746,29 +739,29 @@ export function ScreeningTab({
             ) : activeResult?.status === "loading" ||
               activeResult?.status === "pending" ? (
               <div className="space-y-4 relative z-10">
-                <h3 className="text-2xl font-extrabold tracking-tight text-foreground flex items-center gap-3">
+                <h3 className="text-3xl font-extrabold tracking-[-1.5px] tracking-tight text-[#ffffff] flex items-center gap-3">
                   <Loader2 className="w-6 h-6 animate-spin text-primary" />
                   Analyzing...
                 </h3>
-                <Progress value={75} className="h-1.5 bg-white/10 [&>div]:bg-primary [&>div]:animate-pulse" />
+                <Progress value={75} className="h-1.5 bg-[#262626] [&>div]:bg-[#ffffff] [&>div]:animate-pulse" />
               </div>
             ) : (
               <div className="relative z-10">
-                <h3 className={`text-3xl font-extrabold tracking-tight mb-4 drop-shadow-md ${
+                <h3 className={`text-4xl font-extrabold tracking-[-2px] tracking-tight mb-4 drop-shadow-md ${
                   activeDiagnosis?.riskLevel === "High" ? "text-red-500" : "text-blue-500"
                 }`}>
                   {activeDiagnosis?.condition ?? "Normal"}
                 </h3>
                 <div className="space-y-2">
-                  <div className="flex justify-between text-[11px] font-bold text-muted-foreground uppercase tracking-widest">
+                  <div className="flex justify-between text-[11px] font-bold text-[#999999] uppercase tracking-tighter">
                     <span>Confidence Score</span>
-                    <span className="text-foreground">
+                    <span className="text-[#ffffff]">
                       {((activeDiagnosis?.confidence ?? 0) * 100).toFixed(1)}%
                     </span>
                   </div>
                   <Progress
                     value={(activeDiagnosis?.confidence ?? 0) * 100}
-                    className={`h-2 bg-white/10 ${
+                    className={`h-2 bg-[#262626] ${
                       activeDiagnosis?.riskLevel === "High"
                         ? "[&>div]:bg-red-500"
                         : "[&>div]:bg-blue-500"
@@ -777,12 +770,12 @@ export function ScreeningTab({
                 </div>
                 <div className="flex flex-wrap gap-2 mt-5">
                   <Badge
-                    className="bg-white/10 text-foreground hover:bg-white/20 border border-white/5 text-[9px] uppercase font-bold py-1 px-3 rounded-full"
+                    className="bg-[#262626] text-[#ffffff] hover:bg-[#333333] border border-[#262626] text-[9px] uppercase font-bold py-1 px-3 rounded-full"
                   >
                     {activeResult?.segmentation_active ? "U-Net Segmented" : "Direct Input"}
                   </Badge>
                   <Badge
-                    className={`uppercase font-bold text-[9px] py-1 px-3 rounded-full border border-white/5 ${
+                    className={`uppercase font-bold text-[9px] py-1 px-3 rounded-full border border-[#262626] ${
                       activeDiagnosis?.riskLevel === "High"
                         ? "bg-red-500/20 text-red-500"
                         : "bg-blue-500/20 text-blue-500"
@@ -797,7 +790,7 @@ export function ScreeningTab({
 
           {/* Tab Navigation */}
           <div className="p-4 shrink-0">
-            <div className="flex bg-black/40 p-1.5 rounded-full border border-white/10 relative shadow-inner">
+            <div className="flex bg-[#141414] p-1.5 rounded-full border border-[#262626] relative shadow-inner">
               {[
                 { id: "diagnosis", label: "Evidence" },
                 { id: "chat", label: "Co-Pilot" },
@@ -806,17 +799,17 @@ export function ScreeningTab({
                 <button
                   key={tab.id}
                   onClick={() => setActiveRightTab(tab.id as "diagnosis" | "chat" | "report")}
-                  className={`flex-1 py-2.5 text-[10px] font-bold uppercase tracking-widest rounded-full transition-all duration-300 relative z-10 ${
+                  className={`flex-1 py-2.5 text-[10px] font-bold uppercase tracking-tighter rounded-full transition-all duration-300 relative z-10 ${
                     activeRightTab === tab.id
-                      ? "text-primary-foreground shadow-lg"
-                      : "text-muted-foreground hover:text-foreground"
+                      ? "text-[#000000] shadow-lg"
+                      : "text-[#999999] hover:text-[#ffffff]"
                   }`}
                 >
                   {tab.label}
                 </button>
               ))}
               {/* Animated highlight background */}
-              <div className="absolute top-1.5 bottom-1.5 w-[calc(33.333%-4px)] bg-primary rounded-full transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] z-0 shadow-[0_0_20px_rgba(var(--primary),0.4)]"
+              <div className="absolute top-1.5 bottom-1.5 w-[calc(33.333%-4px)] bg-[#ffffff] rounded-full transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] z-0 shadow-[0_0_20px_rgba(var(--primary),0.4)]"
                 style={{
                   left:
                     activeRightTab === "diagnosis"
@@ -836,8 +829,8 @@ export function ScreeningTab({
                 {/* Loading states */}
                 {(activeResult?.status === "loading" ||
                   activeResult?.status === "pending") && (
-                  <div className="space-y-3 bg-black/20 p-5 rounded-3xl border border-white/5 shadow-inner mt-2">
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-primary mb-4 flex items-center gap-2">
+                  <div className="space-y-3 bg-[#1c1c1c] p-5 rounded-3xl border border-[#262626] shadow-inner mt-2">
+                    <p className="text-[10px] font-bold uppercase tracking-tighter text-primary mb-4 flex items-center gap-2">
                       <Activity className="w-3.5 h-3.5 animate-pulse" />
                       Processing Pipeline
                     </p>
@@ -845,31 +838,31 @@ export function ScreeningTab({
                       <div key={idx} className="flex items-center gap-4 relative">
                         {idx < getStepperStatus().length - 1 && (
                           <div className={`absolute left-2.5 top-6 bottom-[-15px] w-[2px] rounded-full ${
-                            step.done ? "bg-primary/50" : "bg-white/5"
+                            step.done ? "bg-[#ffffff]/50" : "bg-[#1c1c1c]"
                           }`} />
                         )}
                         <div className="relative z-10 flex-shrink-0">
                           {step.done ? (
-                            <div className="w-5 h-5 rounded-full bg-primary flex items-center justify-center shadow-[0_0_10px_rgba(var(--primary),0.5)]">
-                              <svg className="w-3 h-3 text-primary-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                            <div className="w-5 h-5 rounded-full bg-[#ffffff] flex items-center justify-center shadow-[0_0_10px_rgba(var(--primary),0.5)]">
+                              <svg className="w-3 h-3 text-[#000000]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                               </svg>
                             </div>
                           ) : step.loading ? (
-                            <div className="w-5 h-5 rounded-full bg-primary/20 border border-primary flex items-center justify-center animate-pulse">
-                              <div className="w-1.5 h-1.5 rounded-full bg-primary animate-ping"></div>
+                            <div className="w-5 h-5 rounded-full bg-[#ffffff]/20 border border-primary flex items-center justify-center animate-pulse">
+                              <div className="w-1.5 h-1.5 rounded-full bg-[#ffffff] animate-ping"></div>
                             </div>
                           ) : (
-                            <div className="w-5 h-5 rounded-full border border-white/10 bg-black/50"></div>
+                            <div className="w-5 h-5 rounded-full border border-[#262626] bg-[#141414]"></div>
                           )}
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className={`text-[11px] font-semibold transition-colors duration-300 ${
                             step.done
-                              ? "text-foreground"
+                              ? "text-[#ffffff]"
                               : step.loading
                               ? "text-primary"
-                              : "text-muted-foreground"
+                              : "text-[#999999]"
                           }`}>
                             {step.text}
                           </p>
@@ -881,9 +874,9 @@ export function ScreeningTab({
 
                 {/* Image Quality Assessment */}
                 {activeResult?.status === "success" && q && (
-                  <div className="bg-black/20 rounded-[24px] p-5 border border-white/5 shadow-inner hover:border-white/10 transition-colors">
+                  <div className="bg-[#1c1c1c] rounded-[30px] p-5 border border-[#262626] shadow-inner hover:border-[#262626] transition-colors">
                     <div className="flex items-center justify-between mb-4">
-                      <p className="text-[10px] font-bold uppercase tracking-widest text-foreground">Image Quality</p>
+                      <p className="text-[10px] font-bold uppercase tracking-tighter text-[#ffffff]">Image Quality</p>
                       <Badge
                         variant={q.suitableForAi ? "default" : "destructive"}
                         className="rounded-full font-bold uppercase text-[9px] px-3 py-1 border-0 shadow-sm"
@@ -891,7 +884,7 @@ export function ScreeningTab({
                         {q.suitableForAi ? "Suitable" : "Unsuitable"}
                       </Badge>
                     </div>
-                    <div className="flex gap-4 text-[11px] text-muted-foreground font-medium bg-white/5 p-3 rounded-2xl">
+                    <div className="flex gap-4 text-[11px] text-[#999999] font-medium bg-[#1c1c1c] p-3 rounded-full">
                       <span className={q.exposure === "Adequate Exposure" ? "text-emerald-500" : "text-amber-500"}>
                         • {q.exposure}
                       </span>
@@ -900,7 +893,7 @@ export function ScreeningTab({
                       </span>
                     </div>
                     {!q.suitableForAi && (
-                      <div className="flex items-center gap-3 mt-4 pt-4 border-t border-white/5">
+                      <div className="flex items-center gap-3 mt-4 pt-4 border-t border-[#262626]">
                         <input
                           type="checkbox"
                           id="iqa-ack"
@@ -922,7 +915,7 @@ export function ScreeningTab({
                 {/* Clinical Evidence Findings */}
                 {activeResult?.status === "success" && (
                   <div className="space-y-3">
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-foreground mb-3 flex items-center gap-2">
+                    <p className="text-[10px] font-bold uppercase tracking-tighter text-[#ffffff] mb-3 flex items-center gap-2">
                       <Eye className="w-3.5 h-3.5 text-primary" />
                       Evidence Findings
                     </p>
@@ -1069,10 +1062,10 @@ export function ScreeningTab({
                       return (
                         <div
                           key={idx}
-                          className={`bg-black/20 p-5 rounded-[24px] border border-white/5 border-l-4 ${borderColor} hover:bg-black/40 hover:border-white/10 transition-all duration-300 group shadow-sm`}
+                          className={`bg-[#1c1c1c] p-5 rounded-[30px] border border-[#262626] border-l-4 ${borderColor} hover:bg-[#141414] hover:border-[#262626] transition-all duration-300 group shadow-sm`}
                         >
                           <div className="flex justify-between items-start mb-2">
-                            <h4 className="text-[13px] font-bold text-foreground group-hover:text-primary transition-colors pr-2">
+                            <h4 className="text-[13px] font-bold text-[#ffffff] group-hover:text-primary transition-colors pr-2">
                               {ec.title}
                             </h4>
                             {ec.confidence > 0 && (
@@ -1083,7 +1076,7 @@ export function ScreeningTab({
                               </Badge>
                             )}
                           </div>
-                          <p className="text-[11px] text-muted-foreground leading-relaxed font-medium">
+                          <p className="text-[11px] text-[#999999] leading-relaxed font-medium">
                             {ec.description}
                           </p>
                         </div>
@@ -1100,18 +1093,16 @@ export function ScreeningTab({
               </div>
             )}
 
-
-
             {activeRightTab === "report" && (
               <div className="space-y-6 animate-fadein pb-4">
                 {/* Clinical Audit / Override Inputs */}
-                <div className="bg-black/20 p-5 rounded-[24px] border border-white/5 shadow-inner">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-foreground mb-4">
+                <div className="bg-[#1c1c1c] p-5 rounded-[30px] border border-[#262626] shadow-inner">
+                  <p className="text-[10px] font-bold uppercase tracking-tighter text-[#ffffff] mb-4">
                     Clinical Sign-Off
                   </p>
                   <div className="space-y-4">
                     <div className="space-y-2.5">
-                      <label className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">
+                      <label className="text-[10px] text-[#999999] uppercase font-bold tracking-tight">
                         Diagnostic Verdict Adjudication
                       </label>
                       <div className="grid grid-cols-2 gap-2">
@@ -1132,10 +1123,10 @@ export function ScreeningTab({
                                 clinicianNote
                               );
                             }}
-                            className={`p-3 rounded-2xl text-[11px] font-bold border transition-all cursor-pointer ${
+                            className={`p-3 rounded-full text-[11px] font-bold border transition-all cursor-pointer ${
                               clinicalReviewStatus === opt.id
-                                ? "border-primary bg-primary/10 text-primary shadow-sm"
-                                : "border-white/5 bg-white/5 hover:bg-white/10 text-muted-foreground hover:text-foreground"
+                                ? "border-primary bg-[#ffffff]/10 text-primary shadow-sm"
+                                : "border-[#262626] bg-[#1c1c1c] hover:bg-[#262626] text-[#999999] hover:text-[#ffffff]"
                             }`}
                           >
                             {opt.label}
@@ -1145,7 +1136,7 @@ export function ScreeningTab({
                     </div>
 
                     <div className="space-y-3">
-                      <label className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">
+                      <label className="text-[10px] text-[#999999] uppercase font-bold tracking-tight">
                         Reviewer Comments
                       </label>
                       <Textarea
@@ -1157,7 +1148,7 @@ export function ScreeningTab({
                     </div>
 
                     <div className="space-y-3">
-                      <label className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">
+                      <label className="text-[10px] text-[#999999] uppercase font-bold tracking-tight">
                         Reviewer Name
                       </label>
                       <input
@@ -1165,12 +1156,12 @@ export function ScreeningTab({
                         value={reviewerName}
                         onChange={(e) => setReviewerName(e.target.value)}
                         placeholder="Enter your name or ID"
-                        className="w-full px-3 py-2 rounded border border-white/5 bg-white/5 text-white focus:outline-none focus:ring-2 focus:ring-primary"
+                        className="w-full px-3 py-2 rounded border border-[#262626] bg-[#1c1c1c] text-white focus:outline-none focus:ring-2 focus:ring-primary"
                       />
                     </div>
 
                     <div className="space-y-3">
-                      <label className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">
+                      <label className="text-[10px] text-[#999999] uppercase font-bold tracking-tight">
                         Clinician Note (optional)
                       </label>
                       <Textarea
@@ -1181,7 +1172,7 @@ export function ScreeningTab({
                       />
                     </div>
 
-                    <div className="space-y-4 pt-4 border-t border-white/5">
+                    <div className="space-y-4 pt-4 border-t border-[#262626]">
                       <div className="flex items-center gap-3">
                         <input
                           type="checkbox"
@@ -1204,14 +1195,14 @@ export function ScreeningTab({
                     <button
                       onClick={handlePdfExport}
                       disabled={isExporting || !activeResult || !q}
-                      className="w-full flex-1 px-4 py-3 rounded-xl font-medium transition-all hover:opacity-90 disabled:opacity-50 disabled:pointer-events-none bg-primary text-primary-foreground shadow-md"
+                      className="w-full flex-1 px-4 py-3 rounded-full font-medium transition-all hover:opacity-90 disabled:opacity-50 disabled:pointer-events-none bg-[#ffffff] text-[#000000] shadow-md"
                     >
                       {isExporting ? "Exporting PDF..." : "Export PDF Report"}
                     </button>
                     <button
                       onClick={handleJsonSR}
                       disabled={!activeResult || !q}
-                      className="w-full flex-1 px-4 py-3 rounded-xl font-medium transition-all hover:opacity-90 bg-white/10 text-white border border-white/5"
+                      className="w-full flex-1 px-4 py-3 rounded-full font-medium transition-all hover:opacity-90 bg-[#262626] text-white border border-[#262626]"
                     >
                       Export Structured JSON
                     </button>
@@ -1220,18 +1211,18 @@ export function ScreeningTab({
                   <button
                     onClick={handleRegisterDb}
                     disabled={dbRegistered || !activeResult || !q}
-                    className="w-full px-4 py-3 rounded-xl font-medium transition-all hover:opacity-90 bg-white/10 text-white border border-white/5"
+                    className="w-full px-4 py-3 rounded-full font-medium transition-all hover:opacity-90 bg-[#262626] text-white border border-[#262626]"
                   >
                     {dbRegistered ? "Registered to DB" : "Register to Research DB"}
                   </button>
 
-                  <div className="flex items-center gap-3 pt-4 border-t border-white/5">
+                  <div className="flex items-center gap-3 pt-4 border-t border-[#262626]">
                     <button
                       onClick={() => setWorkstationMode("xai")}
                       className={`flex-1 px-3 py-2 rounded text-xs font-medium transition-all hover:opacity-90 ${
                         workstationMode === "xai"
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-white/10 text-white border border-white/5"
+                          ? "bg-[#ffffff] text-[#000000]"
+                          : "bg-[#262626] text-white border border-[#262626]"
                       }`}
                     >
                       AI Explainability View
@@ -1240,8 +1231,8 @@ export function ScreeningTab({
                       onClick={() => setWorkstationMode("clinical")}
                       className={`flex-1 px-3 py-2 rounded text-xs font-medium transition-all hover:opacity-90 ${
                         workstationMode === "clinical"
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-white/10 text-white border border-white/5"
+                          ? "bg-[#ffffff] text-[#000000]"
+                          : "bg-[#262626] text-white border border-[#262626]"
                       }`}
                     >
                       Clinical View

@@ -11,8 +11,6 @@ import {
   Users, 
   AlertTriangle
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://projectmantra-nirikshon-backend.hf.space";
@@ -77,7 +75,6 @@ export function Dashboard({ onNavigate, onOpenWorkbench, hasFiles }: DashboardPr
 
   useEffect(() => {
     fetchStats();
-    // Poll stats every 30 seconds
     const interval = setInterval(fetchStats, 30000);
     return () => clearInterval(interval);
   }, []);
@@ -97,13 +94,13 @@ export function Dashboard({ onNavigate, onOpenWorkbench, hasFiles }: DashboardPr
 
     return (
       <svg width="120" height="120" viewBox="0 0 100 100" className="mx-auto select-none">
-        <circle cx="50" cy="50" r={r} fill="transparent" stroke="#f1f5f9" strokeWidth="8" />
+        <circle cx="50" cy="50" r={r} fill="transparent" stroke="#262626" strokeWidth="8" />
         <circle
           cx="50"
           cy="50"
           r={r}
           fill="transparent"
-          stroke="#10b981"
+          stroke="#0099ff"
           strokeWidth="8"
           strokeDasharray={`${normalDash} ${C}`}
           strokeDashoffset="0"
@@ -114,16 +111,16 @@ export function Dashboard({ onNavigate, onOpenWorkbench, hasFiles }: DashboardPr
           cy="50"
           r={r}
           fill="transparent"
-          stroke="#f59e0b"
+          stroke="#ff5577"
           strokeWidth="8"
           strokeDasharray={`${tbDash} ${C}`}
           strokeDashoffset={-normalDash}
           transform="rotate(-90 50 50)"
         />
-        <text x="50" y="47" textAnchor="middle" dominantBaseline="middle" className="fill-foreground font-bold text-xs font-sans">
+        <text x="50" y="47" textAnchor="middle" dominantBaseline="middle" className="fill-white font-bold text-[14px] font-sans tracking-tight">
           {totalDist}
         </text>
-        <text x="50" y="58" textAnchor="middle" dominantBaseline="middle" className="fill-muted-foreground text-[6px] uppercase tracking-wider font-semibold">
+        <text x="50" y="58" textAnchor="middle" dominantBaseline="middle" className="fill-[#999999] text-[6px] uppercase tracking-widest font-semibold">
           Total Cases
         </text>
       </svg>
@@ -154,14 +151,14 @@ export function Dashboard({ onNavigate, onOpenWorkbench, hasFiles }: DashboardPr
                 y={y}
                 width={barWidth}
                 height={barHeight}
-                fill="#0f766e"
-                rx="3"
-                className="transition-all duration-300 hover:fill-emerald-500"
+                fill="#1c1c1c"
+                rx="4"
+                className="transition-all duration-300 hover:fill-[#0099ff]"
               />
-              <text x={x + barWidth / 2} y={y - 4} textAnchor="middle" className="fill-foreground text-[8px] font-bold">
+              <text x={x + barWidth / 2} y={y - 4} textAnchor="middle" className="fill-white text-[8px] font-bold">
                 {val}
               </text>
-              <text x={x + barWidth / 2} y={paddingY + chartHeight + 12} textAnchor="middle" className="fill-muted-foreground text-[6px] font-semibold">
+              <text x={x + barWidth / 2} y={paddingY + chartHeight + 12} textAnchor="middle" className="fill-[#999999] text-[6px] font-semibold">
                 {label}
               </text>
             </g>
@@ -192,24 +189,24 @@ export function Dashboard({ onNavigate, onOpenWorkbench, hasFiles }: DashboardPr
 
     return (
       <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} className="mx-auto select-none">
-        <line x1={px} y1={py} x2={px + cW} y2={py} stroke="#f1f5f9" strokeDasharray="3 3" />
-        <line x1={px} y1={py + cH / 2} x2={px + cW} y2={py + cH / 2} stroke="#f1f5f9" strokeDasharray="3 3" />
-        <line x1={px} y1={py + cH} x2={px + cW} y2={py + cH} stroke="#e2e8f0" />
+        <line x1={px} y1={py} x2={px + cW} y2={py} stroke="#262626" strokeDasharray="3 3" />
+        <line x1={px} y1={py + cH / 2} x2={px + cW} y2={py + cH / 2} stroke="#262626" strokeDasharray="3 3" />
+        <line x1={px} y1={py + cH} x2={px + cW} y2={py + cH} stroke="#404040" />
         {pts.length > 0 && (
           <polyline
             fill="none"
-            stroke="#0f766e"
+            stroke="#0099ff"
             strokeWidth="2.5"
             points={polylinePath}
           />
         )}
         {pts.map((p, idx) => (
           <g key={idx}>
-            <circle cx={p.x} cy={p.y} r="3" className="fill-background stroke-primary stroke-[2px] cursor-pointer" />
-            <text x={p.x} y={p.y - 6} textAnchor="middle" className="fill-foreground text-[8px] font-bold">
+            <circle cx={p.x} cy={p.y} r="3" className="fill-[#141414] stroke-[#ffffff] stroke-[2px] cursor-pointer" />
+            <text x={p.x} y={p.y - 6} textAnchor="middle" className="fill-[#ffffff] text-[8px] font-bold">
               {p.accuracy}%
             </text>
-            <text x={p.x} y={py + cH + 12} textAnchor="middle" className="fill-muted-foreground text-[6px] font-semibold">
+            <text x={p.x} y={py + cH + 12} textAnchor="middle" className="fill-[#999999] text-[6px] font-semibold">
               {p.date}
             </text>
           </g>
@@ -233,7 +230,7 @@ export function Dashboard({ onNavigate, onOpenWorkbench, hasFiles }: DashboardPr
           cy="50"
           r={gR}
           fill="transparent"
-          stroke="#f1f5f9"
+          stroke="#262626"
           strokeWidth="8"
           strokeDasharray={`${semiC} ${gC}`}
           transform="rotate(-180 50 50)"
@@ -243,133 +240,136 @@ export function Dashboard({ onNavigate, onOpenWorkbench, hasFiles }: DashboardPr
           cy="50"
           r={gR}
           fill="transparent"
-          stroke="#0f766e"
+          stroke="#6a4cf5" // Framer Violet Accent
           strokeWidth="8"
           strokeDasharray={`${filledDash} ${gC}`}
           transform="rotate(-180 50 50)"
           className="transition-all duration-500"
         />
-        <text x="50" y="42" textAnchor="middle" className="fill-foreground font-bold text-xs font-sans">
+        <text x="50" y="42" textAnchor="middle" className="fill-white font-bold text-[14px] font-sans tracking-tight">
           {agreement}%
         </text>
-        <text x="50" y="52" textAnchor="middle" className="fill-muted-foreground text-[6px] uppercase tracking-wider font-semibold">
+        <text x="50" y="52" textAnchor="middle" className="fill-[#999999] text-[6px] uppercase tracking-widest font-semibold">
           Agreement Rate
         </text>
       </svg>
     );
   };
 
-  const tbCount = stats?.disease_distribution?.Tuberculosis || 0;
-  const normalCount = stats?.disease_distribution?.Normal || 0;
-
   return (
-    <div className="max-w-5xl mx-auto space-y-8 animate-fadein">
+    <div className="max-w-[1199px] mx-auto space-y-12">
       {/* Welcome & Overview Banner */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div className="space-y-1">
-          <h2 className="text-2xl font-bold text-foreground font-sans tracking-tight">Clinical Workstation Dashboard</h2>
-          <p className="text-xs text-muted-foreground">Real-time cohort monitoring, diagnostic metrics, and verification backlog stats.</p>
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+        <div>
+          <h1 className="text-[62px] font-medium text-white tracking-[-3.1px] leading-none mb-4">Dashboard</h1>
+          <p className="text-[18px] text-[#999999] tracking-[-0.18px] leading-[1.3] max-w-xl">
+            Real-time cohort monitoring, diagnostic metrics, and verification backlog stats.
+          </p>
         </div>
-        <div className="flex gap-2">
-          <Button 
+        <div className="flex gap-3">
+          <button 
             onClick={() => onNavigate("patients")}
-            variant="outline"
-            className="rounded-full text-xs font-semibold h-9 gap-1.5 cursor-pointer"
+            className="px-[15px] py-[10px] rounded-[100px] bg-[#141414] text-[#ffffff] text-[14px] font-medium tracking-[-0.14px] transition-transform hover:scale-[1.02] flex items-center gap-2"
           >
-            <Users className="w-3.5 h-3.5" /> Manage Patients
-          </Button>
-          <Button 
+            <Users className="w-4 h-4" /> Manage Patients
+          </button>
+          <button 
             onClick={hasFiles ? onOpenWorkbench : () => onNavigate("landing")}
-            className="rounded-full text-xs font-semibold h-9 gap-1.5 cursor-pointer"
+            className="px-[15px] py-[10px] rounded-[100px] bg-[#ffffff] text-[#000000] text-[14px] font-medium tracking-[-0.14px] transition-transform hover:scale-[1.02] flex items-center gap-2"
           >
-            <Activity className="w-3.5 h-3.5" /> 
+            <Activity className="w-4 h-4" /> 
             {hasFiles ? "Open Active Workbench" : "Intake New Scan"}
-            <ChevronRight className="w-3.5 h-3.5" />
-          </Button>
+            <ChevronRight className="w-4 h-4" />
+          </button>
         </div>
       </div>
-      <Separator />
 
-      {/* Stats Cards Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* Stats Cards Grid - 1 Gradient Spotlight, 3 Charcoal */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {[
           { 
             label: "Total Studies Ingestion", 
             value: stats?.total_cases || 0, 
-            icon: <FolderOpen className="w-4 h-4 text-primary" strokeWidth={1.5} />,
-            desc: "Historical cases in PACS node"
+            icon: <FolderOpen className="w-5 h-5 text-[#999999]" strokeWidth={1.5} />,
+            desc: "Historical cases in PACS node",
+            style: "bg-[#141414] text-white border-[#262626]"
           },
           { 
             label: "TB Positive Index", 
             value: stats?.tb_positive_cases || 0, 
-            icon: <AlertTriangle className="w-4 h-4 text-amber-500" strokeWidth={1.5} />,
+            icon: <AlertTriangle className="w-5 h-5 text-[#ff5577]" strokeWidth={1.5} />,
             desc: "AI predicted or review confirmed",
-            alert: (stats?.tb_positive_cases || 0) > 0
+            style: "bg-[#141414] text-white border-[#262626]"
           },
           { 
             label: "Pending Adjudication", 
             value: stats?.pending_reviews || 0, 
-            icon: <Clock className="w-4 h-4 text-blue-500" strokeWidth={1.5} />,
-            desc: "Reviews awaiting signature"
+            icon: <Clock className="w-5 h-5 text-white" strokeWidth={1.5} />,
+            desc: "Reviews awaiting signature",
+            // FRAMER GRADIENT SPOTLIGHT (Violet)
+            style: "bg-gradient-to-br from-[#6a4cf5] to-[#4c2bb8] text-white border-transparent" 
           },
           { 
             label: "Finalized Reviews", 
             value: stats?.completed_reviews || 0, 
-            icon: <CheckCircle className="w-4 h-4 text-emerald-500" strokeWidth={1.5} />,
-            desc: "Reports locked & archived"
+            icon: <CheckCircle className="w-5 h-5 text-[#22c55e]" strokeWidth={1.5} />,
+            desc: "Reports locked & archived",
+            style: "bg-[#141414] text-white border-[#262626]"
           }
         ].map((card, i) => (
-          <Card key={i} className="border border-border bg-card rounded-xl shadow-none">
-            <CardContent className="p-5 flex flex-col justify-between h-32">
-              <div className="flex justify-between items-center w-full">
-                <span className="text-[10px] font-extrabold uppercase text-muted-foreground tracking-widest">{card.label}</span>
-                <div className="w-8 h-8 rounded-full bg-muted/40 flex items-center justify-center">
-                  {card.icon}
-                </div>
+          <div key={i} className={`border rounded-[20px] p-6 flex flex-col justify-between h-40 transition-transform hover:scale-[1.02] ${card.style}`}>
+            <div className="flex justify-between items-start w-full">
+              <span className={`text-[12px] font-medium tracking-[-0.12px] ${card.style.includes('gradient') ? 'text-white/80' : 'text-[#999999]'}`}>
+                {card.label}
+              </span>
+              <div className={`w-10 h-10 rounded-full flex items-center justify-center ${card.style.includes('gradient') ? 'bg-white/10' : 'bg-[#1c1c1c]'}`}>
+                {card.icon}
               </div>
-              <div className="mt-2 space-y-1">
-                {loading ? (
-                  <div className="h-8 w-12 bg-muted/50 animate-pulse rounded-md" />
-                ) : (
-                  <h3 className={`text-2xl font-bold font-sans ${card.alert ? "text-amber-600 dark:text-amber-500" : "text-foreground"}`}>
-                    {card.value}
-                  </h3>
-                )}
-                <p className="text-[10px] text-muted-foreground">{card.desc}</p>
-              </div>
-            </CardContent>
-          </Card>
+            </div>
+            <div className="mt-4 space-y-1">
+              {loading ? (
+                <div className="h-8 w-12 bg-white/10 animate-pulse rounded-md" />
+              ) : (
+                <h3 className="text-[32px] font-medium tracking-[-1.0px] leading-[1.13]">
+                  {card.value}
+                </h3>
+              )}
+              <p className={`text-[12px] tracking-[-0.12px] ${card.style.includes('gradient') ? 'text-white/70' : 'text-[#666666]'}`}>
+                {card.desc}
+              </p>
+            </div>
+          </div>
         ))}
       </div>
 
       {/* Analytics & Charts Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {/* Chart 1: Disease Distribution */}
+        <div className="border border-[#262626] bg-[#141414] rounded-[20px] p-6 flex flex-col justify-between items-center text-center space-y-4 hover:border-[#404040] transition-colors">
+          <div className="w-full flex justify-between items-center text-[12px] font-medium tracking-[-0.12px] text-[#999999]">
+            <span>Case Distribution</span>
+            <span className="text-[#0099ff]">• Donut</span>
+          </div>
+          {renderDonutChart()}
+        </div>
+
         {/* Chart 2: Confidence Distribution */}
-        <Card className="border border-border bg-card rounded-xl shadow-none p-5 flex flex-col justify-between items-center text-center space-y-3">
-          <div className="w-full flex justify-between items-center text-[10px] uppercase font-bold text-muted-foreground tracking-widest">
+        <div className="border border-[#262626] bg-[#141414] rounded-[20px] p-6 flex flex-col justify-between items-center text-center space-y-4 hover:border-[#404040] transition-colors">
+          <div className="w-full flex justify-between items-center text-[12px] font-medium tracking-[-0.12px] text-[#999999]">
             <span>Confidence Brackets</span>
-            <span className="text-primary font-mono">• Hist</span>
+            <span className="text-[#0099ff]">• Hist</span>
           </div>
           {renderConfidenceBarChart()}
-        </Card>
+        </div>
 
         {/* Chart 3: Model Performance Line Chart */}
-        <Card className="border border-border bg-card rounded-xl shadow-none p-5 flex flex-col justify-between items-center text-center space-y-3">
-          <div className="w-full flex justify-between items-center text-[10px] uppercase font-bold text-muted-foreground tracking-widest">
+        <div className="border border-[#262626] bg-[#141414] rounded-[20px] p-6 flex flex-col justify-between items-center text-center space-y-4 hover:border-[#404040] transition-colors">
+          <div className="w-full flex justify-between items-center text-[12px] font-medium tracking-[-0.12px] text-[#999999]">
             <span>Weekly Accuracy Trend</span>
-            <span className="text-primary font-mono">• Spark</span>
+            <span className="text-[#0099ff]">• Spark</span>
           </div>
           {renderPerformanceLineChart()}
-        </Card>
-
-        {/* Chart 4: Reviewer Agreement Dial */}
-        <Card className="border border-border bg-card rounded-xl shadow-none p-5 flex flex-col justify-between items-center text-center space-y-3">
-          <div className="w-full flex justify-between items-center text-[10px] uppercase font-bold text-muted-foreground tracking-widest">
-            <span>Agreement Calibration</span>
-            <span className="text-primary font-mono">• Gauge</span>
-          </div>
-          {renderAgreementGauge()}
-        </Card>
+        </div>
       </div>
     </div>
   );

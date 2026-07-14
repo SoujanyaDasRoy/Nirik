@@ -72,7 +72,7 @@ export function SettingsTab() {
         <div className="lg:col-span-7 space-y-6">
 
           {/* Section 1: AI Calibration */}
-          <Card className="border border-border bg-card rounded-xl shadow-none">
+          <Card className="border border-border bg-card rounded-[20px] shadow-none">
             <CardContent className="p-5 space-y-4">
               <div className="flex items-center gap-2">
                 <Sliders className="w-4 h-4 text-primary" strokeWidth={1.5} />
@@ -92,7 +92,7 @@ export function SettingsTab() {
                         key={mode.value}
                         type="button"
                         onClick={() => setThreshold(mode.value)}
-                        className={`p-3 rounded-xl border flex flex-col text-left justify-between h-20 transition-all cursor-pointer select-none ${
+                        className={`p-3 rounded-[20px] border flex flex-col text-left justify-between h-20 transition-all cursor-pointer select-none ${
                           threshold === mode.value
                             ? "border-primary bg-primary/10 text-foreground ring-1 ring-primary"
                             : "border-border bg-muted/10 text-muted-foreground hover:bg-muted/20"
@@ -112,7 +112,7 @@ export function SettingsTab() {
                 </p>
 
                 {/* Session-only warning */}
-                <div className="flex items-start gap-2 p-3 rounded-lg border border-amber-500/20 bg-amber-500/5 text-xs">
+                <div className="flex items-start gap-2 p-3 rounded-[15px] border border-amber-500/20 bg-amber-500/5 text-xs">
                   <Info className="w-3.5 h-3.5 text-amber-500 flex-shrink-0 mt-0.5" strokeWidth={1.5} />
                   <p className="text-amber-700 dark:text-amber-400 leading-relaxed">
                     <strong>Session-only.</strong> This threshold applies to the current browser session and is not persisted to the backend model. The underlying DenseNet-121 model always returns raw sigmoid confidence.
@@ -135,7 +135,7 @@ export function SettingsTab() {
           </div>
 
           {/* Academic Prototype Warning */}
-          <div className="p-4 border border-amber-500/20 bg-amber-500/5 rounded-xl flex items-start gap-3 text-xs">
+          <div className="p-4 border border-amber-500/20 bg-amber-500/5 rounded-[20px] flex items-start gap-3 text-xs">
             <Sliders className="w-5 h-5 text-amber-500 flex-shrink-0" strokeWidth={1.5} />
             <div>
               <p className="font-bold text-amber-600 dark:text-amber-500">Academic Prototype</p>
@@ -150,7 +150,7 @@ export function SettingsTab() {
 
         {/* Right Column: Real Audit Logs */}
         <div className="lg:col-span-5 space-y-6">
-          <Card className="border border-border bg-card rounded-xl shadow-none">
+          <Card className="border border-border bg-card rounded-[20px] shadow-none">
             <CardContent className="p-5 space-y-4">
               <div className="flex items-center gap-2">
                 <Lock className="w-4 h-4 text-primary" strokeWidth={1.5} />
@@ -163,7 +163,7 @@ export function SettingsTab() {
               </p>
               
               {/* Scrollable Audit Trail */}
-              <div className="h-[432px] overflow-y-auto border border-border rounded-xl divide-y divide-border bg-muted/10 p-3 space-y-2">
+              <div className="h-[432px] overflow-y-auto border border-border rounded-[20px] divide-y divide-border bg-muted/10 p-3 space-y-2">
                 {logsLoading ? (
                   <div className="flex items-center justify-center h-full">
                     <p className="text-xs text-muted-foreground animate-pulse">Loading audit logs…</p>
@@ -176,7 +176,7 @@ export function SettingsTab() {
                   </div>
                 ) : (
                   logs.map((log) => (
-                    <div key={log.id} className="p-2 text-[10px] space-y-1 bg-card border border-border rounded-lg hover:border-primary/20 transition-all">
+                    <div key={log.id} className="p-2 text-[10px] space-y-1 bg-card border border-border rounded-[15px] hover:border-primary/20 transition-all">
                       <div className="flex justify-between items-center text-muted-foreground font-mono text-[9px]">
                         <span>{log.timestamp}</span>
                         <span className="px-1.5 py-0.5 rounded bg-muted text-foreground font-bold">{log.user}</span>

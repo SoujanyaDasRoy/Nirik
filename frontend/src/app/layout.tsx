@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
-import { ThemeProvider } from "@/components/theme-provider";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import FetchInterceptor from "./components/FetchInterceptor";
 
@@ -33,21 +32,13 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${sansFont.variable} ${monoFont.variable} h-full`}
+      className={`${sansFont.variable} ${monoFont.variable} h-full dark`}
     >
       <body className="min-h-full antialiased flex flex-col">
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="dark"
-          forcedTheme="dark"
-          enableSystem={false}
-          disableTransitionOnChange={false}
-        >
-          <TooltipProvider delay={300}>
-            <FetchInterceptor />
-            {children}
-          </TooltipProvider>
-        </ThemeProvider>
+        <TooltipProvider delay={300}>
+          <FetchInterceptor />
+          {children}
+        </TooltipProvider>
       </body>
     </html>
   );

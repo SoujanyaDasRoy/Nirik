@@ -93,6 +93,23 @@ export interface AnalysisResult {
    * XAI-derived path in that case.
    */
   clinical_observations?: DetailedClinicalObservation[];
+  findings?: {
+    id: string;
+    title: string;
+    lung: string;
+    zone: string;
+    confidence: number;
+    reasoning_id: string;
+    roi_id: string;
+    evidence_ids: string[];
+  };
+  report?: {
+    summary: string;
+    limitations: string[];
+    disclaimer: string;
+    generated_at: string;
+    version: string;
+  };
 }
 
 /**

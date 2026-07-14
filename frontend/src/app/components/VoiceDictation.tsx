@@ -112,7 +112,7 @@ export default function VoiceDictation({ onNoteChange }: VoiceDictationProps) {
   };
 
   if (!supported) return (
-    <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-4 text-sm text-amber-500">
+    <div className="rounded-[20px] border border-amber-500/30 bg-amber-500/5 p-4 text-sm text-amber-500">
       ⚠ Voice dictation requires Chrome or Edge browser (Web Speech API).
     </div>
   );
@@ -158,7 +158,7 @@ export default function VoiceDictation({ onNoteChange }: VoiceDictationProps) {
       </div>
 
       {error && (
-        <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+        <div className="rounded-[15px] border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs text-destructive">
           {error}
         </div>
       )}
