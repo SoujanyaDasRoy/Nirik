@@ -157,10 +157,10 @@ export default function AboutPage() {
       <section className="max-w-[1199px] mx-auto px-6 pb-[120px] w-full">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {[
-            { label: "AUC-ROC", value: "99.4%", sub: "Classifier discrimination", bg: "#6a4cf5" }, // Violet
-            { label: "TB Recall", value: "96.3%", sub: "Active cases detected", bg: "#d44df0" }, // Magenta
-            { label: "Accuracy", value: "96.4%", sub: "Overall test set", bg: "#ff5577" }, // Coral
-            { label: "F1 Score", value: "0.943", sub: "Precision-recall harmonic", bg: "#ff7a3d" }, // Orange
+            { label: "AUC-ROC", value: "77.7%", sub: "Classifier discrimination", bg: "#6a4cf5" }, // Violet
+            { label: "TB Recall", value: "82.6%", sub: "Active cases detected", bg: "#d44df0" }, // Magenta
+            { label: "Accuracy", value: "63.2%", sub: "Overall test set", bg: "#ff5577" }, // Coral
+            { label: "F1 Score", value: "0.592", sub: "Precision-recall harmonic", bg: "#ff7a3d" }, // Orange
           ].map(m => (
             <div key={m.label} className="rounded-[30px] p-8 flex flex-col justify-between aspect-square" style={{ backgroundColor: m.bg }}>
               <p className="text-[14px] font-medium text-[#ffffff] tracking-wide mix-blend-overlay">{m.label}</p>
@@ -243,7 +243,7 @@ export default function AboutPage() {
             },
             { 
               title: "LLM Co-Pilot", 
-              desc: "Gemini 2.5 Flash integrated with clinical guardrails. Provides context-aware insights based on the AI prediction.", 
+              desc: "Gemini 3.5 Flash integrated with clinical guardrails. Provides context-aware insights based on the AI prediction.", 
               icon: <Brain className="w-6 h-6 text-[#d44df0]" /> 
             },
             { 
@@ -298,7 +298,7 @@ export default function AboutPage() {
           <div className="rounded-[24px] overflow-hidden bg-[#141414] border border-[#262626] flex flex-col group shadow-xl">
             <div className="px-6 py-5 border-b border-[#262626]">
               <p className="text-[18px] font-medium text-[#ffffff]">Confusion Matrix</p>
-              <p className="text-[14px] text-[#999999]">358 TN · 157 TP · 13 FP · 6 FN</p>
+              <p className="text-[14px] text-[#999999]">195 TN · 142 TP · 166 FP · 30 FN</p>
             </div>
             <div className="p-6 bg-[#090909] flex-1 flex items-center justify-center">
               <img src="/model-results/confusion_matrix.png" alt="Confusion Matrix" className="w-full h-auto rounded-[12px] object-contain transition-transform duration-500 group-hover:scale-[1.05]" />
@@ -309,7 +309,7 @@ export default function AboutPage() {
           <div className="rounded-[24px] overflow-hidden bg-[#141414] border border-[#262626] flex flex-col group shadow-xl">
             <div className="px-6 py-5 border-b border-[#262626]">
               <p className="text-[18px] font-medium text-[#ffffff]">ROC & Precision-Recall</p>
-              <p className="text-[14px] text-[#999999]">AUC = 0.941</p>
+              <p className="text-[14px] text-[#999999]">AUC = 0.777</p>
             </div>
             <div className="p-6 bg-[#090909] flex-1 flex items-center justify-center">
               <img src="/model-results/roc_pr_curves.png" alt="ROC Curves" className="w-full h-auto rounded-[12px] object-contain transition-transform duration-500 group-hover:scale-[1.05]" />
@@ -414,10 +414,10 @@ export default function AboutPage() {
                   {[
                     ["Architecture", "DenseNet-121 (Student)"],
                     ["Parameters", "~7.04 Million"],
-                    ["Model Size", "29.7 MB"],
-                    ["Inference", "~15.5 ms/image (CPU)"],
-                    ["AUC-ROC", "0.994"],
-                    ["Best Threshold", "0.69"],
+                    ["Model Size", "27.9 MB"],
+                    ["Inference", "~797.7 ms/image (CPU)"],
+                    ["AUC-ROC", "0.777"],
+                    ["Best Threshold", "0.60"],
                   ].map(([k, v]) => (
                     <div key={k} className="flex justify-between items-center text-[14px]">
                       <span className="text-[#999999]">{k}</span>
