@@ -585,622 +585,132 @@ export function ScreeningWorkstation({
   // ---------- Render ----------
 
   return (
-    <div className="w-full bg-[#090909] text-[#ffffff]">
-      <div className="flex flex-col w-full gap-8">
-        {/* 1. CENTRAL WORKSPACE (IMAGE) */}
-        <section
-          className="flex-1 flex flex-col w-full min-h-[60vh] relative rounded-3xl overflow-hidden bg-[#1c1c1c] border border-[#262626] shadow-2xl"
-        >
-          {/* Floating status bars */}
-          {activeResult?.demo_mode && (
-            <div className="absolute top-5 left-5 z-50 px-4 py-2 border border-yellow-500/20 bg-yellow-500/10 text-yellow-500 rounded-full flex items-center gap-2 backdrop-blur-md text-[10px] uppercase font-bold tracking-tighter animate-fadein shadow-lg">
-              <ShieldAlert className="w-4 h-4" />
-              Demo Mode
-            </div>
-          )}
-          {activeResult?.study_id && activeResult.study_id !== "N/A" && (
-            <div className="absolute top-5 right-5 z-50 px-5 py-2 border border-[#262626] bg-[#141414] text-[#ffffff] rounded-full backdrop-blur-md text-[11px] font-mono font-bold tracking-tight animate-fadein shadow-lg flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              STUDY: {activeResult.study_id}
-            </div>
-          )}
+    <div className="w-full max-w-[900px] mx-auto bg-[#090909] text-[#ffffff] flex flex-col gap-10 pb-20">
+      
+      {/* 1. ORIGINAL X-RAY */}
+      <section className="flex flex-col gap-3">
+        <h2 className="text-[20px] font-medium tracking-tight flex items-center gap-2">
+          <Eye className="w-5 h-5 text-[#999999]" />
+          Original X-Ray
+        </h2>
+        <div className="w-full min-h-[400px] md:h-[600px] rounded-[24px] overflow-hidden bg-[#141414] border border-[#262626] shadow-xl relative">
+          <DicomViewer
+            imageBase64={activeResult?.original_image ?? ""}
+            hasHeatmap={false}
+            label="Original Scan"
+            viewMode="original"
+          />
+        </div>
+      </section>
 
-          <div className="flex-1 w-full h-full p-2 relative z-10">
-            {workstationMode === "xai" ? (
-              <XaiVisualization
-                result={activeResult!}
-                similarCases={similarCases}
-                loadingSimilar={loadingSimilar}
-                workstationMode={workstationMode}
-                setWorkstationMode={setWorkstationMode}
-                zoomLevel={1}
-                setZoomLevel={() => {}}
-                isComparing={isComparing}
-                setIsComparing={setIsComparing}
-              />
-            ) : (
-              <DicomViewer
-                imageBase64={activeResult?.original_image ?? ""}
-                heatmapBase64={
-                  activeResult?.heatmaps?.[xaiMethod] ??
-                  activeResult?.heatmap_image ??
-                  ""
-                }
-                hasHeatmap={
-                  activeResult?.status === "success" &&
-                  !!(activeResult?.heatmaps?.[xaiMethod] || activeResult?.heatmap_image)
-                }
-                label="Nirikshon Enterprise Viewport"
-                viewMode={viewMode}
-                heatmapOpacity={heatmapOpacity}
-                setHeatmapOpacity={setHeatmapOpacity}
-                observationFocusRegion={observationFocusRegion}
-              />
-            )}
+      {/* 2. GRAD-CAM OVERLAY */}
+      {activeResult?.status === "success" && (activeResult?.heatmaps?.[xaiMethod] || activeResult?.heatmap_image) && (
+        <section className="flex flex-col gap-3 animate-fadein">
+          <h2 className="text-[20px] font-medium tracking-tight flex items-center gap-2">
+            <Layers className="w-5 h-5 text-[#0099ff]" />
+            Grad-CAM Overlay
+          </h2>
+          <div className="w-full min-h-[400px] md:h-[600px] rounded-[24px] overflow-hidden bg-[#141414] border border-[#262626] shadow-xl relative">
+            <DicomViewer
+              imageBase64={activeResult?.original_image ?? ""}
+              heatmapBase64={activeResult?.heatmaps?.[xaiMethod] ?? activeResult?.heatmap_image ?? ""}
+              hasHeatmap={true}
+              label="Activation Heatmap"
+              viewMode="heatmap"
+              heatmapOpacity={0.55}
+            />
           </div>
         </section>
+      )}
 
-        {/* 3. RIGHT PANEL */}
-        <aside
-          className="w-full shrink-0 flex flex-col bg-[#141414] backdrop-blur-2xl border border-[#262626] rounded-3xl xl:rounded-[30px] shadow-2xl overflow-hidden relative z-20"
-        >
-          {/* Verdict Header */}
-          <div className="p-6 border-b border-[#262626] relative overflow-hidden shrink-0 bg-gradient-to-b from-white/[0.02] to-transparent">
-            <div className={`absolute -top-10 -right-10 w-48 h-48 blur-[60px] opacity-20 rounded-full pointer-events-none transition-colors duration-1000 ${
-              activeResult?.status === "loading" ||
-              activeResult?.status === "pending"
-                ? "bg-[#ffffff]"
-                : activeDiagnosis?.riskLevel === "High"
-                ? "bg-red-500"
-                : "bg-blue-500"
-            }`} />
-            <p className="text-[10px] font-bold uppercase tracking-tighter text-[#999999] mb-3 relative z-10 flex items-center gap-2">
-              <Activity className="w-3.5 h-3.5" />
-              AI Classification
-            </p>
+      {/* 3. PREDICTION + CONFIDENCE */}
+      <section className="flex flex-col gap-3">
+        <h2 className="text-[20px] font-medium tracking-tight flex items-center gap-2">
+          <Activity className="w-5 h-5 text-[#10b981]" />
+          Prediction & Confidence
+        </h2>
+        <div className="w-full p-8 rounded-[24px] bg-[#141414] border border-[#262626] shadow-xl relative overflow-hidden">
+          <div className={`absolute -top-20 -right-20 w-64 h-64 blur-[80px] opacity-20 rounded-full pointer-events-none transition-colors duration-1000 ${
+            activeResult?.status === "loading" || activeResult?.status === "pending"
+              ? "bg-[#ffffff]"
+              : activeDiagnosis?.riskLevel === "High"
+              ? "bg-red-500"
+              : "bg-blue-500"
+          }`} />
 
-            {activeResult?.status === "error" ? (
-              <div className="space-y-3 relative z-10 bg-destructive/10 border border-destructive/25 p-4 rounded-3xl">
-                <div className="flex items-center gap-2 text-destructive font-semibold text-sm">
-                  <AlertCircle className="w-4 h-4" />
-                  <span>{activeResult.errorMsg || "Internal server error"}</span>
-                </div>
-                <button
-                  onClick={() =>
-                    selectedIdx !== null && analyzeFile(selectedIdx)
-                  }
-                  className="w-full py-2 rounded-full text-xs font-bold bg-destructive/20 hover:bg-destructive/30 text-destructive border border-destructive/30 transition-all cursor-pointer"
-                >
-                  Retry Inference
-                </button>
+          {activeResult?.status === "error" ? (
+            <div className="space-y-4 relative z-10 bg-destructive/10 border border-destructive/25 p-6 rounded-3xl">
+              <div className="flex items-center gap-3 text-destructive font-semibold text-lg">
+                <AlertCircle className="w-6 h-6" />
+                <span>{activeResult.errorMsg || "Internal server error"}</span>
               </div>
-            ) : activeResult?.status === "loading" ||
-              activeResult?.status === "pending" ? (
-              <div className="space-y-4 relative z-10">
-                <h3 className="text-3xl font-extrabold tracking-[-1.5px] tracking-tight text-[#ffffff] flex items-center gap-3">
-                  <Loader2 className="w-6 h-6 animate-spin text-primary" />
-                  Analyzing...
-                </h3>
-                <Progress value={75} className="h-1.5 bg-[#262626] [&>div]:bg-[#ffffff] [&>div]:animate-pulse" />
-              </div>
-            ) : (
-              <div className="relative z-10">
-                <h3 className={`text-4xl font-extrabold tracking-[-2px] tracking-tight mb-4 drop-shadow-md ${
-                  activeDiagnosis?.riskLevel === "High" ? "text-red-500" : "text-blue-500"
-                }`}>
-                  {activeDiagnosis?.condition ?? "Normal"}
-                </h3>
-                <div className="space-y-2">
-                  <div className="flex justify-between text-[11px] font-bold text-[#999999] uppercase tracking-tighter">
-                    <span>Confidence Score</span>
-                    <span className="text-[#ffffff]">
-                      {((activeDiagnosis?.confidence ?? 0) * 100).toFixed(1)}%
-                    </span>
-                  </div>
-                  <Progress
-                    value={(activeDiagnosis?.confidence ?? 0) * 100}
-                    className={`h-2 bg-[#262626] ${
-                      activeDiagnosis?.riskLevel === "High"
-                        ? "[&>div]:bg-red-500"
-                        : "[&>div]:bg-blue-500"
-                    }`}
-                  />
-                </div>
-                <div className="flex flex-wrap gap-2 mt-5">
-                  <Badge
-                    className="bg-[#262626] text-[#ffffff] hover:bg-[#333333] border border-[#262626] text-[9px] uppercase font-bold py-1 px-3 rounded-full"
-                  >
-                    {activeResult?.segmentation_active ? "U-Net Segmented" : "Direct Input"}
-                  </Badge>
-                  <Badge
-                    className={`uppercase font-bold text-[9px] py-1 px-3 rounded-full border border-[#262626] ${
-                      activeDiagnosis?.riskLevel === "High"
-                        ? "bg-red-500/20 text-red-500"
-                        : "bg-blue-500/20 text-blue-500"
-                    }`}
-                  >
-                    {activeDiagnosis?.riskLevel} Risk
-                  </Badge>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Tab Navigation */}
-          <div className="p-4 shrink-0">
-            <div className="flex bg-[#141414] p-1.5 rounded-full border border-[#262626] relative shadow-inner">
-              {[
-                { id: "diagnosis", label: "Evidence" },
-                { id: "report", label: "Report" },
-              ].map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveRightTab(tab.id as "diagnosis" | "chat" | "report")}
-                  className={`flex-1 py-2.5 text-[10px] font-bold uppercase tracking-tighter rounded-full transition-all duration-300 relative z-10 ${
-                    activeRightTab === tab.id
-                      ? "text-[#000000] shadow-lg"
-                      : "text-[#999999] hover:text-[#ffffff]"
-                  }`}
-                >
-                  {tab.label}
-                </button>
-              ))}
-              {/* Animated highlight background */}
-              <div className="absolute top-1.5 bottom-1.5 w-[calc(50%-4px)] bg-[#ffffff] rounded-full transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] z-0 shadow-[0_0_20px_rgba(var(--primary),0.4)]"
-                style={{
-                  left:
-                    activeRightTab === "diagnosis"
-                      ? "6px"
-                      : "calc(50% + 2px)",
-                }}
-              />
+              <button
+                onClick={() => selectedIdx !== null && analyzeFile(selectedIdx)}
+                className="px-6 py-3 rounded-full font-bold bg-destructive/20 hover:bg-destructive/30 text-destructive border border-destructive/30 transition-all cursor-pointer"
+              >
+                Retry Inference
+              </button>
             </div>
-          </div>
-
-          {/* Tab Content Area */}
-          <div className="flex-1 overflow-y-auto px-6 pb-6 custom-scrollbar space-y-5">
-            {activeRightTab === "diagnosis" && (
-              <div className="space-y-5 animate-fadein">
-                {/* Loading states */}
-                {(activeResult?.status === "loading" ||
-                  activeResult?.status === "pending") && (
-                  <div className="space-y-3 bg-[#1c1c1c] p-5 rounded-3xl border border-[#262626] shadow-inner mt-2">
-                    <p className="text-[10px] font-bold uppercase tracking-tighter text-primary mb-4 flex items-center gap-2">
-                      <Activity className="w-3.5 h-3.5 animate-pulse" />
-                      Processing Pipeline
-                    </p>
-                    {getStepperStatus().map((step, idx) => (
-                      <div key={idx} className="flex items-center gap-4 relative">
-                        {idx < getStepperStatus().length - 1 && (
-                          <div className={`absolute left-2.5 top-6 bottom-[-15px] w-[2px] rounded-full ${
-                            step.done ? "bg-[#ffffff]/50" : "bg-[#1c1c1c]"
-                          }`} />
-                        )}
-                        <div className="relative z-10 flex-shrink-0">
-                          {step.done ? (
-                            <div className="w-5 h-5 rounded-full bg-[#ffffff] flex items-center justify-center shadow-[0_0_10px_rgba(var(--primary),0.5)]">
-                              <svg className="w-3 h-3 text-[#000000]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                              </svg>
-                            </div>
-                          ) : step.loading ? (
-                            <div className="w-5 h-5 rounded-full bg-[#ffffff]/20 border border-primary flex items-center justify-center animate-pulse">
-                              <div className="w-1.5 h-1.5 rounded-full bg-[#ffffff] animate-ping"></div>
-                            </div>
-                          ) : (
-                            <div className="w-5 h-5 rounded-full border border-[#262626] bg-[#141414]"></div>
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className={`text-[11px] font-semibold transition-colors duration-300 ${
-                            step.done
-                              ? "text-[#ffffff]"
-                              : step.loading
-                              ? "text-primary"
-                              : "text-[#999999]"
-                          }`}>
-                            {step.text}
-                          </p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {/* Image Quality Assessment */}
-                {activeResult?.status === "success" && q && (
-                  <div className="bg-[#1c1c1c] rounded-[30px] p-5 border border-[#262626] shadow-inner hover:border-[#262626] transition-colors">
-                    <div className="flex items-center justify-between mb-4">
-                      <p className="text-[10px] font-bold uppercase tracking-tighter text-[#ffffff]">Image Quality</p>
-                      <Badge
-                        variant={q.suitableForAi ? "default" : "destructive"}
-                        className="rounded-full font-bold uppercase text-[9px] px-3 py-1 border-0 shadow-sm"
-                      >
-                        {q.suitableForAi ? "Suitable" : "Unsuitable"}
-                      </Badge>
-                    </div>
-                    <div className="flex gap-4 text-[11px] text-[#999999] font-medium bg-[#1c1c1c] p-3 rounded-full">
-                      <span className={q.exposure === "Adequate Exposure" ? "text-emerald-500" : "text-amber-500"}>
-                        • {q.exposure}
-                      </span>
-                      <span className={q.coverage === "Full Lung Coverage" ? "text-emerald-500" : "text-amber-500"}>
-                        • {q.coverage}
-                      </span>
-                    </div>
-                    {!q.suitableForAi && (
-                      <div className="flex items-center gap-3 mt-4 pt-4 border-t border-[#262626]">
-                        <input
-                          type="checkbox"
-                          id="iqa-ack"
-                          className="h-4 w-4 accent-amber-500 cursor-pointer rounded"
-                          checked={iqaAcknowledged}
-                          onChange={(e) => setIqaAcknowledged(e.target.checked)}
-                        />
-                        <label
-                          htmlFor="iqa-ack"
-                          className="text-[11px] font-bold text-amber-500 cursor-pointer select-none"
-                        >
-                          Acknowledge sub-optimal quality to proceed
-                        </label>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* Clinical Evidence Findings */}
-                {activeResult?.status === "success" && (
-                  <div className="space-y-3">
-                    <p className="text-[10px] font-bold uppercase tracking-tighter text-[#ffffff] mb-3 flex items-center gap-2">
-                      <Eye className="w-3.5 h-3.5 text-primary" />
-                      Evidence Findings
-                    </p>
-                    {/* Mock evidence cards - reuse getEvidenceCards logic from original */}
-                    {(() => {
-                      const diag = predictionService.getDiagnosis(
-                        activeResult.prediction ?? "Normal",
-                        activeResult.confidence ?? 0,
-                        activeResult.threshold_used ?? 0.5
-                      );
-                      const cond = activeResult.prediction ?? "Normal";
-                      const isNormal =
-                        cond.toLowerCase().includes("normal") || cond === "Normal";
-                      const confidencePct = (diag.confidence * 100).toFixed(1);
-                      const region = activeResult.attention_region ?? "lung fields";
-                      const qExposure =
-                        activeResult.image_quality?.exposure ?? "Adequate Exposure";
-                      const qCoverage =
-                        activeResult.image_quality?.coverage ?? "Full Lung Coverage";
-                      const qScore =
-                        activeResult.image_quality?.quality_score ?? 95;
-
-                      if (isNormal) {
-                        return [
-                          {
-                            title: "Parenchymal Clearance",
-                            description: `Bilateral lung fields exhibit normal aeration without signs of active consolidation, effusion, or masses (AI confidence: ${confidencePct}%).`,
-                            confidence: diag.confidence,
-                            region: null,
-                            anatomicalZone: "bilateral",
-                          },
-                          {
-                            title: "Clear Costophrenic Angles",
-                            description: `Pleural boundaries are sharp and well-defined with no indication of fluid accumulation. Costophrenic angles are completely clear.`,
-                            confidence: Math.max(0.92, diag.confidence - 0.04),
-                            region: null,
-                            anatomicalZone: "pleural space",
-                          },
-                          {
-                            title: "Technical Image Integrity",
-                            description: `Radiograph shows ${qExposure.toLowerCase()} and ${qCoverage.toLowerCase()} (Technical Quality Score: ${qScore}%).`,
-                            confidence: qScore / 100,
-                            region: null,
-                            anatomicalZone: "global",
-                          },
-                        ];
-                      }
-                      // Abnormal case
-                      const leftApicalRegion = {
-                        x1: 25,
-                        y1: 20,
-                        x2: 95,
-                        y2: 80,
-                        zoom: 2.2,
-                        panX: 160,
-                        panY: 100,
-                      };
-                      const rightApicalRegion = {
-                        x1: 125,
-                        y1: 20,
-                        x2: 195,
-                        y2: 80,
-                        zoom: 2.2,
-                        panX: -160,
-                        panY: 100,
-                      };
-                      const leftMidRegion = {
-                        x1: 30,
-                        y1: 85,
-                        x2: 100,
-                        y2: 140,
-                        zoom: 2.0,
-                        panX: 150,
-                        panY: -30,
-                      };
-                      const rightMidRegion = {
-                        x1: 120,
-                        y1: 85,
-                        x2: 190,
-                        y2: 140,
-                        zoom: 2.0,
-                        panX: -150,
-                        panY: -30,
-                      };
-                      const isLeft = region.toLowerCase().includes("left");
-                      const isApical =
-                        region.toLowerCase().includes("apical") ||
-                        region.toLowerCase().includes("upper");
-                      let targetRegion = rightApicalRegion;
-                      let zoneLabel = "right apical";
-                      if (isLeft && isApical) {
-                        targetRegion = leftApicalRegion;
-                        zoneLabel = "left apical";
-                      } else if (isLeft && !isApical) {
-                        targetRegion = leftMidRegion;
-                        zoneLabel = "left mid-zone";
-                      } else if (!isLeft && !isApical) {
-                        targetRegion = rightMidRegion;
-                        zoneLabel = "right mid-zone";
-                      }
-                      return [
-                        {
-                          title: "Consolidation & Opacity Focus",
-                          description: `Grad-CAM++ highlighted an area of increased opacity in the ${zoneLabel} zone. This density gradient is consistent with focal active ${cond} consolidation (AI confidence: ${confidencePct}%).`,
-                          confidence: diag.confidence,
-                          region: targetRegion,
-                          anatomicalZone: zoneLabel,
-                        },
-                        {
-                          title: "Asymmetric Density Gradients",
-                          description: `Significant localized markings and architectural asymmetry identified in the ${zoneLabel} zone compared to contralateral regions.`,
-                          confidence: Math.max(0.70, diag.confidence * 0.85),
-                          region: targetRegion,
-                          anatomicalZone: zoneLabel,
-                        },
-                        {
-                          title: "Hilar Lymphadenopathy Suggestion",
-                          description: `Bronchovascular tree markings and mediastinal structures show signs of inflammation or congestion adjacent to the primary focus area.`,
-                          confidence: Math.max(0.60, diag.confidence * 0.70),
-                          region: null,
-                          anatomicalZone: "hilar",
-                        },
-                      ];
-                    })().map((ec, idx) => {
-                      const isAbnormal =
-                        activeResult?.is_tb &&
-                        (ec.title.toLowerCase().includes("consolidation") ||
-                          ec.title.toLowerCase().includes("density") ||
-                          ec.title.toLowerCase().includes("failed") ||
-                          ec.title.toLowerCase().includes("infiltrate"));
-                      const colorPrefix = isAbnormal
-                        ? activeDiagnosis?.riskLevel === "High"
-                          ? "red"
-                          : "blue"
-                        : "blue";
-                      const borderColor =
-                        colorPrefix === "red"
-                          ? "border-l-red-500"
-                          : "border-l-blue-500";
-                      const badgeColor =
-                        colorPrefix === "red"
-                          ? "bg-red-500/10 text-red-500 border-red-500/20"
-                          : "bg-blue-500/10 text-blue-500 border-blue-500/20";
-                      return (
-                        <div
-                          key={idx}
-                          className={`bg-[#1c1c1c] p-5 rounded-[30px] border border-[#262626] border-l-4 ${borderColor} hover:bg-[#141414] hover:border-[#262626] transition-all duration-300 group shadow-sm`}
-                        >
-                          <div className="flex justify-between items-start mb-2">
-                            <h4 className="text-[13px] font-bold text-[#ffffff] group-hover:text-primary transition-colors pr-2">
-                              {ec.title}
-                            </h4>
-                            {ec.confidence > 0 && (
-                              <Badge
-                                className={`rounded-full font-mono font-bold text-[9px] px-2 py-0.5 border ${badgeColor}`}
-                              >
-                                {(ec.confidence * 100).toFixed(0)}%
-                              </Badge>
-                            )}
-                          </div>
-                          <p className="text-[11px] text-[#999999] leading-relaxed font-medium">
-                            {ec.description}
-                          </p>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {activeRightTab === "chat" && (
-              <div className="h-full min-h-[500px] animate-fadein pb-4">
-                <LlmAssistant activeResult={activeResult} />
-              </div>
-            )}
-
-            {activeRightTab === "report" && (
-              <div className="space-y-6 animate-fadein pb-4">
-                {/* Clinical Audit / Override Inputs */}
-                <div className="bg-[#1c1c1c] p-5 rounded-[30px] border border-[#262626] shadow-inner">
-                  <p className="text-[10px] font-bold uppercase tracking-tighter text-[#ffffff] mb-4">
-                    Clinical Sign-Off
-                  </p>
-                  <div className="space-y-4">
-                    <div className="space-y-2.5">
-                      <label className="text-[10px] text-[#999999] uppercase font-bold tracking-tight">
-                        Diagnostic Verdict Adjudication
-                      </label>
-                      <div className="grid grid-cols-2 gap-2">
-                        {[
-                          { id: "confirm", label: "Confirm AI Verdict" },
-                          { id: "reject", label: "Reject AI Verdict" },
-                          { id: "investigate", label: "Request Investigation" },
-                          { id: "insufficient", label: "Insufficient Quality" }
-                        ].map((opt) => (
-                          <button
-                            key={opt.id}
-                            onClick={() => {
-                              setClinicalReviewStatus(opt.id);
-                              syncFeedback(
-                                opt.id,
-                                reviewComments,
-                                reviewerName,
-                                clinicianNote
-                              );
-                            }}
-                            className={`p-3 rounded-full text-[11px] font-bold border transition-all cursor-pointer ${
-                              clinicalReviewStatus === opt.id
-                                ? "border-primary bg-[#ffffff]/10 text-primary shadow-sm"
-                                : "border-[#262626] bg-[#1c1c1c] hover:bg-[#262626] text-[#999999] hover:text-[#ffffff]"
-                            }`}
-                          >
-                            {opt.label}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="space-y-3">
-                      <label className="text-[10px] text-[#999999] uppercase font-bold tracking-tight">
-                        Reviewer Comments
-                      </label>
-                      <Textarea
-                        value={reviewComments}
-                        onChange={(e) => setReviewComments(e.target.value)}
-                        placeholder="Add clinical notes or discrepancies..."
-                        className="min-h-[80px]"
-                      />
-                    </div>
-
-                    <div className="space-y-3">
-                      <label className="text-[10px] text-[#999999] uppercase font-bold tracking-tight">
-                        Reviewer Name
-                      </label>
-                      <input
-                        type="text"
-                        value={reviewerName}
-                        onChange={(e) => setReviewerName(e.target.value)}
-                        placeholder="Enter your name or ID"
-                        className="w-full px-3 py-2 rounded border border-[#262626] bg-[#1c1c1c] text-white focus:outline-none focus:ring-2 focus:ring-primary"
-                      />
-                    </div>
-
-                    <div className="space-y-3">
-                      <label className="text-[10px] text-[#999999] uppercase font-bold tracking-tight">
-                        Clinician Note (optional)
-                      </label>
-                      <Textarea
-                        value={clinicianNote}
-                        onChange={(e) => setClinicianNote(e.target.value)}
-                        placeholder="Additional observations..."
-                        className="min-h-[60px]"
-                      />
-                    </div>
-
-                    <div className="space-y-4 pt-4 border-t border-[#262626]">
-                      <div className="flex items-center gap-3">
-                        <input
-                          type="checkbox"
-                          id="iqa-ack-report"
-                          className="h-4 w-4 accent-amber-500 cursor-pointer rounded"
-                          checked={iqaAcknowledged}
-                          onChange={(e) => setIqaAcknowledged(e.target.checked)}
-                        />
-                        <label htmlFor="iqa-ack-report" className="text-[11px] font-bold text-amber-500 cursor-pointer select-none">
-                          Acknowledge sub-optimal quality to proceed
-                        </label>
-                      </div>
-                    </div>
-                  </div>
+          ) : activeResult?.status === "loading" || activeResult?.status === "pending" ? (
+            <div className="space-y-6 relative z-10">
+              <h3 className="text-4xl font-extrabold tracking-[-1.5px] text-[#ffffff] flex items-center gap-4">
+                <Loader2 className="w-8 h-8 animate-spin text-[#0099ff]" />
+                Analyzing Scan...
+              </h3>
+              <Progress value={75} className="h-2 bg-[#262626] [&>div]:bg-[#ffffff] [&>div]:animate-pulse" />
+            </div>
+          ) : (
+            <div className="relative z-10">
+              <h3 className={`text-6xl md:text-7xl font-bold tracking-[-3px] mb-6 drop-shadow-md ${
+                activeDiagnosis?.riskLevel === "High" ? "text-red-500" : "text-blue-500"
+              }`}>
+                {activeDiagnosis?.condition ?? "Normal"}
+              </h3>
+              
+              <div className="space-y-3 mb-8">
+                <div className="flex justify-between text-[14px] font-bold text-[#999999] uppercase tracking-wide">
+                  <span>AI Confidence Score</span>
+                  <span className="text-[#ffffff]">
+                    {((activeDiagnosis?.confidence ?? 0) * 100).toFixed(1)}%
+                  </span>
                 </div>
-
-                {/* Action Buttons */}
-                <div className="space-y-4">
-                  <div className="flex flex-col sm:flex-row sm:gap-3">
-                    <button
-                      onClick={handlePdfExport}
-                      disabled={isExporting || !activeResult || !q}
-                      className="w-full flex-1 px-4 py-3 rounded-full font-medium transition-all hover:opacity-90 disabled:opacity-50 disabled:pointer-events-none bg-[#ffffff] text-[#000000] shadow-md"
-                    >
-                      {isExporting ? "Exporting PDF..." : "Export PDF Report"}
-                    </button>
-                    <button
-                      onClick={handleJsonSR}
-                      disabled={!activeResult || !q}
-                      className="w-full flex-1 px-4 py-3 rounded-full font-medium transition-all hover:opacity-90 bg-[#262626] text-white border border-[#262626]"
-                    >
-                      Export Structured JSON
-                    </button>
-                  </div>
-
-                  <button
-                    onClick={handleRegisterDb}
-                    disabled={dbRegistered || !activeResult || !q}
-                    className="w-full px-4 py-3 rounded-full font-medium transition-all hover:opacity-90 bg-[#262626] text-white border border-[#262626]"
-                  >
-                    {dbRegistered ? "Registered to DB" : "Register to Research DB"}
-                  </button>
-
-                  <div className="flex items-center gap-3 pt-4 border-t border-[#262626]">
-                    <button
-                      onClick={() => setWorkstationMode("xai")}
-                      className={`flex-1 px-3 py-2 rounded text-xs font-medium transition-all hover:opacity-90 ${
-                        workstationMode === "xai"
-                          ? "bg-[#ffffff] text-[#000000]"
-                          : "bg-[#262626] text-white border border-[#262626]"
-                      }`}
-                    >
-                      AI Explainability View
-                    </button>
-                    <button
-                      onClick={() => setWorkstationMode("clinical")}
-                      className={`flex-1 px-3 py-2 rounded text-xs font-medium transition-all hover:opacity-90 ${
-                        workstationMode === "clinical"
-                          ? "bg-[#ffffff] text-[#000000]"
-                          : "bg-[#262626] text-white border border-[#262626]"
-                      }`}
-                    >
-                      Clinical View
-                    </button>
-                  </div>
-                </div>
+                <Progress
+                  value={(activeDiagnosis?.confidence ?? 0) * 100}
+                  className={`h-3 bg-[#262626] ${
+                    activeDiagnosis?.riskLevel === "High"
+                      ? "[&>div]:bg-red-500"
+                      : "[&>div]:bg-blue-500"
+                  }`}
+                />
               </div>
-            )}
-          </div>
-        </aside>
-      </div>
+
+              <div className="flex flex-wrap gap-3">
+                <Badge className="bg-[#262626] text-[#ffffff] hover:bg-[#333333] border border-[#262626] text-[12px] uppercase font-bold py-1.5 px-4 rounded-full">
+                  {activeResult?.segmentation_active ? "U-Net Segmented" : "Direct Input"}
+                </Badge>
+                <Badge className={`uppercase font-bold text-[12px] py-1.5 px-4 rounded-full border border-[#262626] ${
+                  activeDiagnosis?.riskLevel === "High"
+                    ? "bg-red-500/20 text-red-500"
+                    : "bg-blue-500/20 text-blue-500"
+                }`}>
+                  {activeDiagnosis?.riskLevel} Risk
+                </Badge>
+              </div>
+
+              <div className="mt-8 pt-8 border-t border-[#262626] flex justify-end">
+                <button
+                  onClick={handlePdfExport}
+                  disabled={isExporting}
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-full font-semibold text-[13px] bg-[#ffffff] text-[#000000] hover:scale-[1.02] transition-transform disabled:opacity-50 disabled:hover:scale-100"
+                >
+                  <Download className="w-4 h-4" />
+                  {isExporting ? "Generating PDF..." : "Export Clinical Report"}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </section>
     </div>
   );
-}
-
-// Helper to sync feedback (mirrors original)
-async function syncFeedback(
-  status: string,
-  comments: string,
-  reviewer: string,
-  note: string
-) {
-  const getBackendStatus = (s: string) => {
-    if (s === "confirm") return "Confirm AI finding";
-    if (s === "reject") return "Reject AI finding";
-    if (s === "investigate") return "Request Investigation";
-    if (s === "insufficient") return "Insufficient Quality";
-    return s;
-  };
-  const backendStatus = getBackendStatus(status);
-
-  // TODO: Integrate with actual feedback saving via handleFeedbackSaved prop
-  // For now, we just call the prop if available (should be passed from parent)
-  // This function is kept for parity but actual call should be in the component's callbacks.
-  // In this component we call handleFeedbackSaved from the button onClick above.
 }

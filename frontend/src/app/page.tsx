@@ -137,7 +137,7 @@ export default function AboutPage() {
                 if (canLaunch) router.push("/diagnose");
                 else document.getElementById("disclaimer-accept")?.focus();
               }}
-              className="flex items-center gap-2.5 px-6 py-3 rounded-full font-semibold text-[14px] transition-all hover:scale-[1.02] shadow-xl shadow-white/5 hover:bg-[#e0e0e0]"
+              className="flex items-center gap-2.5 px-6 py-3 rounded-full font-semibold text-[14px] transition-all hover:scale-[1.02] shadow-xl shadow-white/5 hover:bg-[#e0e0e0] cursor-pointer"
               style={{
                 backgroundColor: "#ffffff",
                 color: "#000000",
@@ -191,17 +191,28 @@ export default function AboutPage() {
             <p>• <strong className="text-[#ffffff]">Consult a Doctor.</strong> If any result is positive, please consult a licensed physician for confirmatory testing (GeneXpert, sputum smear).</p>
             <p>• <strong className="text-[#ffffff]">Academic Use Only.</strong> Built for a final year project demonstration. Not for real-world patient deployment.</p>
           </div>
-          <div className="flex items-center gap-4 pt-6 border-t border-[#262626]">
-            <input
-              id="disclaimer-accept"
-              type="checkbox"
-              checked={accepted}
-              onChange={e => setAccepted(e.target.checked)}
-              className="w-5 h-5 cursor-pointer appearance-none rounded-[6px] border border-[#262626] bg-[#090909] checked:bg-[#0099ff] checked:border-[#0099ff] transition-colors relative"
-            />
-            <label htmlFor="disclaimer-accept" className="text-[15px] font-medium cursor-pointer text-[#ffffff]">
-              I understand this is not a clinical tool and will consult a doctor for medical decisions.
-            </label>
+          <div className="flex flex-col sm:flex-row items-center gap-4 pt-6 border-t border-[#262626] justify-between">
+            <div className="flex items-center gap-4 flex-1">
+              <input
+                id="disclaimer-accept"
+                type="checkbox"
+                checked={accepted}
+                onChange={e => setAccepted(e.target.checked)}
+                className="w-5 h-5 cursor-pointer appearance-none rounded-[6px] border border-[#262626] bg-[#090909] checked:bg-[#0099ff] checked:border-[#0099ff] transition-colors relative shrink-0"
+              />
+              <label htmlFor="disclaimer-accept" className="text-[15px] font-medium cursor-pointer text-[#ffffff]">
+                I understand this is not a clinical tool and will consult a doctor for medical decisions.
+              </label>
+            </div>
+            {accepted && (
+              <button
+                onClick={() => router.push("/diagnose")}
+                className="flex items-center justify-center gap-2.5 px-6 py-3 rounded-full font-semibold text-[14px] bg-[#ffffff] text-[#000000] hover:scale-[1.02] transition-all cursor-pointer shadow-lg w-full sm:w-auto shrink-0 animate-fadein"
+              >
+                Enter Workstation
+                <Play className="w-4 h-4 fill-current" />
+              </button>
+            )}
           </div>
         </div>
       </section>
