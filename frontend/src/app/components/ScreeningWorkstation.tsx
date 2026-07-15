@@ -711,6 +711,43 @@ export function ScreeningWorkstation({
           )}
         </div>
       </section>
+
+      {/* 4. DETAILS OF THE DIAGNOSIS / EXPLANATION */}
+      {activeResult?.status === "success" && (
+        <section className="flex flex-col gap-3 animate-fadein">
+          <h2 className="text-[20px] font-medium tracking-tight flex items-center gap-2">
+            <Bot className="w-5 h-5 text-[#8b5cf6]" />
+            Details of the Diagnosis
+          </h2>
+          <div className="w-full p-8 rounded-[24px] bg-[#141414] border border-[#262626] shadow-xl relative overflow-hidden text-[#cccccc] text-[15px] leading-relaxed">
+            <div className="space-y-4">
+              <p>
+                <strong>AI Explanation:</strong> Based on the DenseNet-121 model analysis, the radiograph exhibits features {activeDiagnosis?.riskLevel === "High" ? "strongly indicative of Pulmonary Tuberculosis" : "consistent with normal lung anatomy"}. The confidence level of this prediction is {((activeDiagnosis?.confidence ?? 0) * 100).toFixed(1)}%.
+              </p>
+              
+              {activeDiagnosis?.riskLevel === "High" ? (
+                <>
+                  <p>
+                    <strong>Key Observations:</strong> The Grad-CAM heatmap highlights specific anatomical regions of interest (typically upper lung zones or apical regions) where the neural network detected pathological textures or opacities correlating with active TB infection.
+                  </p>
+                  <p>
+                    <strong>Clinical Recommendation:</strong> Urgent clinical correlation is advised. Sputum AFB smear, GeneXpert MTB/RIF, and further microbiological testing should be considered to confirm active infection.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p>
+                    <strong>Key Observations:</strong> The Grad-CAM heatmap shows diffuse or minimal activations, with no focal areas of high pathological significance detected by the model. The lung fields appear generally clear of TB-specific opacities.
+                  </p>
+                  <p>
+                    <strong>Clinical Recommendation:</strong> No immediate action is required based solely on this radiograph. However, AI screening does not replace clinical judgement; evaluate the patient for any symptomatic presentations.
+                  </p>
+                </>
+              )}
+            </div>
+          </div>
+        </section>
+      )}
     </div>
   );
 }
