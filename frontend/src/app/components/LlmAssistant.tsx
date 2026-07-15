@@ -20,6 +20,22 @@ export default function LlmAssistant({ activeResult }: { activeResult: AnalysisR
     endOfMessagesRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isTyping]);
 
+  // Check LLM status on mount
+  useEffect(() => {
+    const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://projectmantra-nirikshon-backend.hf.space";
+    fetch(`${API_BASE}/chat/status`, { credentials: "include" })
+      .then(r => r.json())
+      .then(data => {
+        if (!data.llm_available) {
+          setMessages(prev => [...prev, {
+            role: "assistant",
+            content: "⚠️ AI Co-Pilot is running in degraded mode: GEMINI_API_KEY is not configured on the server. You will receive rule-based responses based on the model output. To enable full LLM responses, add the GEMINI_API_KEY to the Hugging Face Space secrets."
+          }]);
+        }
+      })
+      .catch(() => {}); // Silently ignore if status check fails
+  }, []);
+
   const handleSend = async () => {
     if (!input.trim()) return;
 
@@ -29,7 +45,8 @@ export default function LlmAssistant({ activeResult }: { activeResult: AnalysisR
     setIsTyping(true);
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/chat`, {
+      const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://projectmantra-nirikshon-backend.hf.space";
+      const response = await fetch(`${API_BASE}/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -53,7 +70,8 @@ export default function LlmAssistant({ activeResult }: { activeResult: AnalysisR
       setMessages(prev => [...prev, { role: "assistant", content: data.response || "No response generated." }]);
     } catch (error) {
       console.error("LLM Error:", error);
-      setMessages(prev => [...prev, { role: "assistant", content: "I'm sorry, I encountered an error while trying to process your request. Please try again." }]);
+      const errMsg = error instanceof Error ? error.message : "Unknown error";
+      setMessages(prev => [...prev, { role: "assistant", content: `⚠️ Could not reach the AI assistant (${errMsg}). Make sure the backend is running and GEMINI_API_KEY is set.` }]);
     } finally {
       setIsTyping(false);
     }
