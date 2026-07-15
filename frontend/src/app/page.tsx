@@ -206,58 +206,138 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* ── MODEL PERFORMANCE SHOWCASE ── */}
-      <section id="model-section" className="max-w-[1199px] mx-auto px-6 pb-[120px] w-full space-y-16">
+      {/* ── SYSTEM ARCHITECTURE ── */}
+      <section id="architecture-section" className="max-w-[1199px] mx-auto px-6 pb-[120px] w-full space-y-12">
         <div className="text-center space-y-4 max-w-[700px] mx-auto">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-[13px] font-medium tracking-wide bg-[#141414] text-[#ffffff] border border-[#262626]">
-            Validated Model Performance
+            Platform Architecture
           </div>
-          <h2 className="text-[62px] font-medium tracking-[-3.1px] leading-[1]">Real Results on Unseen Data</h2>
+          <h2 className="text-[52px] font-medium tracking-[-2.5px] leading-[1]">Decoupled & Modular</h2>
           <p className="text-[18px] text-[#999999] leading-[1.3] tracking-[-0.18px]">
-            Evaluated on a held-out test set from the NIRT Chennai cohort — never seen during training.
+            Engineered for high performance, clinical safety, and seamless LLM integration.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {[
-            { title: "ROC & Precision-Recall Curves", sub: "AUC = 0.941 · Threshold = 0.870 · Recall = 81.7%", img: "/model-results/roc_pr_curves.png", alt: "ROC Curves" },
-            { title: "Confusion Matrix — Test Set", sub: "378 TN · 89 TP · 13 FP · 20 FN", img: "/model-results/confusion_matrix.png", alt: "Confusion Matrix" },
-          ].map(card => (
-            <div key={card.title} className="rounded-[20px] overflow-hidden bg-[#141414] border border-[#262626]">
-              <div className="px-6 py-5 border-b border-[#262626]">
-                <p className="text-[18px] font-medium tracking-[-0.2px] text-[#ffffff]">{card.title}</p>
-                <p className="text-[14px] mt-1 text-[#999999]">{card.sub}</p>
+            { 
+              title: "Next.js Frontend", 
+              desc: "React 19 & Tailwind CSS powers a responsive, scrollable clinical workspace with native DICOM parsing and zero viewport locks.", 
+              icon: <Scan className="w-6 h-6 text-[#0099ff]" /> 
+            },
+            { 
+              title: "DenseNet-121 Engine", 
+              desc: "PyTorch & ONNX dual-load backend providing 15ms CPU inference and true-gradient backpropagation for Grad-CAM++.", 
+              icon: <Cpu className="w-6 h-6 text-[#10b981]" /> 
+            },
+            { 
+              title: "LLM Co-Pilot", 
+              desc: "Gemini 2.5 Flash integrated with clinical guardrails. Provides context-aware insights based on the AI prediction.", 
+              icon: <Brain className="w-6 h-6 text-[#d44df0]" /> 
+            },
+            { 
+              title: "Flask REST API", 
+              desc: "Modular Flask 3.1 architecture with independent blueprints for auth, prediction, explainability, and LLM chat.", 
+              icon: <Activity className="w-6 h-6 text-[#ff5577]" /> 
+            }
+          ].map(arc => (
+            <div key={arc.title} className="p-8 rounded-[24px] bg-[#141414] border border-[#262626] hover:bg-[#1c1c1c] transition-colors flex flex-col gap-4 shadow-xl">
+              <div className="w-12 h-12 rounded-full bg-[#090909] border border-[#262626] flex items-center justify-center">
+                {arc.icon}
               </div>
-              <div className="p-6 bg-[#090909]">
-                <img src={card.img} alt={card.alt} className="w-full rounded-[10px] object-contain opacity-90 hover:opacity-100 transition-opacity" />
+              <div>
+                <p className="text-[18px] font-medium text-[#ffffff] mb-2">{arc.title}</p>
+                <p className="text-[14px] text-[#999999] leading-[1.5]">{arc.desc}</p>
               </div>
             </div>
           ))}
         </div>
+      </section>
 
-        <div className="rounded-[20px] overflow-hidden bg-[#141414] border border-[#262626]">
-          <div className="px-6 py-5 flex items-center justify-between border-b border-[#262626]">
-            <div>
-              <p className="text-[18px] font-medium tracking-[-0.2px] text-[#ffffff]">Grad-CAM Explainability Visualizations</p>
-              <p className="text-[14px] mt-1 text-[#999999]">Gradient-weighted class activation maps.</p>
-            </div>
-            <span className="px-3 py-1.5 rounded-full text-[12px] font-medium bg-[#1c1c1c] text-[#ffffff] border border-[#262626]">XAI</span>
+      {/* ── MODEL PERFORMANCE SHOWCASE (BENTO GRID) ── */}
+      <section id="model-section" className="max-w-[1199px] mx-auto px-6 pb-[120px] w-full space-y-12">
+        <div className="text-center space-y-4 max-w-[700px] mx-auto">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-[13px] font-medium tracking-wide bg-[#141414] text-[#ffffff] border border-[#262626]">
+            Validated Model Performance
           </div>
-          <div className="p-6 bg-[#090909]">
-            <img src="/model-results/gradcam_visualizations.png" alt="Grad-CAM" className="w-full rounded-[10px] object-contain opacity-90 hover:opacity-100 transition-opacity" />
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-0 border-t border-[#262626]">
-            {[
-              { label: "True TB Cases", desc: "Model focuses on upper lobe consolidation and cavity regions — clinically correct." },
-              { label: "High-Conf Errors", desc: "False positives show pleural/hilar features sharing visual similarity with TB." },
-              { label: "Low-Conf Correct", desc: "Normal scans with unusual anatomy or portable technique challenge the model." },
-            ].map((item, i) => (
-              <div key={item.label} className={`p-6 space-y-2 ${i > 0 ? "md:border-l border-[#262626]" : ""}`}>
-                <p className="text-[14px] font-medium text-[#ffffff]">{item.label}</p>
-                <p className="text-[14px] leading-[1.4] text-[#999999]">{item.desc}</p>
+          <h2 className="text-[52px] font-medium tracking-[-2.5px] leading-[1]">Real Results on Unseen Data</h2>
+          <p className="text-[18px] text-[#999999] leading-[1.3] tracking-[-0.18px]">
+            Comprehensive evaluation metrics and visualizations from the held-out test cohort.
+          </p>
+        </div>
+
+        {/* Bento Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          
+          {/* Large Card: Grad-CAM */}
+          <div className="lg:col-span-2 rounded-[24px] overflow-hidden bg-[#141414] border border-[#262626] flex flex-col group shadow-xl">
+            <div className="px-6 py-5 border-b border-[#262626] flex justify-between items-center">
+              <div>
+                <p className="text-[18px] font-medium text-[#ffffff]">XAI: Grad-CAM Visualizations</p>
+                <p className="text-[14px] text-[#999999]">Gradient-weighted class activation maps across varied cases.</p>
               </div>
-            ))}
+              <span className="px-3 py-1.5 rounded-full text-[12px] font-medium bg-[#1c1c1c] text-[#ffffff] border border-[#262626]">Interpretability</span>
+            </div>
+            <div className="p-6 bg-[#090909] flex-1 flex items-center justify-center">
+              <img src="/model-results/gradcam_visualizations.png" alt="Grad-CAM" className="w-full h-auto rounded-[12px] object-contain transition-transform duration-500 group-hover:scale-[1.02]" />
+            </div>
           </div>
+
+          {/* Small Card: Confusion Matrix */}
+          <div className="rounded-[24px] overflow-hidden bg-[#141414] border border-[#262626] flex flex-col group shadow-xl">
+            <div className="px-6 py-5 border-b border-[#262626]">
+              <p className="text-[18px] font-medium text-[#ffffff]">Confusion Matrix</p>
+              <p className="text-[14px] text-[#999999]">378 TN · 89 TP · 13 FP · 20 FN</p>
+            </div>
+            <div className="p-6 bg-[#090909] flex-1 flex items-center justify-center">
+              <img src="/model-results/confusion_matrix.png" alt="Confusion Matrix" className="w-full h-auto rounded-[12px] object-contain transition-transform duration-500 group-hover:scale-[1.05]" />
+            </div>
+          </div>
+
+          {/* Small Card: ROC Curves */}
+          <div className="rounded-[24px] overflow-hidden bg-[#141414] border border-[#262626] flex flex-col group shadow-xl">
+            <div className="px-6 py-5 border-b border-[#262626]">
+              <p className="text-[18px] font-medium text-[#ffffff]">ROC & Precision-Recall</p>
+              <p className="text-[14px] text-[#999999]">AUC = 0.941</p>
+            </div>
+            <div className="p-6 bg-[#090909] flex-1 flex items-center justify-center">
+              <img src="/model-results/roc_pr_curves.png" alt="ROC Curves" className="w-full h-auto rounded-[12px] object-contain transition-transform duration-500 group-hover:scale-[1.05]" />
+            </div>
+          </div>
+
+          {/* Large Card: Sample Predictions */}
+          <div className="lg:col-span-2 rounded-[24px] overflow-hidden bg-[#141414] border border-[#262626] flex flex-col group shadow-xl">
+            <div className="px-6 py-5 border-b border-[#262626]">
+              <p className="text-[18px] font-medium text-[#ffffff]">Sample Clinical Predictions</p>
+              <p className="text-[14px] text-[#999999]">Demonstrating high-confidence classifications vs ground truth.</p>
+            </div>
+            <div className="p-6 bg-[#090909] flex-1 flex items-center justify-center">
+              <img src="/model-results/sample_predictions.png" alt="Sample Predictions" className="w-full h-auto rounded-[12px] object-contain transition-transform duration-500 group-hover:scale-[1.02]" />
+            </div>
+          </div>
+
+          {/* Small Card: Performance Comparison */}
+          <div className="lg:col-span-2 rounded-[24px] overflow-hidden bg-[#141414] border border-[#262626] flex flex-col group shadow-xl">
+            <div className="px-6 py-5 border-b border-[#262626]">
+              <p className="text-[18px] font-medium text-[#ffffff]">Architecture Comparison</p>
+              <p className="text-[14px] text-[#999999]">DenseNet vs ResNet Performance Benchmark.</p>
+            </div>
+            <div className="p-6 bg-[#090909] flex-1 flex items-center justify-center">
+              <img src="/model-results/performance_comparison.png" alt="Performance" className="w-full max-h-[300px] rounded-[12px] object-contain transition-transform duration-500 group-hover:scale-[1.02]" />
+            </div>
+          </div>
+
+          {/* Small Card: Deployment Metrics */}
+          <div className="rounded-[24px] overflow-hidden bg-[#141414] border border-[#262626] flex flex-col group shadow-xl">
+            <div className="px-6 py-5 border-b border-[#262626]">
+              <p className="text-[18px] font-medium text-[#ffffff]">Deployment Profiling</p>
+              <p className="text-[14px] text-[#999999]">Hardware Latency & Memory.</p>
+            </div>
+            <div className="p-6 bg-[#090909] flex-1 flex items-center justify-center">
+              <img src="/model-results/deployment_metrics.png" alt="Deployment" className="w-full h-auto rounded-[12px] object-contain transition-transform duration-500 group-hover:scale-[1.05]" />
+            </div>
+          </div>
+          
         </div>
       </section>
 
