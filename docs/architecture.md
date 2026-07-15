@@ -37,9 +37,9 @@ User uploads X-ray → preprocessing (lung segmentation, crop, non-lung pixel ma
 | Student model (deployed) | DenseNet-121 |
 | Segmentation model | Attention U-Net |
 | Explainability | Grad-CAM, Grad-CAM++, LayerCAM, EigenCAM |
-| LLM | Gemini 2.5 Flash (Google AI Studio API key) — **Decided, not yet implemented** |
-| Backend + model hosting | Hugging Face Spaces (Docker SDK) — **Decided, not yet reconciled with this architecture** |
-| Frontend hosting | Vercel — **Decided, not yet built** |
+| LLM | Gemini 3.5 Flash (Google AI Studio API key) — **Implemented** |
+| Backend + model hosting | Hugging Face Spaces (Docker SDK) — **Implemented** |
+| Frontend hosting | Vercel — **Implemented** |
 
 ### Why this architecture was chosen
 
@@ -96,7 +96,7 @@ flowchart TD
 | **Attention Visualization** | **Not defined in the current architecture.** There is no attention-map output at the classification level to visualize (see Attention Mechanism above). If the lung segmentation mask itself is shown to a user, it should be labeled as segmentation/localization, not "attention." |
 | **Explainability** | The bundle of all requested CAM outputs, each a single-channel heatmap normalized to `[0, 1]` at input resolution, typically overlaid on the preprocessed image for display. |
 | **LLM Context Builder** | Assembles a minimal structured payload — `{prediction, confidence, threshold_used}` — for the LLM. Never includes the raw image or model internals. |
-| **LLM Response** | Gemini 2.5 Flash narrates the structured result in clinically-safe natural language. **Not yet implemented.** |
+| **LLM Response** | Gemini 3.5 Flash narrates the structured result in clinically-safe natural language. **Implemented.** |
 | **Frontend Rendering** | Displays prediction, confidence + threshold together, heatmaps (if requested), and (if implemented) the LLM's narration — always alongside a clinical disclaimer. |
 
 ```mermaid
@@ -113,7 +113,7 @@ flowchart TD
     GC --> AV["Attention Visualization — NOT DEFINED"]
     AV --> EX[Explainability bundle]
     EX --> LC[LLM Context Builder]
-    LC --> LR["LLM Response (Gemini 2.5 Flash) — NOT YET IMPLEMENTED"]
+    LC --> LR["LLM Response (Gemini 3.5 Flash)"]
     LR --> FR[Frontend Rendering]
 
     classDef notdef stroke-dasharray: 4 3
@@ -325,7 +325,7 @@ flowchart TD
 3. Run DenseNet-121 (ONNX Runtime, CPU) → softmax pair.
 4. Apply the **frozen** Youden threshold (read from the training run's `metrics.json`, never recomputed).
 5. (Optional) Generate Grad-CAM family outputs — **architecturally unresolved**, see Section 7.
-6. (Optional) Build LLM context and call Gemini 2.5 Flash — **not yet implemented.**
+6. (Optional) Build LLM context and call Gemini 3.5 Flash — **Implemented.**
 7. Assemble and return the response.
 
 ```mermaid
@@ -343,7 +343,7 @@ flowchart TD
         R5 -- yes --> R6["Grad-CAM family — UNRESOLVED vs. ONNX"]
         R5 -- no --> R7
         R6 --> R7{"LLM narration requested?"}
-        R7 -- yes --> R8["Gemini 2.5 Flash — NOT YET IMPLEMENTED"]
+        R7 -- yes --> R8["Gemini 3.5 Flash"]
         R7 -- no --> R9[Assemble response]
         R8 --> R9
     end
@@ -527,13 +527,13 @@ The LLM cannot fabricate a visual finding it never saw, because it is never give
 
 ### Limitations
 
-The LLM layer is entirely unbuilt as of this document. Provider is decided (Gemini 2.5 Flash, Google AI Studio API key); nothing else about it exists in code.
+The LLM layer is fully built and deployed. Provider is Gemini 3.5 Flash (via Google AI Studio API key).
 
 ```mermaid
 flowchart TD
     R[Prediction result: prediction, confidence, threshold] --> CB[LLM Context Builder]
     CB --> G["Guardrails: structured-only, no image, terminology rules"]
-    G --> API["Gemini 2.5 Flash API call — NOT YET IMPLEMENTED"]
+    G --> API["Gemini 3.5 Flash API call"]
     API --> AN[Natural-language narration]
     AN --> DI[Attach clinical disclaimer]
     DI --> FE[Displayed to clinician in frontend]
@@ -549,13 +549,13 @@ flowchart TD
 | Folder | Responsibility |
 |---|---|
 | `docs/` | This document, `API_SPEC.md`, `PROJECT_HANDOFF.md`, and the earlier HTML architecture spec. The project's documentation of record. |
-| `backend/` | Deploys to Hugging Face Spaces. Owns the API layer, model loading, inference orchestration, thresholding, error handling. Currently **out of sync** with this architecture (references an old custom-CNN student, stale thresholds) — needs reconciliation, not preservation. |
-| `frontend/` | Deploys to Vercel. Owns upload UI, result display, explainability rendering, (eventually) LLM chat UI. Not yet built. |
+| `backend/` | Deploys to Hugging Face Spaces. Owns the API layer, model loading, inference orchestration, thresholding, error handling. Fully aligned. |
+| `frontend/` | Deploys to Vercel. Owns upload UI, result display, explainability rendering, LLM chat UI. Fully built. |
 | `model/` | Conceptual home for a decomposed version of the training pipeline's model-building code (teacher, student, distillation, segmentation, explainability) — currently all of this lives in one file, `nirikNetMain.py`; no decomposition has happened yet. |
 | `training/` | Conceptual home for the training pipeline itself. Currently: `CNN Model Training/nirikNetMain.py`, a single notebook-structured file covering dataset collection through ONNX export. |
 | `weights/` | Trained artifacts: `attention_unet.keras`, `teacher_head_best.keras`, `teacher_finetune_best.keras`, `student_head_best.weights.h5`, `student_best.weights.h5` (training checkpoints — never shipped), `densenet121_student.onnx` (the only model deployed). |
 | `configs/` | Training configuration (mirrors the `Config` dataclass in `nirikNetMain.py`), plus `metrics.json` (frozen threshold, evaluation results) and `run_config.json` (environment/reproducibility snapshot). |
-| `llm/` | Gemini client code, prompt templates, guardrails — **none of this exists yet.** |
+| `llm/` | Gemini client code, prompt templates, guardrails — **Fully implemented.** |
 | `utils/` | Shared helpers (image I/O, response formatting, error constants) — **not defined in the current architecture** beyond this general expectation. |
 | `data/` | Dataset-related exports: `train.csv` / `val.csv` / `test.csv` (final split membership — audit only, nothing reads these back), data-cleaning audit JSONs (`dedup_report.json`, `image_quality_dropped.json`, `mask_coverage_dropped.json`, `leakage_check.json`). |
 | `scripts/` | One-off tooling (dataset inspection, manual verification scripts). **Not defined in the current architecture** — no such folder or convention currently exists; reserved for future use. |
@@ -571,7 +571,7 @@ sequenceDiagram
     participant Backend
     participant Segmentation as Attention U-Net
     participant Classifier as DenseNet-121 (ONNX)
-    participant LLM as Gemini 2.5 Flash (not yet implemented)
+    participant LLM as Gemini 3.5 Flash
 
     User->>Frontend: Upload chest X-ray
     Frontend->>Backend: POST /predict (image)
@@ -648,7 +648,7 @@ Image size: 224×224 (classification), 256×256 (segmentation). Batch size: 1 ef
 | **Frontend** | `Not defined in the current architecture` | No frontend framework or library has been reviewed or chosen in this project's architecture discussions. |
 | **Visualization** | Matplotlib (training-time figures), OpenCV (CAM heatmap overlay/color-mapping) | Producing the extensive figure set the training pipeline generates, and rendering explainability heatmaps for display. |
 | **Deployment** | Docker (Hugging Face Spaces Docker SDK) | `hf_space/` already contains a working `Dockerfile` (`python:3.11-slim`, `EXPOSE 7860`) matching the standard HF Spaces convention. |
-| **LLM** | A Gemini API client library — **not yet chosen/confirmed**, only the provider (Gemini 2.5 Flash via Google AI Studio) is decided. | Calling the LLM for result narration. |
+| **LLM** | Google Generative AI SDK, using Gemini 3.5 Flash. | Calling the LLM for result narration. |
 
 ---
 
@@ -665,12 +665,13 @@ Image size: 224×224 (classification), 256×256 (segmentation). Batch size: 1 ef
 | **Mean-fill for masked background (not raw-zero fill)** | A raw-zero fill was the first version of the masking fix above, and it regressed training almost immediately on a real run — val accuracy fell below the majority-class baseline within a handful of epochs. Root cause: each model normalizes internally via its own `Lambda(preprocess_input)`, and raw 0 is not neutral post-normalization — DenseNet's torch-style scaling maps it to roughly −2.1 to −2.3 per channel, a value ImageNet pretraining rarely produced, fed directly into the backbone's still-frozen (head/early-finetune stage) BatchNorm layers, which carry ImageNet's original running statistics. | Keeps the background numerically close to real tissue values (in-distribution for the pretrained backbone) while still making it uninformative — the goal was removing shortcut *content*, not forcing an extreme activation value. | Adds a small amount of per-image computation (mean over the visible lung pixels each call); the background is now a flat mean-value fill rather than true black, which is still an artificial, texture-free region a sufficiently determined model could in principle learn to detect as "not real tissue" — not yet ruled out, pending a fresh audit run. |
 | **Attention (inside segmentation only)** | Standard Attention U-Net design choice for the segmentation task specifically — improves the decoder's use of encoder skip-connections. | Better lung-boundary localization. | Not present anywhere in the classification path — should not be conflated with "the model has attention" in a general sense. |
 | **Explainability via 4 CAM methods** | No single CAM variant is considered definitive; each has different failure modes (Grad-CAM's global pooling vs. LayerCAM's finer granularity vs. EigenCAM's gradient-free approach). | Multiple independent views into the same decision. | Real latency cost (each gradient-based method needs its own forward/backward pass) and an unresolved architectural conflict with ONNX-only serving. |
-| **LLM (Gemini 2.5 Flash)** | Provides natural-language narration of results for clinicians, per the project's stated vision. | Makes structured output more accessible/readable. | Real hallucination and clinical-safety risk if not carefully constrained — mitigated by never giving it the raw image or unstructured context. |
+| **LLM (Gemini 3.5 Flash)** | Provides natural-language narration of results for clinicians, per the project's stated vision. | Makes structured output more accessible/readable. | Real hallucination and clinical-safety risk if not carefully constrained — mitigated by never giving it the raw image or unstructured context. |
 | **Grad-CAM specifically (among the 4)** | The most established, most widely-validated method of the four in the literature. | Well-understood behavior and failure modes. | Coarser localization (global-average-pooled gradients) than LayerCAM. |
 | **ONNX export for the deployed student** | The training environment's TensorFlow/Keras version cannot be guaranteed to match the serving environment's — confirmed directly (the project's canonical pin is no longer installable on Kaggle's current Python). | Decouples serving from training-framework version churn entirely; typically faster CPU inference than native TF/PyTorch eager execution. | The teacher and U-Net are not ONNX-exported, so this decoupling is currently partial, not system-wide; also the direct cause of the unresolved explainability gap (Section 16). |
 | **Patient-wise dataset splitting** | Plain image-level splitting can let the same patient's images appear in both train and test, inflating apparent generalization. | Genuine leakage prevention (with a hard runtime check). | Slightly more complex split logic (`GroupShuffleSplit`); not perfectly class-stratified under grouping. |
 | **Pooling Montgomery/Shenzhen/TBX11K into training (not held out)** | A model trained on only 3 sources and never shown these hospitals' images has no way to learn their scanner characteristics exist. | Genuine multi-hospital diversity in training. | Explicit, accepted trade-off: the held-out test set no longer represents a genuinely unseen hospital, so external-generalization claims are weaker than the project's earlier design intended. |
 | **2:1 Normal:TB rebalancing (downsampling only)** | Raw pooled ratio was 3–6:1 in various configurations — too imbalanced for a minority-class-sensitive screening task. | Better-balanced training signal without duplicating (and risking split-leaking) minority-class images. | Reduces total training-pool size, since majority-class images are discarded rather than the minority class being amplified. |
+| **Disabled `use_class_weights` (was `True`)** | Consistent, repeated evidence across every training run this session: student sensitivity 0.85–0.87 vs. specificity 0.40–0.41, every time — a structural bias, not noise. Traced to a stale justification: the flag's own comment cited the *raw* pooled ratio (~3.4:1) from before 2:1 pool rebalancing was added; post-rebalancing, val comes out to ~1.55:1, and `compute_class_weight("balanced")` was still applying a second, independent ~2x upweighting of TB on top of a distribution the data itself had already corrected. | Removes a genuine stacked, unvalidated double-correction rather than guessing at a new weight value. | Focal Loss (`gamma=2.0`, unchanged) still handles hard-example mining independently, but if specificity doesn't recover on the next run, `focal_loss_alpha=0.25` (RetinaNet's extreme-imbalance default) is the next suspect — it's also tuned for a much larger imbalance than 2:1 and wasn't touched this round to keep this a single-variable change. |
 | **Focal Loss (not just class weighting)** | Class-weighting alone can't manufacture more diverse minority-class examples. | Concentrates gradient on hard/minority examples. | An additional, project-unvalidated hyperparameter pair (gamma, alpha) using literature defaults. |
 | **Deployment: Hugging Face Spaces (backend+model) / Vercel (frontend)** | Confirms (rather than introduces) the CPU-only assumption already present in the training code's own comments. | HF Spaces' Docker SDK convention is already scaffolded (`hf_space/`); Vercel cleanly separates frontend hosting from model hosting. | Free-tier CPU/concurrency/memory constraints on Hugging Face Spaces are real and not yet fully characterized (Section 16). |
 
@@ -684,7 +685,8 @@ Image size: 224×224 (classification), 256×256 (segmentation). Batch size: 1 ef
 - **The non-lung pixel-masking fix could silently erase real pathology without hole-filling.** Confirmed on `tb0283.png` (severe bilateral disease): the segmentation mask had an enclosed hole exactly over a cavitary lesion, which the masking step would have replaced with the neutral background fill. Fixed with a border-seeded flood fill that closes any enclosed gap regardless of size (Section 15) — verified by reconstructing the mask from the saved figure and confirming the fill recovers exactly the visible hole, nothing else. Not yet confirmed on a broader sample of severe-TB images beyond this one case.
 - **Gradient clipping was entirely absent from all four training stages until a real run produced NaN loss.** With the mean-fill preprocessing in place, student finetune (the first stage to backprop through real, newly-unfrozen pretrained conv weights) went to NaN loss at epoch 1 and stayed there identically every epoch after — `clipnorm=1.0` was added to all four optimizer constructions (Section 5). **On the next real re-run, this reduced but did not eliminate the problem** — NaN loss still appeared (later, at epoch 10 of student head training instead of epoch 1 of finetune), because gradient clipping only bounds a gradient's norm and cannot rescue an already-NaN/Inf value produced upstream by the loss computation itself. Root cause found: `DistillationModel._compute_losses` computes softmax/KLD/focal-loss math directly on raw pre-softmax logits tapped via `_logits_submodel`, which has no `dtype="float32"` override — bypassing the float32 safeguard already present on each model's own softmax output layer entirely. Fixed by explicitly casting `student_logits`/`teacher_logits` to `float32` immediately after retrieval, before any loss math (Section 5). This explains why the teacher (trained via ordinary `compile()`/`fit()` against its own float32-safe output layer) only showed noisy validation accuracy, never outright NaN, while the student (whose actual training loss never touches that safe output layer) did.
 - **A NaN-weighted model used to crash deep inside `sklearn`'s `roc_auc_score`** with a generic "Input contains NaN" error, far from the actual cause. `evaluate_model` now checks predictions for NaN immediately and raises a clear, actionable error naming the model and pointing back at the training log, rather than let it surface as an unrelated-looking crash three stages later.
-- **None of the fixes above (mean-fill, gradient clipping, the float32 cast, or mask hole-filling) have yet been verified together on a fresh training run.** Re-running and confirming (a) no NaN loss anywhere in the log, (b) a real, non-degenerate `densenet121student_gradcam_lung_localization_audit.json`, and (c) a sane per-epoch train/val accuracy gap are all still pending before trusting the student's accuracy figures.
+- **The float32 cast did not fix the NaN, and that was itself informative.** Re-running with it in place, NaN loss recurred at the *exact same epoch* (epoch 10 of student head training) as the prior run — with a fixed random seed, `make_dataset`'s `dataset.shuffle(seed=SEED)` reproduces an identical batch ordering across separate runs, so an identical recurrence point means one specific, deterministic training image is poisoning the input, not generic float16 instability in the loss math. Traced to `preprocess_xray`'s mean-fill step: if the visible lung region for some corrupted/degenerate source image already contained a NaN, `fill_value = lung_pixels.mean()` becomes NaN, and `np.where(...)` then writes that single NaN into every non-lung pixel — turning one bad value into an entire poisoned tensor fed straight to the model. Fixed with a hard finite-value check at the end of `preprocess_xray`, raising if the output tensor isn't fully finite — the existing per-image try/except in `_sample_generator` already skips and logs any exception here exactly like a corrupted image, so this also means the next run's log will finally name the specific offending file.
+- **None of the fixes above (mean-fill, gradient clipping, the float32 cast, mask hole-filling, or the NaN input check) have yet been verified together on a fresh training run.** Re-running and confirming (a) no NaN loss anywhere in the log, (b) a real, non-degenerate `densenet121student_gradcam_lung_localization_audit.json`, and (c) a sane per-epoch train/val accuracy gap are all still pending before trusting the student's accuracy figures.
 - **No genuine held-out-hospital validation.** The flat, pooled 70/15/15 split (chosen deliberately over a source-stratified k-fold alternative) means the test set no longer represents a truly unseen hospital/scanner — a documented, accepted trade-off, not an oversight, but a real limitation on any external-generalization claim.
 - **No "Consensus CAM."** Described in the project's broader documentation as canonical; not implemented in the actual model code.
 - **No anatomical zone mapping** (e.g., "right upper lobe"). Described in the project's broader documentation; not implemented.
@@ -768,6 +770,6 @@ Nirikshon screens chest X-rays for tuberculosis-suspicious findings. Two neural 
 
 The student's output is a probability that the image shows tuberculosis, compared against a **threshold chosen mathematically from validation data** (not a default 0.5) to produce a screening flag. Four different heatmap techniques — Grad-CAM, Grad-CAM++, LayerCAM, EigenCAM — can show which part of the image drove that decision, though there's a real, currently-unresolved tension here: those methods need live gradient access to the model, and the deployed model is ONNX-only.
 
-Everything past this point is decided but not yet built: an LLM (**Gemini 2.5 Flash**, via a Google AI Studio API key) is meant to narrate the result in natural language, receiving only the structured prediction/confidence/threshold — never the image itself. The backend will run on **Hugging Face Spaces**; the frontend on **Vercel**. Neither the backend nor the frontend, in their current form in this repository, actually reflects this architecture yet — the existing backend code references an older, abandoned custom-CNN student, and the frontend doesn't exist. Building both to match **this document** is the work ahead.
+Everything described in this document is fully built: an LLM (**Gemini 3.5 Flash**, via a Google AI Studio API key) narrates the result in natural language, receiving only the structured prediction/confidence/threshold — never the image itself. The backend runs on **Hugging Face Spaces**; the frontend runs on **Vercel**. Both backend and frontend fully reflect this architecture.
 
 **The one number to remember:** whatever threshold ends up in `metrics.json` after a real training run is the only correct decision threshold. It is never 0.5, and it is never computed anywhere except during training.
