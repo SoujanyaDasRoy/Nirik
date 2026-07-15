@@ -152,6 +152,31 @@ export function ScreeningWorkstation({
       )
     : null;
 
+  // Determine colors based on condition and risk
+  const isTbCondition = activeDiagnosis?.condition.toLowerCase().includes("tuberculosis") ?? false;
+  const isHighRisk = activeDiagnosis?.riskLevel === "High";
+  const resultColors = isTbCondition
+    ? isHighRisk
+      ? {
+          text: "text-red-500",
+          bgGlow: "bg-red-500",
+          progress: "[&>div]:bg-red-500",
+          badge: "bg-red-500/20 text-red-500 border-red-500/30",
+        }
+      : {
+          text: "text-amber-500",
+          bgGlow: "bg-amber-500",
+          progress: "[&>div]:bg-amber-500",
+          badge: "bg-amber-500/20 text-amber-500 border-amber-500/30",
+        }
+    : {
+        text: "text-emerald-400",
+        bgGlow: "bg-emerald-500",
+        progress: "[&>div]:bg-emerald-500",
+        badge: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
+      };
+
+
   // View mode state (original, heatmap, side-by-side, split, longitudinal)
   const [viewMode, setViewMode] = useState<
     "original" | "heatmap" | "side-by-side" | "split" | "longitudinal"
@@ -645,9 +670,7 @@ export function ScreeningWorkstation({
           <div className={`absolute -top-20 -right-20 w-64 h-64 blur-[80px] opacity-20 rounded-full pointer-events-none transition-colors duration-1000 ${
             activeResult?.status === "loading" || activeResult?.status === "pending"
               ? "bg-[#ffffff]"
-              : activeDiagnosis?.riskLevel === "High"
-              ? "bg-red-500"
-              : "bg-emerald-500"
+              : resultColors.bgGlow
           }`} />
 
           {activeResult?.status === "error" ? (
@@ -673,9 +696,7 @@ export function ScreeningWorkstation({
             </div>
           ) : (
             <div className="relative z-10">
-              <h3 className={`text-6xl md:text-7xl font-bold tracking-[-3px] mb-6 drop-shadow-md ${
-                activeDiagnosis?.riskLevel === "High" ? "text-red-500" : "text-emerald-400"
-              }`}>
+              <h3 className={`text-6xl md:text-7xl font-bold tracking-[-3px] mb-6 drop-shadow-md ${resultColors.text}`}>
                 {activeDiagnosis?.condition ?? "Normal"}
               </h3>
               
@@ -688,11 +709,7 @@ export function ScreeningWorkstation({
                 </div>
                 <Progress
                   value={(activeDiagnosis?.confidence ?? 0) * 100}
-                  className={`h-3 bg-[#262626] ${
-                    activeDiagnosis?.riskLevel === "High"
-                      ? "[&>div]:bg-red-500"
-                      : "[&>div]:bg-emerald-500"
-                  }`}
+                  className={`h-3 bg-[#262626] ${resultColors.progress}`}
                 />
               </div>
 
@@ -700,11 +717,7 @@ export function ScreeningWorkstation({
                 <Badge className="bg-[#262626] text-[#ffffff] hover:bg-[#333333] border border-[#262626] text-[12px] uppercase font-bold py-1.5 px-4 rounded-full">
                   {activeResult?.segmentation_active ? "U-Net Segmented" : "Direct Input"}
                 </Badge>
-                <Badge className={`uppercase font-bold text-[12px] py-1.5 px-4 rounded-full border ${
-                  activeDiagnosis?.riskLevel === "High"
-                    ? "bg-red-500/20 text-red-500 border-red-500/30"
-                    : "bg-emerald-500/20 text-emerald-400 border-emerald-500/30"
-                }`}>
+                <Badge className={`uppercase font-bold text-[12px] py-1.5 px-4 rounded-full border ${resultColors.badge}`}>
                   {activeDiagnosis?.riskLevel} Risk
                 </Badge>
               </div>
@@ -734,10 +747,10 @@ export function ScreeningWorkstation({
           <div className="w-full p-8 rounded-[24px] bg-[#141414] border border-[#262626] shadow-xl relative overflow-hidden text-[#cccccc] text-[15px] leading-relaxed">
             <div className="space-y-4">
               <p>
-                <strong>AI Explanation:</strong> Based on the DenseNet-121 model analysis, the radiograph exhibits features {activeDiagnosis?.riskLevel === "High" ? "strongly indicative of Pulmonary Tuberculosis" : "consistent with normal lung anatomy"}. The confidence level of this prediction is {((activeDiagnosis?.confidence ?? 0) * 100).toFixed(1)}%.
+                <strong>AI Explanation:</strong> Based on the DenseNet-121 model analysis, the radiograph exhibits features {isTbCondition ? "strongly indicative of Pulmonary Tuberculosis" : "consistent with normal lung anatomy"}. The confidence level of this prediction is {((activeDiagnosis?.confidence ?? 0) * 100).toFixed(1)}%.
               </p>
               
-              {activeDiagnosis?.riskLevel === "High" ? (
+              {isTbCondition ? (
                 <>
                   <p>
                     <strong>Key Observations:</strong> The Grad-CAM heatmap highlights specific anatomical regions of interest (typically upper lung zones or apical regions) where the neural network detected pathological textures or opacities correlating with active TB infection.
