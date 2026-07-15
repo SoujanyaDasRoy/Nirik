@@ -23,6 +23,9 @@ import {
   Loader2,
   LayoutDashboard,
   Search,
+  RefreshCw,
+  MoreVertical,
+  Bot,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
