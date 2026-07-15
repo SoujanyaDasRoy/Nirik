@@ -590,41 +590,50 @@ export function ScreeningWorkstation({
   return (
     <div className="w-full max-w-[900px] mx-auto bg-[#090909] text-[#ffffff] flex flex-col gap-10 pb-20">
       
-      {/* 1. ORIGINAL X-RAY */}
+      {/* 1+2. X-RAY + GRAD-CAM SIDE-BY-SIDE */}
       <section className="flex flex-col gap-3">
-        <h2 className="text-[20px] font-medium tracking-tight flex items-center gap-2">
-          <Eye className="w-5 h-5 text-[#999999]" />
-          Original X-Ray
-        </h2>
-        <div className="w-full min-h-[400px] md:h-[600px] rounded-[24px] overflow-hidden bg-[#141414] border border-[#262626] shadow-xl relative">
-          <DicomViewer
-            imageBase64={activeResult?.original_image ?? ""}
-            hasHeatmap={false}
-            label="Original Scan"
-            viewMode="original"
-          />
+        <div className={`grid gap-4 ${
+          activeResult?.status === "success" && (activeResult?.heatmaps?.[xaiMethod] || activeResult?.heatmap_image)
+            ? "grid-cols-1 md:grid-cols-2"
+            : "grid-cols-1"
+        }`}>
+          {/* Original X-Ray */}
+          <div className="flex flex-col gap-2">
+            <h2 className="text-[16px] font-medium tracking-tight flex items-center gap-2 text-[#999999]">
+              <Eye className="w-4 h-4" />
+              Original X-Ray
+            </h2>
+            <div className="w-full h-[340px] rounded-[20px] overflow-hidden bg-[#141414] border border-[#262626] shadow-xl relative">
+              <DicomViewer
+                imageBase64={activeResult?.original_image ?? ""}
+                hasHeatmap={false}
+                label="Original Scan"
+                viewMode="original"
+              />
+            </div>
+          </div>
+
+          {/* Grad-CAM Overlay – only shown when available */}
+          {activeResult?.status === "success" && (activeResult?.heatmaps?.[xaiMethod] || activeResult?.heatmap_image) && (
+            <div className="flex flex-col gap-2 animate-fadein">
+              <h2 className="text-[16px] font-medium tracking-tight flex items-center gap-2 text-[#0099ff]">
+                <Layers className="w-4 h-4" />
+                Grad-CAM Overlay
+              </h2>
+              <div className="w-full h-[340px] rounded-[20px] overflow-hidden bg-[#141414] border border-[#262626] shadow-xl relative">
+                <DicomViewer
+                  imageBase64={activeResult?.original_image ?? ""}
+                  heatmapBase64={activeResult?.heatmaps?.[xaiMethod] ?? activeResult?.heatmap_image ?? ""}
+                  hasHeatmap={true}
+                  label="Activation Heatmap"
+                  viewMode="heatmap"
+                  heatmapOpacity={0.55}
+                />
+              </div>
+            </div>
+          )}
         </div>
       </section>
-
-      {/* 2. GRAD-CAM OVERLAY */}
-      {activeResult?.status === "success" && (activeResult?.heatmaps?.[xaiMethod] || activeResult?.heatmap_image) && (
-        <section className="flex flex-col gap-3 animate-fadein">
-          <h2 className="text-[20px] font-medium tracking-tight flex items-center gap-2">
-            <Layers className="w-5 h-5 text-[#0099ff]" />
-            Grad-CAM Overlay
-          </h2>
-          <div className="w-full min-h-[400px] md:h-[600px] rounded-[24px] overflow-hidden bg-[#141414] border border-[#262626] shadow-xl relative">
-            <DicomViewer
-              imageBase64={activeResult?.original_image ?? ""}
-              heatmapBase64={activeResult?.heatmaps?.[xaiMethod] ?? activeResult?.heatmap_image ?? ""}
-              hasHeatmap={true}
-              label="Activation Heatmap"
-              viewMode="heatmap"
-              heatmapOpacity={0.55}
-            />
-          </div>
-        </section>
-      )}
 
       {/* 3. PREDICTION + CONFIDENCE */}
       <section className="flex flex-col gap-3">
@@ -638,7 +647,7 @@ export function ScreeningWorkstation({
               ? "bg-[#ffffff]"
               : activeDiagnosis?.riskLevel === "High"
               ? "bg-red-500"
-              : "bg-blue-500"
+              : "bg-emerald-500"
           }`} />
 
           {activeResult?.status === "error" ? (
@@ -665,7 +674,7 @@ export function ScreeningWorkstation({
           ) : (
             <div className="relative z-10">
               <h3 className={`text-6xl md:text-7xl font-bold tracking-[-3px] mb-6 drop-shadow-md ${
-                activeDiagnosis?.riskLevel === "High" ? "text-red-500" : "text-blue-500"
+                activeDiagnosis?.riskLevel === "High" ? "text-red-500" : "text-emerald-400"
               }`}>
                 {activeDiagnosis?.condition ?? "Normal"}
               </h3>
@@ -682,7 +691,7 @@ export function ScreeningWorkstation({
                   className={`h-3 bg-[#262626] ${
                     activeDiagnosis?.riskLevel === "High"
                       ? "[&>div]:bg-red-500"
-                      : "[&>div]:bg-blue-500"
+                      : "[&>div]:bg-emerald-500"
                   }`}
                 />
               </div>
@@ -691,10 +700,10 @@ export function ScreeningWorkstation({
                 <Badge className="bg-[#262626] text-[#ffffff] hover:bg-[#333333] border border-[#262626] text-[12px] uppercase font-bold py-1.5 px-4 rounded-full">
                   {activeResult?.segmentation_active ? "U-Net Segmented" : "Direct Input"}
                 </Badge>
-                <Badge className={`uppercase font-bold text-[12px] py-1.5 px-4 rounded-full border border-[#262626] ${
+                <Badge className={`uppercase font-bold text-[12px] py-1.5 px-4 rounded-full border ${
                   activeDiagnosis?.riskLevel === "High"
-                    ? "bg-red-500/20 text-red-500"
-                    : "bg-blue-500/20 text-blue-500"
+                    ? "bg-red-500/20 text-red-500 border-red-500/30"
+                    : "bg-emerald-500/20 text-emerald-400 border-emerald-500/30"
                 }`}>
                   {activeDiagnosis?.riskLevel} Risk
                 </Badge>
