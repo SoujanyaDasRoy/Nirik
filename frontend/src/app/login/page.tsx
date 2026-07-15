@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Activity, Lock, User, CheckCircle, AlertCircle, ArrowUpRight } from "lucide-react";
+import { Activity, CheckCircle, AlertCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://projectmantra-nirikshon-backend.hf.space";
@@ -40,10 +40,9 @@ export default function LoginPage() {
         localStorage.setItem("nirikshon_user", JSON.stringify({ username: data.username, role: data.role }));
         router.push("/diagnose");
       } else {
-        // Correctly handle the error from the new endpoint format, or fallback
         const errMessage = typeof data.error === 'string' 
           ? data.error 
-          : (data.error?.message || "Invalid username or password.");
+          : (data.error?.message || "Invalid credentials.");
         setError(errMessage);
       }
     } catch (err) {
@@ -55,39 +54,48 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#090909] flex flex-col font-sans transition-colors duration-200 overflow-hidden relative">
-      {/* Background glow effects */}
-      <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-[#0099ff] opacity-[0.05] blur-[120px] rounded-full pointer-events-none" />
-      <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] bg-[#d44df0] opacity-[0.05] blur-[120px] rounded-full pointer-events-none" />
+    <div className="min-h-screen bg-[#090909] flex flex-col font-sans overflow-hidden relative selection:bg-[#0099ff] selection:text-[#ffffff]">
       
-      <div className="flex-1 flex flex-col justify-center items-center p-6 w-full max-w-md mx-auto space-y-8 z-10 relative">
+      {/* Framer-style Top Nav */}
+      <nav className="h-[56px] bg-[#090909] flex items-center justify-between px-6 z-20 sticky top-0 border-b border-[#262626]">
+        <div className="flex items-center gap-2 cursor-pointer" onClick={() => router.push("/")}>
+          <Activity className="w-5 h-5 text-[#ffffff]" />
+          <span className="text-[#ffffff] text-[15px] font-medium tracking-[-0.15px]">Nirikshon</span>
+        </div>
+        <button
+          onClick={() => router.push("/")}
+          className="text-[#999999] text-[13px] font-medium hover:text-[#ffffff] transition-colors"
+        >
+          Return to Overview
+        </button>
+      </nav>
+
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col justify-center items-center p-6 w-full max-w-lg mx-auto z-10 relative">
         
+        {/* Framer-style Display Typography */}
         <motion.div 
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-          className="text-center space-y-4"
+          className="text-center space-y-6 w-full mb-12"
         >
-          <div className="inline-flex w-14 h-14 rounded-full bg-[#141414] border border-[#262626] items-center justify-center text-[#ffffff] shadow-2xl">
-            <Activity className="w-6 h-6" strokeWidth={1.5} />
-          </div>
-          <div>
-            <h2 className="text-[28px] font-medium tracking-tight text-[#ffffff] leading-tight">
-              Clinical Ingress
-            </h2>
-            <p className="text-[14px] text-[#999999] mt-2 max-w-xs mx-auto">
-              Secure authentication for the Nirikshon AI workstation.
-            </p>
-          </div>
+          <h2 className="text-[42px] sm:text-[62px] font-medium tracking-[-2px] sm:tracking-[-3.1px] text-[#ffffff] leading-[1.00]">
+            Clinical Ingress
+          </h2>
+          <p className="text-[24px] text-[#999999] leading-[1.30] tracking-[-0.01px] max-w-sm mx-auto">
+            Secure authentication for the Nirikshon AI diagnostic workspace.
+          </p>
         </motion.div>
 
+        {/* Form Container (Charcoal Surface) */}
         <motion.div
-          initial={{ opacity: 0, y: 20, scale: 0.95 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
           className="w-full"
         >
-          <div className="bg-[#141414] border border-[#262626] rounded-[24px] shadow-2xl p-8 backdrop-blur-xl">
+          <div className="bg-[#141414] rounded-[20px] p-8 w-full">
             <AnimatePresence mode="wait">
               {error && (
                 <motion.div
@@ -96,96 +104,76 @@ export default function LoginPage() {
                   exit={{ opacity: 0, height: 0, marginBottom: 0 }}
                   className="overflow-hidden"
                 >
-                  <div className="p-3 border border-red-500/20 bg-red-500/10 rounded-xl flex items-start gap-2.5 text-[13px] text-red-400">
-                    <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
-                    <span>{error}</span>
+                  <div className="p-4 bg-[#090909] border border-[#ff5577]/30 rounded-[10px] flex items-start gap-3 text-[14px] text-[#ff5577] font-medium tracking-[-0.14px]">
+                    <AlertCircle className="w-5 h-5 flex-shrink-0" />
+                    <span className="mt-[2px]">{error}</span>
                   </div>
                 </motion.div>
               )}
             </AnimatePresence>
 
-            <form onSubmit={handleLogin} className="space-y-5">
-              <div className="space-y-2">
-                <label className="text-[#999999] font-medium text-[13px]">
+            <form onSubmit={handleLogin} className="space-y-6">
+              <div className="space-y-3">
+                <label className="text-[#999999] text-[15px] font-medium tracking-[-0.15px]">
                   Credentialed Username
                 </label>
-                <div className="relative group">
-                  <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#666666] group-focus-within:text-[#ffffff] transition-colors" />
-                  <input
-                    type="text"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    placeholder="e.g. reviewer"
-                    className="w-full pl-11 pr-4 py-3 border border-[#262626] rounded-xl bg-[#090909] text-[#ffffff] focus:border-[#ffffff]/50 focus:ring-1 focus:ring-[#ffffff]/50 outline-none h-12 text-[14px] transition-all placeholder:text-[#444444]"
-                    disabled={loading}
-                  />
-                </div>
+                <input
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder="e.g. reviewer"
+                  className="w-full px-[14px] py-[10px] bg-[#090909] text-[#ffffff] text-[15px] rounded-[10px] border border-[#262626] outline-none transition-shadow focus:shadow-[0_0_0_1px_rgba(0,153,255,0.25)] focus:border-[#0099ff] placeholder:text-[#666666]"
+                  disabled={loading}
+                />
               </div>
 
-              <div className="space-y-2">
-                <label className="text-[#999999] font-medium text-[13px]">
+              <div className="space-y-3">
+                <label className="text-[#999999] text-[15px] font-medium tracking-[-0.15px]">
                   Account Password
                 </label>
-                <div className="relative group">
-                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#666666] group-focus-within:text-[#ffffff] transition-colors" />
-                  <input
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••"
-                    className="w-full pl-11 pr-4 py-3 border border-[#262626] rounded-xl bg-[#090909] text-[#ffffff] focus:border-[#ffffff]/50 focus:ring-1 focus:ring-[#ffffff]/50 outline-none h-12 text-[14px] transition-all placeholder:text-[#444444]"
-                    disabled={loading}
-                  />
-                </div>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="w-full px-[14px] py-[10px] bg-[#090909] text-[#ffffff] text-[15px] rounded-[10px] border border-[#262626] outline-none transition-shadow focus:shadow-[0_0_0_1px_rgba(0,153,255,0.25)] focus:border-[#0099ff] placeholder:text-[#666666]"
+                  disabled={loading}
+                />
               </div>
 
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
+              <button
                 type="submit"
                 disabled={loading}
-                className="w-full h-12 text-[14px] font-semibold rounded-xl mt-4 bg-[#ffffff] text-[#000000] hover:bg-[#e0e0e0] transition-colors flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full py-[15px] px-[15px] mt-4 bg-[#ffffff] text-[#000000] rounded-full text-[15px] font-semibold tracking-[-0.14px] hover:scale-[1.02] active:scale-100 transition-transform cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? "Authenticating..." : "Sign In to Workstation"}
-                {!loading && <ArrowUpRight className="w-4 h-4" />}
-              </motion.button>
+              </button>
             </form>
           </div>
         </motion.div>
 
+        {/* Framer-style Seed Accounts Box */}
         <motion.div 
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.5, delay: 0.3 }}
-          className="w-full"
+          className="w-full mt-8"
         >
-          <div className="p-4 border border-[#262626] bg-[#141414]/50 rounded-xl flex flex-col gap-3 text-[13px] leading-relaxed text-[#999999]">
-            <p className="font-semibold text-[#ffffff] flex items-center gap-1.5">
-              <CheckCircle className="w-4 h-4 text-[#10b981]" /> Default Seed Accounts
+          <div className="bg-[#090909] border border-[#262626] rounded-[15px] p-6 space-y-4">
+            <p className="text-[13px] font-medium text-[#999999] tracking-[-0.13px] flex items-center gap-2">
+              <CheckCircle className="w-4 h-4 text-[#22c55e]" /> Default Seed Accounts
             </p>
-            <div className="flex justify-between items-center bg-[#090909] border border-[#262626] p-2.5 rounded-lg">
-              <span>Reviewer</span>
-              <span className="font-mono text-[#ffffff] tracking-wide">reviewer / password123</span>
-            </div>
-            <div className="flex justify-between items-center bg-[#090909] border border-[#262626] p-2.5 rounded-lg">
-              <span>Admin</span>
-              <span className="font-mono text-[#ffffff] tracking-wide">admin / password123</span>
+            <div className="flex flex-col gap-3">
+              <div className="flex justify-between items-center pb-3 border-b border-[#1a1a1a]">
+                <span className="text-[14px] font-medium text-[#ffffff]">Reviewer</span>
+                <span className="font-mono text-[#999999] text-[13px]">reviewer / password123</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-[14px] font-medium text-[#ffffff]">Admin</span>
+                <span className="font-mono text-[#999999] text-[13px]">admin / password123</span>
+              </div>
             </div>
           </div>
-        </motion.div>
-
-        <motion.div 
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.5, delay: 0.4 }}
-          className="text-center mt-4"
-        >
-          <button
-            onClick={() => router.push("/")}
-            className="text-[13px] text-[#666666] hover:text-[#ffffff] font-medium transition-colors cursor-pointer"
-          >
-            ← Return to Overview
-          </button>
         </motion.div>
 
       </div>

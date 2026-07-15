@@ -58,25 +58,25 @@ export default function AboutPage() {
         }}
       >
         <div className="h-16 max-w-[1199px] mx-auto px-6 flex items-center justify-between">
-          <div className="flex items-center gap-8">
+          <div className="flex items-center gap-4 sm:gap-8">
             <Link href="/" className="flex items-center gap-2 cursor-pointer relative z-10 group">
-              <img src="/nirikshon_logo.png" alt="Nirikshon Logo" className="h-[64px] w-auto object-contain transition-transform hover:scale-105 origin-left" />
+              <img src="/nirikshon_logo.png" alt="Nirikshon Logo" className="h-[48px] sm:h-[64px] w-auto object-contain transition-transform hover:scale-105 origin-left" />
             </Link>
-            <span className="hidden md:inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-medium tracking-wide bg-[#141414] text-[#999999] border border-[#262626]">
+            <span className="hidden sm:inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-medium tracking-wide bg-[#141414] text-[#999999] border border-[#262626]">
               Research Prototype
             </span>
           </div>
           
-          <div className="flex items-center gap-6">
+          <div className="flex items-center gap-3 sm:gap-6">
             <button
               onClick={() => document.getElementById("medical-disclaimer")?.scrollIntoView({ behavior: "smooth", block: "center" })}
-              className="text-[14px] font-medium text-[#E0E0E0] hover:text-[#ffffff] transition-colors"
+              className="hidden sm:inline-block text-[14px] font-medium text-[#E0E0E0] hover:text-[#ffffff] transition-colors"
             >
               Disclaimer
             </button>
             <button
               onClick={() => document.getElementById("model-section")?.scrollIntoView({ behavior: "smooth" })}
-              className="text-[14px] font-medium text-[#E0E0E0] hover:text-[#ffffff] transition-colors"
+              className="hidden sm:inline-block text-[14px] font-medium text-[#E0E0E0] hover:text-[#ffffff] transition-colors"
             >
               Model Results
             </button>
@@ -85,14 +85,14 @@ export default function AboutPage() {
                 if (canLaunch) router.push("/diagnose");
                 else document.getElementById("medical-disclaimer")?.scrollIntoView({ behavior: "smooth", block: "center" });
               }}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-full font-semibold text-[14px] transition-all hover:scale-[1.02] shadow-lg shadow-white/5 hover:bg-[#e0e0e0]"
+              className="flex items-center gap-1.5 sm:gap-2 px-4 py-2 rounded-full font-semibold text-[13px] sm:text-[14px] transition-all hover:scale-[1.02] shadow-lg shadow-white/5 hover:bg-[#e0e0e0]"
               style={{
                 backgroundColor: "#ffffff",
                 color: "#000000",
                 border: "1px solid transparent"
               }}
             >
-              Launch <ArrowRight className="w-4 h-4" />
+              Launch <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </button>
           </div>
         </div>
@@ -191,16 +191,16 @@ export default function AboutPage() {
             <p>• <strong className="text-[#ffffff]">Consult a Doctor.</strong> If any result is positive, please consult a licensed physician for confirmatory testing (GeneXpert, sputum smear).</p>
             <p>• <strong className="text-[#ffffff]">Academic Use Only.</strong> Built for a final year project demonstration. Not for real-world patient deployment.</p>
           </div>
-          <div className="flex flex-col sm:flex-row items-center gap-4 pt-6 border-t border-[#262626] justify-between">
-            <div className="flex items-center gap-4 flex-1">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 pt-6 border-t border-[#262626] justify-between">
+            <div className="flex items-start gap-3 flex-1">
               <input
                 id="disclaimer-accept"
                 type="checkbox"
                 checked={accepted}
                 onChange={e => setAccepted(e.target.checked)}
-                className="w-5 h-5 cursor-pointer appearance-none rounded-[6px] border border-[#262626] bg-[#090909] checked:bg-[#0099ff] checked:border-[#0099ff] transition-colors relative shrink-0"
+                className="w-5 h-5 cursor-pointer appearance-none rounded-[6px] border border-[#262626] bg-[#090909] checked:bg-[#0099ff] checked:border-[#0099ff] transition-colors relative shrink-0 mt-0.5"
               />
-              <label htmlFor="disclaimer-accept" className="text-[15px] font-medium cursor-pointer text-[#ffffff]">
+              <label htmlFor="disclaimer-accept" className="text-[14px] sm:text-[15px] font-medium cursor-pointer text-[#ffffff] leading-snug">
                 I understand this is not a clinical tool and will consult a doctor for medical decisions.
               </label>
             </div>
@@ -223,7 +223,7 @@ export default function AboutPage() {
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-[13px] font-medium tracking-wide bg-[#141414] text-[#ffffff] border border-[#262626]">
             Platform Architecture
           </div>
-          <h2 className="text-[52px] font-medium tracking-[-2.5px] leading-[1]">Decoupled & Modular</h2>
+          <h2 className="text-[32px] md:text-[52px] font-medium tracking-[-1.5px] md:tracking-[-2.5px] leading-[1.1] md:leading-[1]">Decoupled & Modular</h2>
           <p className="text-[18px] text-[#999999] leading-[1.3] tracking-[-0.18px]">
             Engineered for high performance, clinical safety, and seamless LLM integration.
           </p>
@@ -271,7 +271,7 @@ export default function AboutPage() {
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-[13px] font-medium tracking-wide bg-[#141414] text-[#ffffff] border border-[#262626]">
             Validated Model Performance
           </div>
-          <h2 className="text-[52px] font-medium tracking-[-2.5px] leading-[1]">Real Results on Unseen Data</h2>
+          <h2 className="text-[32px] md:text-[52px] font-medium tracking-[-1.5px] md:tracking-[-2.5px] leading-[1.1] md:leading-[1]">Real Results on Unseen Data</h2>
           <p className="text-[18px] text-[#999999] leading-[1.3] tracking-[-0.18px]">
             Comprehensive evaluation metrics and visualizations from the held-out test cohort.
           </p>
