@@ -144,16 +144,10 @@ export function usePrediction(
 
         setResults(prev => {
           const next = [...prev];
-          // Revoke the object URL for this index since we're replacing it with backend data
+          // Do not revoke the object URL here, as we need it for original_image if backend doesn't provide one.
+          // The useEffect will clean it up when the result is removed.
           const prevUrl = objectUrls.current.get(idx);
-          if (prevUrl) {
-            try {
-              URL.revokeObjectURL(prevUrl);
-            } catch (e) {
-              console.warn('Failed to revoke object URL on success:', e);
-            }
-            objectUrls.current.delete(idx);
-          }
+
 
           next[idx] = {
             filename: file.name,
@@ -171,7 +165,7 @@ export function usePrediction(
                modality: "CR",
                study_date: new Date().toISOString().split('T')[0]
             },
-            original_image: data.original_image || null,
+            original_image: data.original_image || prevUrl || null,
             heatmap_image: data.explainability?.gradcam_plus_plus || data.explainability?.gradcam || null,
             study_id: data.request_id || "unknown",
             image_quality: data.image_quality || {
