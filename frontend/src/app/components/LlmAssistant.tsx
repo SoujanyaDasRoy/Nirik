@@ -57,7 +57,33 @@ export default function LlmAssistant({ activeResult }: { activeResult: AnalysisR
             confidence: activeResult?.confidence || 0,
             threshold: activeResult?.threshold_used || 0.5,
             patientId: activeResult?.metadata?.patient_id || "Unknown Patient",
-            isTb: activeResult?.is_tb || false
+            patientAge: activeResult?.metadata?.patient_age || "Unknown",
+            patientSex: activeResult?.metadata?.patient_sex || "Unknown",
+            view: "PA",
+            imageQuality: activeResult?.image_quality ? {
+              exposure: activeResult.image_quality.exposure,
+              coverage: activeResult.image_quality.coverage,
+              resolution: activeResult.image_quality.resolution,
+              qualityScore: activeResult.image_quality.quality_score,
+            } : null,
+            isTb: activeResult?.is_tb || false,
+            xaiResults: activeResult?.xai_results ? {
+              summary: activeResult.xai_results.summary,
+              ranking: activeResult.xai_results.ranking,
+              metrics: activeResult.xai_results.metrics,
+              rois: activeResult.xai_results.rois.map(r => ({
+                id: r.id,
+                location: r.location,
+                contribution: r.contribution_pct,
+                activation: r.activation_score
+              }))
+            } : null,
+            observations: activeResult?.clinical_observations ? activeResult.clinical_observations.map(o => ({
+              label: o.label,
+              location: o.location,
+              significance: o.clinical_significance,
+              narrative: o.narrative,
+            })) : []
           }
         }),
       });
