@@ -67,18 +67,18 @@ export default function LlmAssistant({ activeResult }: { activeResult: AnalysisR
               qualityScore: activeResult.image_quality.quality_score,
             } : null,
             isTb: activeResult?.is_tb || false,
-            xaiResults: activeResult?.xai_results ? {
+            xaiResults: (activeResult?.xai_results && Array.isArray((activeResult.xai_results as any).rois)) ? {
               summary: activeResult.xai_results.summary,
               ranking: activeResult.xai_results.ranking,
               metrics: activeResult.xai_results.metrics,
-              rois: activeResult.xai_results.rois.map(r => ({
+              rois: (activeResult.xai_results as any).rois.map((r: any) => ({
                 id: r.id,
                 location: r.location,
                 contribution: r.contribution_pct,
                 activation: r.activation_score
               }))
             } : null,
-            observations: activeResult?.clinical_observations ? activeResult.clinical_observations.map(o => ({
+            observations: Array.isArray(activeResult?.clinical_observations) ? activeResult.clinical_observations.map(o => ({
               label: o.label,
               location: o.location,
               significance: o.clinical_significance,
