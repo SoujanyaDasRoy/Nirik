@@ -178,7 +178,8 @@ export function usePrediction(
                warnings: []
             },
             heatmaps: data.explainability || null,
-            xai_results: data.explainability || null,
+            xai_results: data.xai_results || data.explainability || null,
+            clinical_observations: data.clinical_observations || data.explainability?.clinical_observations || null,
             demo_mode: data.demo_mode || false,
             saliency_fallback: data.saliency_fallback || false,
             findings: data.findings || [],
