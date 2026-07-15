@@ -47,38 +47,28 @@ export default function DiagnosePage() {
 
   // ── Session check ─────────────────────────────────────
   useEffect(() => {
-    const checkUserSession = async () => {
+    const checkUserSession = () => {
       try {
-        const res = await fetch(`${API_BASE}/session`, { credentials: "include" });
-        if (res.ok) {
-          const data = await res.json();
-          if (data.authenticated) {
-            setSessionUser({ username: data.username, role: data.role });
+        const userStr = localStorage.getItem("nirikshon_user");
+        if (userStr) {
+          const user = JSON.parse(userStr);
+          if (user && user.username) {
+            setSessionUser({ username: user.username, role: user.role || "reviewer" });
             setCheckingSession(false);
-          } else {
-            router.push("/login");
+            return;
           }
-        } else {
-          router.push("/login");
         }
-      } catch {
-        router.push("/login");
+      } catch (e) {
+        console.error("Failed to parse user session", e);
       }
+      router.push("/login");
     };
     checkUserSession();
   }, [router]);
 
-  const handleLogout = async () => {
-    try {
-      const res = await fetch(`${API_BASE}/logout`, { method: "POST", credentials: "include" });
-      if (res.ok) {
-        localStorage.removeItem("nirikshon_user");
-        router.push("/login");
-      }
-    } catch {
-      localStorage.removeItem("nirikshon_user");
-      router.push("/login");
-    }
+  const handleLogout = () => {
+    localStorage.removeItem("nirikshon_user");
+    router.push("/login");
   };
 
   const handleFeedbackSaved = (override: string | null, note: string, annotatedB64: string, comments?: string, reviewer?: string) => {
