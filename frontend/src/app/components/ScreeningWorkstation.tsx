@@ -141,7 +141,7 @@ export function ScreeningWorkstation({
     window.addEventListener("nirikshon_threshold_changed", handler);
     return () => window.removeEventListener("nirikshon_threshold_changed", handler);
   }, []);
-  const currentThreshold = customThreshold ?? activeResult?.threshold_used ?? 0.5;
+  const currentThreshold = customThreshold ?? activeResult?.threshold_used ?? 0.6;
   const isTbDerived =
     activeResult ? (activeResult.confidence ?? 0) >= currentThreshold : false;
   const activeDiagnosis = activeResult
@@ -426,7 +426,7 @@ export function ScreeningWorkstation({
     const diagnosisObj = predictionService.getDiagnosis(
       activeResult.prediction ?? "Normal",
       activeResult.confidence ?? 0,
-      activeResult.threshold_used ?? 0.5
+      activeResult.threshold_used ?? 0.6
     );
 
     const observationsList = observationService.getObservations(
@@ -496,7 +496,7 @@ export function ScreeningWorkstation({
     const diagnosisObj = predictionService.getDiagnosis(
       activeResult.prediction ?? "Normal",
       activeResult.confidence ?? 0,
-      activeResult.threshold_used ?? 0.5
+      activeResult.threshold_used ?? 0.6
     );
 
     const observationsList = observationService.getObservations(
@@ -536,7 +536,7 @@ export function ScreeningWorkstation({
     const diagnosisObj = predictionService.getDiagnosis(
       activeResult.prediction ?? "Normal",
       activeResult.confidence ?? 0,
-      activeResult.threshold_used ?? 0.5
+      activeResult.threshold_used ?? 0.6
     );
 
     const observationsList = observationService.getObservations(

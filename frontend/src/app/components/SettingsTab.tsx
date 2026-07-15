@@ -22,7 +22,7 @@ interface AuditLog {
 }
 
 export function SettingsTab() {
-  const [threshold, setThreshold] = useState(0.50);
+  const [threshold, setThreshold] = useState(0.60);
   const [saved, setSaved] = useState(false);
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [logsLoading, setLogsLoading] = useState(true);
@@ -85,7 +85,7 @@ export function SettingsTab() {
                   <div className="grid grid-cols-3 gap-3">
                     {[
                       { name: "High Sensitivity", value: 0.35, desc: "Fewer False Negatives" },
-                      { name: "Standard (Balanced)", value: 0.50, desc: "Optimal Baseline" },
+                      { name: "Standard (Balanced)", value: 0.60, desc: "Optimal Baseline" },
                       { name: "High Specificity", value: 0.65, desc: "Fewer False Positives" }
                     ].map((mode) => (
                       <button

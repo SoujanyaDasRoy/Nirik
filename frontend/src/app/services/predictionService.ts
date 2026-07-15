@@ -7,7 +7,7 @@ export interface DiagnosisResult {
 }
 
 export const predictionService = {
-  getDiagnosis(prediction: string, confidence: number, thresholdUsed: number = 0.50): DiagnosisResult {
+  getDiagnosis(prediction: string, confidence: number, thresholdUsed: number = 0.60): DiagnosisResult {
     // Dynamically map diagnosis to condition-agnostic structure relative to dynamic threshold
     const margin = 0.15;
     const lowerBound = thresholdUsed - margin;
