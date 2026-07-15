@@ -1,0 +1,6 @@
+Manifest.json (CNN Model Training/manifest.json) contains:
+- test_auc: 0.949 (all sources)
+- test_auc_india: 0.9109 (India only)
+
+Accuracy, precision, recall, F1 score, confusion matrix not present in manifest or any other file in current repository state.
+To obtain these metrics, re-run the Kaggle notebook with full dataset and compute from predictions vs ground truth.

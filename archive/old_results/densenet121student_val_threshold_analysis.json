@@ -1,0 +1,23 @@
+[
+  {
+    "threshold": 0.3,
+    "accuracy": 0.50187265917603,
+    "sensitivity": 0.9569377990430622,
+    "specificity": 0.20923076923076922,
+    "precision": 0.437636761487965
+  },
+  {
+    "threshold": 0.5,
+    "accuracy": 0.5898876404494382,
+    "sensitivity": 0.8660287081339713,
+    "specificity": 0.4123076923076923,
+    "precision": 0.48655913978494625
+  },
+  {
+    "threshold": 0.7,
+    "accuracy": 0.6910112359550562,
+    "sensitivity": 0.722488038277512,
+    "specificity": 0.6707692307692308,
+    "precision": 0.5852713178294574
+  }
+]

@@ -1,0 +1,33 @@
+{
+  "min_coverage": 0.05,
+  "max_coverage": 0.85,
+  "normal_drop_rate": 0.001827485380116959,
+  "tb_drop_rate": 0.0,
+  "dropped": [
+    {
+      "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-1503.png",
+      "label": 0,
+      "coverage": 0.0
+    },
+    {
+      "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-2964.png",
+      "label": 0,
+      "coverage": 0.0
+    },
+    {
+      "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-2326.png",
+      "label": 0,
+      "coverage": 0.04164886474609375
+    },
+    {
+      "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-510.png",
+      "label": 0,
+      "coverage": 0.042926788330078125
+    },
+    {
+      "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-2048.png",
+      "label": 0,
+      "coverage": 0.04796600341796875
+    }
+  ]
+}

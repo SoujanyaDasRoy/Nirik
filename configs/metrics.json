@@ -1,0 +1,347 @@
+{
+  "config": {
+    "img_size": 224,
+    "batch_size": 32,
+    "teacher_epochs": 55,
+    "student_epochs": 110,
+    "distill_temperature": 3.0,
+    "distill_alpha": 0.5,
+    "weight_decay": 0.0001
+  },
+  "teacher_val": {
+    "accuracy": 0.9588014981273408,
+    "precision": 0.9473684210526315,
+    "recall": 0.9473684210526315,
+    "f1": 0.9473684210526315,
+    "roc_auc": 0.9930511593669489,
+    "pr_auc": 0.9895847907907616,
+    "specificity": 0.9661538461538461,
+    "sensitivity": 0.9473684210526315,
+    "balanced_accuracy": 0.9567611336032389,
+    "mcc": 0.9135222672064778,
+    "cohen_kappa": 0.9135222672064778,
+    "confusion_matrix": [
+      [
+        314,
+        11
+      ],
+      [
+        11,
+        198
+      ]
+    ],
+    "classification_report": {
+      "Normal": {
+        "precision": 0.9661538461538461,
+        "recall": 0.9661538461538461,
+        "f1-score": 0.9661538461538461,
+        "support": 325.0
+      },
+      "Tuberculosis": {
+        "precision": 0.9473684210526315,
+        "recall": 0.9473684210526315,
+        "f1-score": 0.9473684210526315,
+        "support": 209.0
+      },
+      "accuracy": 0.9588014981273408,
+      "macro avg": {
+        "precision": 0.9567611336032389,
+        "recall": 0.9567611336032389,
+        "f1-score": 0.9567611336032389,
+        "support": 534.0
+      },
+      "weighted avg": {
+        "precision": 0.9588014981273408,
+        "recall": 0.9588014981273408,
+        "f1-score": 0.9588014981273408,
+        "support": 534.0
+      }
+    }
+  },
+  "student_val": {
+    "accuracy": 0.5898876404494382,
+    "precision": 0.48655913978494625,
+    "recall": 0.8660287081339713,
+    "f1": 0.6230636833046471,
+    "roc_auc": 0.7589105631210894,
+    "pr_auc": 0.7032827075830087,
+    "specificity": 0.4123076923076923,
+    "sensitivity": 0.8660287081339713,
+    "balanced_accuracy": 0.6391682002208318,
+    "mcc": 0.295498889282974,
+    "cohen_kappa": 0.24432985693792897,
+    "confusion_matrix": [
+      [
+        134,
+        191
+      ],
+      [
+        28,
+        181
+      ]
+    ],
+    "classification_report": {
+      "Normal": {
+        "precision": 0.8271604938271605,
+        "recall": 0.4123076923076923,
+        "f1-score": 0.5503080082135524,
+        "support": 325.0
+      },
+      "Tuberculosis": {
+        "precision": 0.48655913978494625,
+        "recall": 0.8660287081339713,
+        "f1-score": 0.6230636833046471,
+        "support": 209.0
+      },
+      "accuracy": 0.5898876404494382,
+      "macro avg": {
+        "precision": 0.6568598168060533,
+        "recall": 0.6391682002208318,
+        "f1-score": 0.5866858457590998,
+        "support": 534.0
+      },
+      "weighted avg": {
+        "precision": 0.6938539713649455,
+        "recall": 0.5898876404494382,
+        "f1-score": 0.5787835439701794,
+        "support": 534.0
+      }
+    }
+  },
+  "teacher_test": {
+    "accuracy": 0.9644194756554307,
+    "precision": 0.9235294117647059,
+    "recall": 0.9631901840490797,
+    "f1": 0.9429429429429429,
+    "roc_auc": 0.9939973211185158,
+    "pr_auc": 0.9882444806597761,
+    "specificity": 0.9649595687331537,
+    "sensitivity": 0.9631901840490797,
+    "balanced_accuracy": 0.9640748763911167,
+    "mcc": 0.9175371510011873,
+    "cohen_kappa": 0.9171091975621313,
+    "confusion_matrix": [
+      [
+        358,
+        13
+      ],
+      [
+        6,
+        157
+      ]
+    ],
+    "classification_report": {
+      "Normal": {
+        "precision": 0.9835164835164835,
+        "recall": 0.9649595687331537,
+        "f1-score": 0.9741496598639455,
+        "support": 371.0
+      },
+      "Tuberculosis": {
+        "precision": 0.9235294117647059,
+        "recall": 0.9631901840490797,
+        "f1-score": 0.9429429429429429,
+        "support": 163.0
+      },
+      "accuracy": 0.9644194756554307,
+      "macro avg": {
+        "precision": 0.9535229476405946,
+        "recall": 0.9640748763911167,
+        "f1-score": 0.9585463014034442,
+        "support": 534.0
+      },
+      "weighted avg": {
+        "precision": 0.9652058230379446,
+        "recall": 0.9644194756554307,
+        "f1-score": 0.9646240140622163,
+        "support": 534.0
+      }
+    }
+  },
+  "student_test": {
+    "accuracy": 0.5411985018726592,
+    "precision": 0.3861111111111111,
+    "recall": 0.852760736196319,
+    "f1": 0.5315487571701721,
+    "roc_auc": 0.7160716352752469,
+    "pr_auc": 0.5635774984139583,
+    "specificity": 0.40431266846361186,
+    "sensitivity": 0.852760736196319,
+    "balanced_accuracy": 0.6285367023299654,
+    "mcc": 0.2525876031550502,
+    "cohen_kappa": 0.19201837921962428,
+    "confusion_matrix": [
+      [
+        150,
+        221
+      ],
+      [
+        24,
+        139
+      ]
+    ],
+    "classification_report": {
+      "Normal": {
+        "precision": 0.8620689655172413,
+        "recall": 0.40431266846361186,
+        "f1-score": 0.5504587155963303,
+        "support": 371.0
+      },
+      "Tuberculosis": {
+        "precision": 0.3861111111111111,
+        "recall": 0.852760736196319,
+        "f1-score": 0.5315487571701721,
+        "support": 163.0
+      },
+      "accuracy": 0.5411985018726592,
+      "macro avg": {
+        "precision": 0.6240900383141762,
+        "recall": 0.6285367023299654,
+        "f1-score": 0.5410037363832512,
+        "support": 534.0
+      },
+      "weighted avg": {
+        "precision": 0.7167859500337221,
+        "recall": 0.5411985018726592,
+        "f1-score": 0.5446865747284205,
+        "support": 534.0
+      }
+    }
+  },
+  "teacher_params": 23600002,
+  "student_params": 7043650,
+  "compression_ratio": 3.3505358727364363,
+  "teacher_cpu_latency": {
+    "model": "Teacher (ResNet-50)",
+    "ms_per_image": 504.017,
+    "n_runs": 100
+  },
+  "student_cpu_latency": {
+    "model": "Student (DenseNet121)",
+    "ms_per_image": 779.107,
+    "n_runs": 100
+  },
+  "student_threshold_analysis_val": [
+    {
+      "threshold": 0.3,
+      "accuracy": 0.50187265917603,
+      "sensitivity": 0.9569377990430622,
+      "specificity": 0.20923076923076922,
+      "precision": 0.437636761487965
+    },
+    {
+      "threshold": 0.5,
+      "accuracy": 0.5898876404494382,
+      "sensitivity": 0.8660287081339713,
+      "specificity": 0.4123076923076923,
+      "precision": 0.48655913978494625
+    },
+    {
+      "threshold": 0.7,
+      "accuracy": 0.6910112359550562,
+      "sensitivity": 0.722488038277512,
+      "specificity": 0.6707692307692308,
+      "precision": 0.5852713178294574
+    }
+  ],
+  "student_threshold_analysis_test": [
+    {
+      "threshold": 0.3,
+      "accuracy": 0.4363295880149813,
+      "sensitivity": 0.9693251533742331,
+      "specificity": 0.20215633423180593,
+      "precision": 0.34801762114537443
+    },
+    {
+      "threshold": 0.5,
+      "accuracy": 0.5411985018726592,
+      "sensitivity": 0.852760736196319,
+      "specificity": 0.40431266846361186,
+      "precision": 0.3861111111111111
+    },
+    {
+      "threshold": 0.7,
+      "accuracy": 0.6179775280898876,
+      "sensitivity": 0.6625766871165644,
+      "specificity": 0.5983827493261455,
+      "precision": 0.42023346303501946
+    }
+  ],
+  "student_youden_threshold": 0.6967113018035889,
+  "student_val_at_youden_threshold": {
+    "threshold": 0.6967113018035889,
+    "accuracy": 0.6928838951310862,
+    "sensitivity": 0.7272727272727273,
+    "specificity": 0.6707692307692308,
+    "precision": 0.5868725868725869,
+    "f1": 0.6495726495726496
+  },
+  "student_test_at_youden_threshold": {
+    "threshold": 0.6967113018035889,
+    "accuracy": 0.6198501872659176,
+    "sensitivity": 0.6687116564417178,
+    "specificity": 0.5983827493261455,
+    "precision": 0.42248062015503873,
+    "f1": 0.517814726840855
+  },
+  "student_gradcam_lung_localization_audit": {
+    "n_audited": 49,
+    "mean_gradcam_lung_overlap": 0.3487472556227324,
+    "fraction_below_overlap_threshold": 0.8775510204081632,
+    "overlap_threshold": 0.5,
+    "fraction_edge_flagged": 0.5918367346938775
+  },
+  "student_per_source_audit": {
+    "per_source": [
+      {
+        "source": "da",
+        "n": 9,
+        "n_tb": 9,
+        "n_normal": 0,
+        "accuracy": 0.6666666666666666,
+        "recall_tb": 0.6666666666666666
+      },
+      {
+        "source": "india",
+        "n": 10,
+        "n_tb": 6,
+        "n_normal": 4,
+        "accuracy": 0.6,
+        "recall_tb": 0.8333333333333334
+      },
+      {
+        "source": "montgomery",
+        "n": 14,
+        "n_tb": 5,
+        "n_normal": 9,
+        "accuracy": 0.5,
+        "recall_tb": 0.8
+      },
+      {
+        "source": "shenzhen",
+        "n": 57,
+        "n_tb": 38,
+        "n_normal": 19,
+        "accuracy": 0.5087719298245614,
+        "recall_tb": 0.5526315789473685
+      },
+      {
+        "source": "tb",
+        "n": 342,
+        "n_tb": 43,
+        "n_normal": 299,
+        "accuracy": 0.652046783625731,
+        "recall_tb": 0.7209302325581395
+      },
+      {
+        "source": "tbx11k",
+        "n": 102,
+        "n_tb": 62,
+        "n_normal": 40,
+        "accuracy": 0.5882352941176471,
+        "recall_tb": 0.6774193548387096
+      }
+    ],
+    "accuracy_spread": 0.16666666666666663
+  }
+}

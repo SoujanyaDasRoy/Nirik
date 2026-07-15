@@ -1,0 +1,338 @@
+import numpy as np
+import cv2
+
+def extract_xai_rois(heatmap_blurred: np.ndarray, is_tb: bool) -> list:
+    """
+    Extract Regions of Interest (ROIs) from the heatmap using OpenCV contours.
+    """
+    h, w = heatmap_blurred.shape
+    max_val = np.max(heatmap_blurred)
+    # Threshold dynamically to identify hot spots relative to peak activation
+    relative_thresh = 0.60 if is_tb else 0.70
+    thresh_val = max(0.15, max_val * relative_thresh)
+    _, mask = cv2.threshold((heatmap_blurred * 255).astype(np.uint8), int(thresh_val * 255), 255, cv2.THRESH_BINARY)
+
+    contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+    rois = []
+    total_activation_sum = 0.0
+
+    # Process each contour
+    for idx, contour in enumerate(contours):
+        if cv2.contourArea(contour) < 15: # Filter very small noise
+            continue
+
+        x, y, cw, ch = cv2.boundingRect(contour)
+
+        # Enclosing circle
+        (cx, cy), radius = cv2.minEnclosingCircle(contour)
+
+        # Simplified contour for rendering
+        epsilon = 0.015 * cv2.arcLength(contour, True)
+        approx = cv2.approxPolyDP(contour, epsilon, True)
+        contour_pts = [[int(pt[0][0]), int(pt[0][1])] for pt in approx]
+
+        # Calculate mean activation in this contour
+        contour_mask = np.zeros_like(mask)
+        cv2.drawContours(contour_mask, [contour], -1, 255, -1)
+        mean_val = cv2.mean(heatmap_blurred, mask=contour_mask)[0]
+
+        # Calculate sum of activation as proxy for contribution
+        sum_val = cv2.sumElems(cv2.multiply(heatmap_blurred, contour_mask.astype(np.float32)/255.0))[0]
+        total_activation_sum += sum_val
+
+        # Map center to anatomical zones
+        nx = (x + cw/2.0) / w
+        ny = (y + ch/2.0) / h
+
+        side = "Right" if nx < 0.50 else "Left"
+        if ny < 0.40:
+            zone = "Upper"
+        elif ny < 0.68:
+            zone = "Middle"
+        else:
+            zone = "Lower"
+
+        location = f"{side} {zone} Lung Zone"
+
+        rois.append({
+            "id": chr(65 + idx),
+            "activation_score": float(mean_val),
+            "sum_activation": float(sum_val),
+            "location": location,
+            "bbox": [int(x), int(y), int(cw), int(ch)],
+            "circle": [int(cx), int(cy), int(radius)],
+            "contour": contour_pts,
+            "center": [float(nx), float(ny)]
+        })
+
+    # Sort ROIs by sum activation (descending)
+    rois.sort(key=lambda x: x["sum_activation"], reverse=True)
+
+    # Calculate relative contribution percentage
+    final_rois = []
+    for idx, r in enumerate(rois[:6]): # Limit to top 6 ROIs
+        contrib = (r["sum_activation"] / total_activation_sum * 100.0) if total_activation_sum > 0 else 0.0
+        # Assign clean sorted IDs (A, B, C...)
+        r["id"] = chr(65 + idx)
+        r["contribution_pct"] = round(contrib, 1)
+        r["activation_score"] = round(r["activation_score"] * 100.0, 1)
+
+        # Delete temporary field
+        del r["sum_activation"]
+        final_rois.append(r)
+
+    return final_rois
+
+
+def generate_xai_clinical_summary(rois: list, is_tb: bool, confidence: float) -> str:
+    """
+    Generate a human-readable clinical explanation summary using clinical safety constraints.
+    """
+    if not rois:
+        return "No significant focal abnormalities or salient opacities detected. Radiographic features appear within normal limits."
+
+    top_roi = rois[0]
+    loc = top_roi["location"]
+    contrib = top_roi["contribution_pct"]
+    act = top_roi["activation_score"]
+
+    if is_tb:
+        summary = (
+            f"CAD assessment indicates a high-probability focal opacity localized to the {loc} (Region {top_roi['id']}), "
+            f"representing {contrib}% of the primary predictive variance (peak local activation: {act}%). This saliency "
+            f"distribution is highly correlative with consolidative, infiltrative, or cavitary pathologies classically "
+            f"associated with active Mycobacterium tuberculosis infection. Sputum acid-fast bacilli (AFB) smear, molecular "
+            f"assays, and clinical correlation are strongly recommended to definitively confirm active disease."
+        )
+    else:
+        summary = (
+            f"CAD analysis reveals diffuse, low-level background gradients (predominantly mapped to the {loc}, "
+            f"representing {contrib}% relative variance) without evidence of focal asymmetric opacification, cavitation, "
+            f"or structural consolidation. No salient radiographic features suggestive of active pulmonary tuberculosis "
+            f"are identified. As a computer-aided triage finding, this does not preclude latent infection or early-stage "
+            f"non-tuberculous respiratory pathologies. Clinical correlation remains advised for symptomatic patients."
+        )
+    return summary
+
+
+def compute_quadrant_analysis(raw_map_np: np.ndarray, unet_mask_np: np.ndarray = None) -> dict:
+    """
+    Divides the heatmap into 4 quadrants and computes activation fractions.
+    Returns quadrant scores + clinical interpretation.
+    """
+    H, W = raw_map_np.shape
+    # Apply U-Net mask if available (Gen 2)
+    if unet_mask_np is not None:
+        try:
+            mask_resized = cv2.resize(unet_mask_np, (W, H))
+            heatmap = raw_map_np * (mask_resized > 0.5).astype(np.float32)
+        except Exception:
+            heatmap = raw_map_np
+    else:
+        heatmap = raw_map_np
+
+    # Split into 4 quadrants
+    upper_left  = heatmap[:H//2, :W//2]
+    upper_right = heatmap[:H//2, W//2:]
+    lower_left  = heatmap[H//2:, :W//2]
+    lower_right = heatmap[H//2:, W//2:]
+
+    total = heatmap.sum()
+    if total < 1e-5:
+        # Default flat score if no activation exists
+        scores = {
+            "upper_left":  0.25,
+            "upper_right": 0.25,
+            "lower_left":  0.25,
+            "lower_right": 0.25,
+        }
+    else:
+        scores = {
+            "upper_left":  float(upper_left.sum() / total),
+            "upper_right": float(upper_right.sum() / total),
+            "lower_left":  float(lower_left.sum() / total),
+            "lower_right": float(lower_right.sum() / total),
+        }
+
+    upper_frac = scores["upper_left"] + scores["upper_right"]
+    lower_frac = scores["lower_left"] + scores["lower_right"]
+
+    # Clinical interpretation
+    if upper_frac >= 0.55:
+        zone = "upper"
+        interpretation = "Anomalies concentrated in upper lung zones — pattern highly consistent with active pulmonary Tuberculosis (typical apical/posterior lobe involvement)."
+        disease_overlap = ["Tuberculosis", "Aspergillosis", "Apical Silicosis"]
+    elif lower_frac >= 0.55:
+        zone = "lower"
+        interpretation = "Anomalies concentrated in lower lung zones — clinical pattern typical for bacterial/viral pneumonia, COVID-19, or pulmonary edema rather than primary TB."
+        disease_overlap = ["Bacterial Pneumonia", "COVID-19", "Pulmonary Edema", "Bronchiectasis"]
+    else:
+        zone = "mixed"
+        interpretation = "Anomalies distributed across multiple zones — findings are non-specific. Differential includes miliary TB, sarcoidosis, or systemic fungal infections."
+        disease_overlap = ["Tuberculosis (Miliary/Disseminated)", "Sarcoidosis", "Fungal Infection", "Lymphoma"]
+
+    return {
+        "quadrant_scores": {k: round(v * 100, 1) for k, v in scores.items()},
+        "upper_fraction": round(upper_frac * 100, 1),
+        "lower_fraction": round(lower_frac * 100, 1),
+        "dominant_zone": zone,
+        "interpretation": interpretation,
+        "disease_overlap": disease_overlap
+    }
+
+
+def generate_clinical_reasoning(evidence: dict, prediction: str, prob: float, is_tb: bool, validation: dict, rois: list, quadrant_analysis: dict) -> dict:
+    """
+    Generate structured clinical reasoning from evidence.
+    Returns a dictionary suitable for inclusion in API response under 'reasoning' key.
+    """
+    import hashlib
+    import json
+
+    # Generate a deterministic reasoning ID based on evidence content
+    # We'll use a hash of the evidence dict (excluding timestamp to avoid changes every second)
+    evidence_for_hash = evidence.copy()
+    if 'timestamp' in evidence_for_hash:
+        del evidence_for_hash['timestamp']
+    evidence_str = json.dumps(evidence_for_hash, sort_keys=True)
+    hash_obj = hashlib.md5(evidence_str.encode())
+    reasoning_id = hash_obj.hexdigest()[:16]  # 16-char hex string
+
+    supporting_evidence = []
+    conflicting_evidence = []
+    limitations = []
+
+    # Validation-based rules
+    val_status = validation.get('status', 'Unavailable')
+    if val_status == 'Valid':
+        supporting_evidence.append('Validation_Valid')
+    elif val_status == 'Invalid':
+        conflicting_evidence.append('Validation_Invalid')
+    # Questionable: neutral, no addition
+
+    # Activation overlap ratio
+    overlap_ratio = validation.get('metrics', {}).get('activation_overlap_ratio', 0.0)
+    if overlap_ratio >= 80.0:
+        supporting_evidence.append('HighActivationOverlap')
+    elif overlap_ratio < 60.0:
+        conflicting_evidence.append('LowActivationOverlap')
+
+    # Outside lung activation percentage
+    outside_pct = validation.get('metrics', {}).get('outside_lung_activation_percentage', 100.0)
+    if outside_pct <= 20.0:
+        supporting_evidence.append('LowOutsideActivation')
+    elif outside_pct >= 40.0:
+        conflicting_evidence.append('HighOutsideActivation')
+
+    # Lung coverage percentage
+    lung_cov = validation.get('metrics', {}).get('lung_coverage_percentage', 0.0)
+    if lung_cov >= 30.0:
+        supporting_evidence.append('AdequateLungCoverage')
+    elif lung_cov < 10.0:
+        conflicting_evidence.append('LowLungCoverage')
+        limitations.append('Low activation coverage')
+
+    # Activation density
+    act_dens = validation.get('metrics', {}).get('activation_density', 0.0)
+    # No fixed thresholds; we'll use relative to typical values? Skip for now.
+
+    # ROI-based rules
+    roi_count = evidence.get("roi_metrics", {}).get("count", 0)
+    if roi_count > 0:
+        supporting_evidence.append('ROIsPresent')
+        # Optionally add specific ROI IDs if we want to list them
+        for roi in rois:
+            supporting_evidence.append(f'ROI_{roi["id"]}')
+    else:
+        conflicting_evidence.append('NoROIsDetected')
+        limitations.append('No regions of interest detected')
+
+    # Average activation (percentage)
+    avg_act = evidence.get('roi_metrics', {}).get('average_activation', 0.0)
+    if avg_act >= 50.0:
+        supporting_evidence.append('HighAverageActivation')
+    elif avg_act < 20.0:
+        conflicting_evidence.append('LowAverageActivation')
+
+    # Geometry: dominant zone
+    dominant_zone = evidence.get('geometry', {}).get('dominant_zone', 'mixed')
+    if is_tb and dominant_zone == 'upper':
+        supporting_evidence.append('UpperLobePredominance')  # TB often upper lobe
+    elif is_tb and dominant_zone == 'lower':
+        conflicting_evidence.append('LowerLobePredominance')  # less typical for TB
+    elif not is_tb and dominant_zone == 'lower':
+        supporting_evidence.append('LowerLobePredominance_Normal')  # pneumonia etc.
+    # Mixed: neutral
+
+    # Quadrant balance
+    upper_frac = evidence.get('geometry', {}).get('upper_fraction', 0.0)
+    lower_frac = evidence.get('geometry', {}).get('lower_fraction', 0.0)
+    if abs(upper_frac - lower_frac) > 0.3:  # significant imbalance
+        if upper_frac > lower_frac:
+            supporting_evidence.append('UpperLobePredominance_Quantitative')
+        else:
+            supporting_evidence.append('LowerLobePredominance_Quantitative')
+    else:
+        # roughly balanced
+        pass
+
+    # Heatmap statistics: standard deviation as indicator of focality
+    hm_std = evidence.get('heatmap_stats', {}).get('std', 0.0)
+    if hm_std > 0.2:  # arbitrary threshold, indicating focal hotspots
+        supporting_evidence.append('FocalActivationPattern')
+    elif hm_std < 0.05:
+        conflicting_evidence.append('DiffuseActivationPattern')
+        # For TB, focal is expected; diffuse less typical
+
+    # Evidence confidence
+    evid_conf = evidence.get('evidence_confidence', 0.0)
+    if evid_conf >= 0.7:
+        supporting_evidence.append('HighEvidenceConfidence')
+    elif evid_conf < 0.3:
+        conflicting_evidence.append('LowEvidenceConfidence')
+        limitations.append('Low evidence confidence')
+
+    # Calibrated confidence (prediction confidence)
+    cal_conf = evidence.get('calibrated_confidence', 0.0)
+    if cal_conf >= 0.8:
+        supporting_evidence.append('HighPredictionConfidence')
+    elif cal_conf < 0.5:
+        conflicting_evidence.append('LowPredictionConfidence')
+        limitations.append('Low prediction confidence')
+
+    # Consistency between prediction and evidence
+    # If prediction is TB but evidence supports TB but evidence suggests normal, etc.
+    # We'll rely on the above rules.
+
+    # Remove duplicates
+    supporting_evidence = list(dict.fromkeys(supporting_evidence))
+    conflicting_evidence = list(dict.fromkeys(conflicting_evidence))
+    limitations = list(dict.fromkeys(limitations))
+
+    # Compute reasoning confidence: weighted combination of evidence confidence and prediction confidence
+    # We'll also factor in validation quality.
+    # Simple average of evidence_confidence and calibrated_confidence, clamped.
+    reasoning_confidence = (evid_conf * 0.6 + cal_conf * 0.4)
+    reasoning_confidence = max(0.0, min(1.0, reasoning_confidence))
+
+    # Uncertainty: we define as 1 - reasoning_confidence, but also add ignorance if evidence missing.
+    # Base uncertainty
+    uncertainty = 1.0 - reasoning_confidence
+    # Increase uncertainty if critical data missing
+    if validation.get('status') == 'Unavailable':
+        uncertainty = min(1.0, uncertainty + 0.3)
+    if roi_count == 0:
+        uncertainty = min(1.0, uncertainty + 0.2)
+    uncertainty = max(0.0, min(1.0, uncertainty))
+
+    # Build reasoning object
+    reasoning = {
+        "reasoning_id": reasoning_id,
+        "supporting_evidence": supporting_evidence,
+        "conflicting_evidence": conflicting_evidence,
+        "confidence": round(reasoning_confidence, 4),
+        "uncertainty": round(uncertainty, 4),
+        "limitations": limitations
+    }
+    return reasoning

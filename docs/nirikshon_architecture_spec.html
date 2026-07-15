@@ -1,0 +1,952 @@
+<meta charset="utf-8">
+<title>Nirikshon — Architecture Specification</title>
+<style>
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #10151a;
+      --surface: #171e24;
+      --surface-2: #1d252c;
+      --border: #2a333b;
+      --ink: #e9edee;
+      --ink-muted: #9fadb4;
+      --accent: #6ccddb;
+      --accent-ink: #0c2226;
+      --confirmed: #6ccddb;
+      --confirmed-bg: rgba(108, 205, 219, 0.12);
+      --derived: #d9a455;
+      --derived-bg: rgba(217, 164, 85, 0.12);
+      --notdef: #93a0a7;
+      --notdef-bg: rgba(147, 160, 167, 0.08);
+      --decided: #b79fe0;
+      --decided-bg: rgba(183, 159, 224, 0.14);
+      --code-bg: #12181d;
+    }
+  }
+  :root {
+    --bg: #eef1ee;
+    --surface: #f7f8f5;
+    --surface-2: #e7ebe6;
+    --border: #d3d9d1;
+    --ink: #1c2624;
+    --ink-muted: #57645f;
+    --accent: #2f8f9b;
+    --accent-ink: #ffffff;
+    --confirmed: #24818c;
+    --confirmed-bg: rgba(47, 143, 155, 0.10);
+    --derived: #9a6a1e;
+    --derived-bg: rgba(154, 106, 30, 0.10);
+    --notdef: #6b7773;
+    --notdef-bg: rgba(107, 119, 115, 0.08);
+    --decided: #7a5aad;
+    --decided-bg: rgba(122, 90, 173, 0.10);
+    --code-bg: #e9ece6;
+  }
+  :root[data-theme="dark"] {
+    --bg: #10151a;
+    --surface: #171e24;
+    --surface-2: #1d252c;
+    --border: #2a333b;
+    --ink: #e9edee;
+    --ink-muted: #9fadb4;
+    --accent: #6ccddb;
+    --accent-ink: #0c2226;
+    --confirmed: #6ccddb;
+    --confirmed-bg: rgba(108, 205, 219, 0.12);
+    --derived: #d9a455;
+    --derived-bg: rgba(217, 164, 85, 0.12);
+    --notdef: #93a0a7;
+    --notdef-bg: rgba(147, 160, 167, 0.08);
+    --decided: #b79fe0;
+    --decided-bg: rgba(183, 159, 224, 0.14);
+    --code-bg: #12181d;
+  }
+  :root[data-theme="light"] {
+    --bg: #eef1ee;
+    --surface: #f7f8f5;
+    --surface-2: #e7ebe6;
+    --border: #d3d9d1;
+    --ink: #1c2624;
+    --ink-muted: #57645f;
+    --accent: #2f8f9b;
+    --accent-ink: #ffffff;
+    --confirmed: #24818c;
+    --confirmed-bg: rgba(47, 143, 155, 0.10);
+    --derived: #9a6a1e;
+    --derived-bg: rgba(154, 106, 30, 0.10);
+    --notdef: #6b7773;
+    --notdef-bg: rgba(107, 119, 115, 0.08);
+    --decided: #7a5aad;
+    --decided-bg: rgba(122, 90, 173, 0.10);
+    --code-bg: #e9ece6;
+  }
+
+  * { box-sizing: border-box; }
+  html { color-scheme: light dark; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: Charter, 'Iowan Old Style', 'Georgia', 'Times New Roman', serif;
+    font-size: 16.5px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  .mono {
+    font-family: ui-monospace, 'SF Mono', 'Cascadia Code', Consolas, 'Roboto Mono', monospace;
+  }
+  h1, h2, h3, h4 {
+    font-family: -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+    text-wrap: balance;
+    color: var(--ink);
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+  a { color: var(--accent); }
+
+  /* ---- Shell layout ---- */
+  .shell {
+    display: grid;
+    grid-template-columns: 280px minmax(0, 1fr);
+    min-height: 100vh;
+  }
+  .toc {
+    position: sticky;
+    top: 0;
+    align-self: start;
+    height: 100vh;
+    overflow-y: auto;
+    border-right: 1px solid var(--border);
+    background: var(--surface);
+    padding: 28px 20px 40px;
+  }
+  .toc-brand {
+    font-family: -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+    font-weight: 800;
+    font-size: 15px;
+    letter-spacing: 0.02em;
+    color: var(--ink);
+    margin: 0 0 2px;
+  }
+  .toc-sub {
+    font-size: 12px;
+    color: var(--ink-muted);
+    margin: 0 0 22px;
+    line-height: 1.4;
+  }
+  .toc-legend {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 12px 12px;
+    margin-bottom: 22px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+  }
+  .toc-legend-title {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--ink-muted);
+    margin-bottom: 2px;
+  }
+  .toc nav {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+  .toc nav a {
+    font-family: -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+    text-decoration: none;
+    color: var(--ink-muted);
+    font-size: 13.5px;
+    padding: 6px 8px;
+    border-radius: 5px;
+    display: flex;
+    gap: 8px;
+  }
+  .toc nav a:hover { background: var(--surface-2); color: var(--ink); }
+  .toc nav a .num {
+    font-family: ui-monospace, 'SF Mono', Consolas, monospace;
+    color: var(--accent);
+    font-size: 12px;
+    min-width: 18px;
+  }
+
+  main {
+    padding: 56px clamp(20px, 5vw, 72px) 120px;
+    max-width: 900px;
+  }
+  .doc-header {
+    margin-bottom: 48px;
+    padding-bottom: 28px;
+    border-bottom: 1px solid var(--border);
+  }
+  .doc-kicker {
+    font-family: ui-monospace, 'SF Mono', Consolas, monospace;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--accent);
+    margin: 0 0 10px;
+  }
+  .doc-title {
+    font-size: 34px;
+    margin: 0 0 14px;
+    line-height: 1.15;
+  }
+  .doc-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 18px;
+    font-family: ui-monospace, 'SF Mono', Consolas, monospace;
+    font-size: 12.5px;
+    color: var(--ink-muted);
+  }
+
+  section { margin-bottom: 56px; }
+  section > h2 {
+    font-size: 24px;
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin: 0 0 6px;
+    scroll-margin-top: 24px;
+  }
+  section > h2 .sec-num {
+    font-family: ui-monospace, 'SF Mono', Consolas, monospace;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--accent);
+  }
+  section > .dek {
+    color: var(--ink-muted);
+    font-size: 14.5px;
+    margin: 0 0 22px;
+    max-width: 62ch;
+  }
+  h3 {
+    font-size: 17.5px;
+    margin: 28px 0 10px;
+  }
+  h4 {
+    font-family: ui-monospace, 'SF Mono', Consolas, monospace;
+    font-size: 12.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--ink-muted);
+    margin: 20px 0 8px;
+    font-weight: 600;
+  }
+  p { max-width: 68ch; margin: 0 0 14px; }
+  ul, ol { max-width: 66ch; padding-left: 22px; margin: 0 0 14px; }
+  li { margin-bottom: 6px; }
+  strong { color: var(--ink); }
+
+  /* ---- Tags: epistemic status ---- */
+  .tag {
+    font-family: ui-monospace, 'SF Mono', Consolas, monospace;
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: 4px;
+    display: inline-block;
+    white-space: nowrap;
+    vertical-align: 1px;
+  }
+  .tag--confirmed { color: var(--confirmed); background: var(--confirmed-bg); border: 1px solid color-mix(in srgb, var(--confirmed) 40%, transparent); }
+  .tag--derived   { color: var(--derived);   background: var(--derived-bg);   border: 1px solid color-mix(in srgb, var(--derived) 40%, transparent); }
+  .tag--notdef    { color: var(--notdef);    background: var(--notdef-bg);   border: 1px dashed color-mix(in srgb, var(--notdef) 55%, transparent); }
+  .tag--decided   { color: var(--decided);   background: var(--decided-bg);  border: 1px solid color-mix(in srgb, var(--decided) 40%, transparent); }
+
+  /* ---- Callouts ---- */
+  .note {
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    background: var(--surface);
+    border-radius: 0 6px 6px 0;
+    padding: 12px 16px;
+    margin: 16px 0;
+    font-size: 14.5px;
+  }
+  .note.gap { border-left-color: var(--derived); }
+  .note.absent { border-left-color: var(--notdef); }
+  .note p:last-child { margin-bottom: 0; }
+  .note-label {
+    font-family: ui-monospace, 'SF Mono', Consolas, monospace;
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--ink-muted);
+    display: block;
+    margin-bottom: 4px;
+  }
+
+  /* ---- Tables ---- */
+  .table-wrap { overflow-x: auto; margin: 16px 0; border: 1px solid var(--border); border-radius: 8px; }
+  table { border-collapse: collapse; width: 100%; font-size: 14px; min-width: 480px; }
+  th, td { text-align: left; padding: 9px 14px; border-bottom: 1px solid var(--border); }
+  th {
+    font-family: -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+    font-size: 11.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--ink-muted);
+    background: var(--surface-2);
+    font-weight: 600;
+  }
+  tr:last-child td { border-bottom: none; }
+  td.num, th.num { font-family: ui-monospace, 'SF Mono', Consolas, monospace; font-variant-numeric: tabular-nums; }
+  tbody tr:hover { background: var(--surface); }
+
+  /* ---- Code ---- */
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px 18px;
+    overflow-x: auto;
+    font-size: 13px;
+    line-height: 1.55;
+  }
+  code {
+    font-family: ui-monospace, 'SF Mono', Consolas, monospace;
+  }
+  p code, li code {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1px 5px;
+    font-size: 0.88em;
+  }
+
+  /* ---- Pipeline stage list ---- */
+  .stagelist { display: flex; flex-direction: column; margin: 18px 0; }
+  .stage {
+    display: grid;
+    grid-template-columns: 30px 1fr;
+    gap: 14px;
+    padding: 14px 0;
+    border-top: 1px solid var(--border);
+  }
+  .stage:first-child { border-top: none; }
+  .stage-idx {
+    font-family: ui-monospace, 'SF Mono', Consolas, monospace;
+    color: var(--accent);
+    font-size: 13px;
+    padding-top: 2px;
+  }
+  .stage-name {
+    font-family: -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+    font-weight: 700;
+    font-size: 15px;
+    margin: 0 0 4px;
+  }
+  .stage-body { font-size: 14px; color: var(--ink-muted); max-width: 62ch; }
+  .stage-body strong { color: var(--ink); }
+
+  /* ---- Arch box diagram ---- */
+  .archrow { display: flex; align-items: stretch; gap: 10px; flex-wrap: wrap; margin: 18px 0; }
+  .archbox {
+    flex: 1 1 160px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    border-radius: 8px;
+    padding: 12px 14px;
+  }
+  .archbox h5 {
+    margin: 0 0 4px;
+    font-family: -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+    font-size: 13.5px;
+    font-weight: 700;
+  }
+  .archbox p { margin: 0; font-size: 12.5px; color: var(--ink-muted); }
+  .archbox .dim { font-family: ui-monospace, 'SF Mono', Consolas, monospace; font-size: 11px; color: var(--accent); display:block; margin-top:6px; }
+  .arrow { align-self: center; color: var(--ink-muted); font-size: 18px; padding: 0 2px; }
+
+  hr.sec-rule { border: none; border-top: 1px solid var(--border); margin: 0 0 40px; }
+
+  footer {
+    max-width: 900px;
+    padding: 32px clamp(20px, 5vw, 72px) 80px;
+    color: var(--ink-muted);
+    font-size: 12.5px;
+    font-family: ui-monospace, 'SF Mono', Consolas, monospace;
+  }
+
+  @media (max-width: 880px) {
+    .shell { grid-template-columns: 1fr; }
+    .toc { position: relative; height: auto; border-right: none; border-bottom: 1px solid var(--border); }
+  }
+</style>
+
+<div class="shell">
+  <aside class="toc">
+    <p class="toc-brand">NIRIKSHON</p>
+    <p class="toc-sub">Architecture Specification<br>v1.2 — derived from <code class="mono">nirikNetMain.py</code></p>
+    <div class="toc-legend">
+      <div class="toc-legend-title">Reading the tags</div>
+      <span class="tag tag--confirmed">Confirmed</span>
+      <span class="tag tag--derived">Derived</span>
+      <span class="tag tag--decided">Decided</span>
+      <span class="tag tag--notdef">Not defined</span>
+    </div>
+    <nav>
+      <a href="#s1"><span class="num">01</span> Executive Summary</a>
+      <a href="#s2"><span class="num">02</span> End-to-End Pipeline</a>
+      <a href="#s3"><span class="num">03</span> Model Architecture</a>
+      <a href="#s4"><span class="num">04</span> Training Architecture</a>
+      <a href="#s5"><span class="num">05</span> Inference Architecture</a>
+      <a href="#s6"><span class="num">06</span> Explainability</a>
+      <a href="#s7"><span class="num">07</span> Backend Requirements</a>
+      <a href="#s8"><span class="num">08</span> Frontend Requirements</a>
+      <a href="#s9"><span class="num">09</span> LLM Integration</a>
+      <a href="#s10"><span class="num">10</span> Mermaid Diagram</a>
+      <a href="#s11"><span class="num">11</span> Folder Responsibilities</a>
+      <a href="#s12"><span class="num">12</span> Source of Truth</a>
+    </nav>
+  </aside>
+
+  <main>
+    <div class="doc-header">
+      <p class="doc-kicker">Architecture Specification · Internal Reference</p>
+      <h1 class="doc-title">Nirikshon TB Screening System — Final Architecture Specification</h1>
+      <div class="doc-meta">
+        <span>SOURCE&nbsp;OF&nbsp;TRUTH: CNN Model Training/nirikNetMain.py</span>
+        <span>STATUS: Training pipeline verified · Backend/Frontend/LLM not yet built</span>
+      </div>
+    </div>
+
+    <section id="s1">
+      <h2><span class="sec-num">01</span> Executive Summary</h2>
+      <p class="dek">Plain-language description of what this system actually is, for anyone touching backend, frontend, or LLM work.</p>
+
+      <p>Nirikshon screens chest X-rays for signs suspicious of pulmonary tuberculosis. It does this with two neural networks trained together, but only one of them ever sees a real patient's image after training is done.</p>
+
+      <p>A large network (<strong>ResNet-50</strong>, ~23.6M parameters) is trained first, as a "teacher." It never ships — its only job is to transfer what it learned to a second, smaller network (<strong>DenseNet-121</strong>, ~7.0M parameters), the "student," via a technique called knowledge distillation. The student is the only model that is ever exported, deployed, or shown a real uploaded image. This two-model setup exists because the student is what has to run affordably, on ordinary CPU hardware, for every screening request — the teacher's only value is making that smaller model better than it would be trained alone.</p>
+
+      <p>Before either network sees an image, a third, entirely separate network — an <strong>Attention U-Net</strong> — finds the lungs in the X-ray and everything outside that region is cropped away. This exists to stop the classifier from learning shortcuts (scanner labels, hospital markings, borders) instead of lung pathology.</p>
+
+      <p>The student's prediction is a probability that the image shows tuberculosis. That probability is compared against a threshold chosen mathematically from validation data (not a default 0.5) to produce a binary screening flag. Four different heatmap techniques (Grad-CAM, Grad-CAM++, LayerCAM, EigenCAM) can show which part of the image drove that decision.</p>
+
+      <p>The model is exported to <strong>ONNX</strong> format specifically so the serving environment doesn't need to run the same version of TensorFlow/Keras the model was trained with — this was a deliberate fix for a real Kaggle/training-environment version mismatch encountered during development.</p>
+
+      <div class="note gap">
+        <span class="note-label">Scope of this document</span>
+        <p>Everything in Sections 1–6 is <span class="tag tag--confirmed">Confirmed</span> — read directly from the current state of <code>nirikNetMain.py</code>. Sections 7–9 (backend, frontend, LLM) mostly describe a <span class="tag tag--derived">Derived</span> contract inferred from the model's actual inputs/outputs, since none of that layer is implemented yet. A few points there are <span class="tag tag--decided">Decided</span> — a real project decision has been made, just not yet built (e.g. the LLM provider). Where something genuinely isn't resolved, it's marked <span class="tag tag--notdef">Not defined</span> rather than guessed.</p>
+      </div>
+    </section>
+
+    <section id="s2">
+      <h2><span class="sec-num">02</span> End-to-End AI Pipeline</h2>
+      <p class="dek">Every stage from upload to display, and why each one exists. <span class="tag tag--notdef">Not defined</span> stages are training-pipeline concepts with no built inference-serving equivalent yet.</p>
+
+      <div class="note gap">
+        <span class="note-label">Correcting a term in the requested outline</span>
+        <p>The outline for this document lists <strong>Attention Module</strong> as a stage between Segmentation and the Student Model. That stage does not exist as a separate step. Attention exists <em>only</em> as attention gates inside the Attention U-Net's decoder (Section 3) — it is part of how segmentation works, not a second processing stage after it. Stating this explicitly rather than inventing a module that isn't in the code.</p>
+      </div>
+
+      <div class="stagelist">
+        <div class="stage">
+          <div class="stage-idx">1</div>
+          <div>
+            <p class="stage-name">User uploads X-ray <span class="tag tag--derived">Derived</span></p>
+            <p class="stage-body">Not implemented at the code level — <code>nirikNetMain.py</code> is a training pipeline, not a serving one. Inferred format constraint: whatever <code>read_image_grayscale()</code> accepts — standard raster formats via OpenCV, plus DICOM via <code>pydicom</code> if present.</p>
+          </div>
+        </div>
+        <div class="stage">
+          <div class="stage-idx">2</div>
+          <div>
+            <p class="stage-name">Preprocessing <span class="tag tag--confirmed">Confirmed</span></p>
+            <p class="stage-body"><code>preprocess_xray()</code>. Grayscale read → lung-mask prediction → largest-2-components + morphological cleanup → bounding-box crop with <strong>8.5% padding</strong> → CLAHE (clipLimit 2.0, tile 8×8) → resize to <strong>224×224</strong> → stacked to canonical 0–255 float32 RGB. Exists so every image the model ever sees — training or inference — goes through <em>one</em> shared code path, eliminating train/serve preprocessing drift.</p>
+          </div>
+        </div>
+        <div class="stage">
+          <div class="stage-idx">3</div>
+          <div>
+            <p class="stage-name">Lung Segmentation <span class="tag tag--confirmed">Confirmed</span></p>
+            <p class="stage-body">Attention U-Net, 256×256 grayscale in, binary mask out. Exists to stop the classifier from learning hospital/scanner shortcuts instead of pulmonary pathology — a documented project-level concern, not a generic add-on.</p>
+          </div>
+        </div>
+        <div class="stage">
+          <div class="stage-idx">—</div>
+          <div>
+            <p class="stage-name">"Attention Module" <span class="tag tag--notdef">Not defined as a separate stage</span></p>
+            <p class="stage-body">See callout above. Folded into Stage 3.</p>
+          </div>
+        </div>
+        <div class="stage">
+          <div class="stage-idx">4</div>
+          <div>
+            <p class="stage-name">Student Model <span class="tag tag--confirmed">Confirmed</span></p>
+            <p class="stage-body">DenseNet-121 forward pass on the 224×224×3 canonical tensor. The only classification network that exists past training time — see Section 5 for why the teacher is excluded.</p>
+          </div>
+        </div>
+        <div class="stage">
+          <div class="stage-idx">5</div>
+          <div>
+            <p class="stage-name">Prediction <span class="tag tag--confirmed">Confirmed</span></p>
+            <p class="stage-body">Softmax over 2 classes: <code>[P(Normal), P(Tuberculosis)]</code>, summing to 1.0.</p>
+          </div>
+        </div>
+        <div class="stage">
+          <div class="stage-idx">6</div>
+          <div>
+            <p class="stage-name">Confidence <span class="tag tag--confirmed">Confirmed</span></p>
+            <p class="stage-body">There is no separate "confidence" computation distinct from the raw probability — <code>P(Tuberculosis)</code> itself is the confidence value used everywhere in evaluation (<code>y_score = y_prob[:, 1]</code>). It is compared against a <strong>Youden's-J-derived threshold</strong> computed once on the validation split at training time, not a default 0.5 and not recomputed per request.</p>
+          </div>
+        </div>
+        <div class="stage">
+          <div class="stage-idx">7</div>
+          <div>
+            <p class="stage-name">Explainability <span class="tag tag--confirmed">Confirmed</span></p>
+            <p class="stage-body">Grad-CAM, Grad-CAM++, LayerCAM, EigenCAM, computed against the student's DenseNet-121 backbone. See the ONNX caveat in Section 5 — this requires gradient access the exported inference format does not provide.</p>
+          </div>
+        </div>
+        <div class="stage">
+          <div class="stage-idx">8</div>
+          <div>
+            <p class="stage-name">LLM <span class="tag tag--notdef">Not defined</span></p>
+            <p class="stage-body">No LLM code exists anywhere in the training pipeline. Referenced only as a future intent elsewhere in the project's documentation. See Section 9 for a derived design, clearly marked as unbuilt.</p>
+          </div>
+        </div>
+        <div class="stage">
+          <div class="stage-idx">9</div>
+          <div>
+            <p class="stage-name">Frontend <span class="tag tag--notdef">Not defined</span></p>
+            <p class="stage-body">No frontend code was in scope for this specification. See Section 8 for a derived display contract.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="s3">
+      <h2><span class="sec-num">03</span> Complete Model Architecture</h2>
+      <p class="dek">All facts in this section are <span class="tag tag--confirmed">Confirmed</span> — read directly from <code>build_teacher()</code>, <code>build_densenet_student()</code>, <code>build_attention_unet()</code>, and <code>DistillationModel</code>.</p>
+
+      <h3>Teacher model — ResNet-50</h3>
+      <p>ImageNet-pretrained, <strong>~23.6M parameters</strong>. Exists purely to produce a supervisory signal for the student via knowledge distillation — it is never exported and never touches a real uploaded image.</p>
+      <div class="archrow">
+        <div class="archbox"><h5>Input</h5><p>Canonical RGB</p><span class="dim">224×224×3</span></div>
+        <div class="arrow">→</div>
+        <div class="archbox"><h5>Lambda</h5><p><code>resnet50.preprocess_input</code> (Caffe-style, BGR mean-subtract)</p></div>
+        <div class="arrow">→</div>
+        <div class="archbox"><h5>ResNet-50 backbone</h5><p>Frozen → conv4/conv5 blocks unfrozen for finetune</p><span class="dim">7×7×2048</span></div>
+        <div class="arrow">→</div>
+        <div class="archbox"><h5>GAP → BN → Dropout(0.2)</h5><p>Global average pool + regularize</p></div>
+        <div class="arrow">→</div>
+        <div class="archbox"><h5>Dense(2) → Softmax</h5><p>logits layer named <code>teacher_logits</code></p></div>
+      </div>
+
+      <h3>Student model — DenseNet-121</h3>
+      <p>ImageNet-pretrained, <strong>~7.04M parameters</strong> (7,043,650 exact). This is the <strong>only model deployed for inference</strong>.</p>
+      <div class="archrow">
+        <div class="archbox"><h5>Input</h5><p>Canonical RGB</p><span class="dim">224×224×3</span></div>
+        <div class="arrow">→</div>
+        <div class="archbox"><h5>Lambda</h5><p><code>densenet.preprocess_input</code> (Torch-style, ImageNet mean/std)</p></div>
+        <div class="arrow">→</div>
+        <div class="archbox"><h5>DenseNet-121 backbone</h5><p>Frozen (head stage) → conv5_block* unfrozen (finetune stage)</p><span class="dim">7×7×1024</span></div>
+        <div class="arrow">→</div>
+        <div class="archbox"><h5>GAP → BN → Dropout(0.3)</h5><p>Global average pool + regularize</p></div>
+        <div class="arrow">→</div>
+        <div class="archbox"><h5>Dense(2) → Softmax</h5><p>logits layer named <code>student_logits</code></p></div>
+      </div>
+
+      <h4>Why DenseNet-121 was selected</h4>
+      <ul>
+        <li><strong>Pretrained initialization.</strong> The architecture it replaced (a bespoke CNN, "NirikNet") trained from random weights — a real overfitting risk given the training pool's size. DenseNet-121 starts from ImageNet weights.</li>
+        <li><strong>Narrower teacher/student capacity gap.</strong> 23.6M → 7.04M is a ~3.35× gap, down from ~11× with the previous student — addressing degraded distillation quality under large capacity gaps (Mirzadeh et al., 2020).</li>
+        <li><strong>Domain precedent.</strong> DenseNet-121 is the architecture CheXNet (Rajpurkar et al., 2017) established for chest-radiograph classification specifically.</li>
+        <li><strong>Accepted trade-off.</strong> CPU inference is slower than the model it replaced — <strong>~750–870ms/image</strong> measured on Kaggle's CPU-forced benchmark, versus ~260–490ms for the previous student. Judged acceptable because this is a non-real-time, single-image screening upload, not a live feed.</li>
+      </ul>
+
+      <h4>Role of ResNet-50</h4>
+      <p>Training-time only. Supplies temperature-scaled soft targets to the distillation loss. Never receives a real patient image outside training; never exported.</p>
+
+      <h4>Knowledge Distillation workflow</h4>
+      <p>Implemented in <code>DistillationModel</code>. Both networks end in a softmax layer for standalone use (evaluation, Grad-CAM), but distillation math is computed on the <strong>pre-softmax logits</strong> via a "logits submodel" view into each network's graph — a fix for a softmax-of-softmax bug found earlier in this project (re-softmaxing an already-softmaxed output flattens gradients and corrupts both loss terms).</p>
+      <div class="table-wrap">
+        <table>
+          <tbody>
+            <tr><td>Soft teacher targets</td><td class="num"><code>softmax(teacher_logits / T)</code></td></tr>
+            <tr><td>Soft student output</td><td class="num"><code>softmax(student_logits / T)</code></td></tr>
+            <tr><td>Distillation loss</td><td class="num"><code>KLD(soft_teacher, soft_student) × T²</code></td></tr>
+            <tr><td>Hard-label loss</td><td class="num"><code>FocalCE(y, softmax(student_logits))</code>, T=1</td></tr>
+            <tr><td>Total loss</td><td class="num"><code>α × hard_loss + (1−α) × distill_loss</code></td></tr>
+            <tr><td>T (temperature)</td><td class="num">3.0</td></tr>
+            <tr><td>α (hard-loss weight)</td><td class="num">0.5</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Both teacher and student train in <strong>two stages each</strong> (frozen head warmup → partial backbone unfreeze). The student's two stages both run inside a fresh <code>DistillationModel</code> wrapping the (already fully-trained, frozen) teacher.</p>
+
+      <h4>Attention mechanism</h4>
+      <p>Exists <strong>only</strong> inside the segmentation U-Net, as soft attention gates (<code>_attention_gate()</code>) at each decoder level: 1×1 convs on the encoder skip-connection and the up-sampled decoder signal, added, ReLU'd, projected to a single channel, sigmoid'd, then multiplied elementwise against the skip connection. <strong>Neither ResNet-50 nor DenseNet-121 contains any attention mechanism</strong> — no SE blocks, no CBAM, no self-attention. Stating this plainly since it's easy to assume otherwise from the pipeline outline.</p>
+
+      <h4>Lung segmentation</h4>
+      <p>Attention U-Net, 4-level encoder/decoder, <code>base_filters=32</code> doubling per level (32 → 64 → 128 → 256, bottleneck 512). Input <strong>256×256×1</strong> grayscale, output <strong>256×256×1</strong> sigmoid mask. At inference, binarized at &gt;0.5, largest-2-connected-components kept, then morphologically opened+closed (5×5 kernel) before the bounding box is computed.</p>
+
+      <h4>Feature extraction</h4>
+      <p>Standard ImageNet-hierarchy convolutional features from each backbone. Final feature map before pooling: ResNet-50 → 7×7×2048; DenseNet-121 → 7×7×1024.</p>
+
+      <h4>Classification head</h4>
+      <p>Identical shape for both networks: <code>GlobalAveragePooling2D → BatchNormalization → Dropout → Dense(2, linear) → Activation(softmax)</code>. Only the dropout rate differs (teacher 0.2, student 0.3).</p>
+
+      <h4>Output layer</h4>
+      <p><code>Dense(2)</code> raw logits, immediately followed by <code>Activation("softmax")</code> as a separate layer (not baked into the Dense activation) — this split exists specifically so the distillation math can read pre-softmax logits without disturbing the model's normal softmax-output behavior.</p>
+    </section>
+
+    <section id="s4">
+      <h2><span class="sec-num">04</span> Training Architecture</h2>
+      <p class="dek">All <span class="tag tag--confirmed">Confirmed</span>. Dataset counts are real numbers from the most recent verified pipeline run, not estimates.</p>
+
+      <h4>Dataset</h4>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Source</th><th class="num">Images (raw)</th><th>Role</th></tr></thead>
+          <tbody>
+            <tr><td>Tawsifur (TB_Chest_Radiography_Database)</td><td class="num">4,200</td><td>Class-folder Normal/Tuberculosis</td></tr>
+            <tr><td>Jaypee / India</td><td class="num">155</td><td>Metadata CSV, catalogs TB-positive cases only</td></tr>
+            <tr><td>Montgomery</td><td class="num">138</td><td>Metadata CSV</td></tr>
+            <tr><td>Shenzhen</td><td class="num">662</td><td>Metadata CSV</td></tr>
+            <tr><td>DA / DB (vbookshelf)</td><td class="num">156 / 122</td><td>Curated TB-positive collections</td></tr>
+            <tr><td>TBX11K (usmanshams/tbx-11)</td><td class="num">12,279 raw → 1,500 Normal + 800 TB used</td><td>Folder-labeled: <code>health</code>→Normal, <code>tb</code>→TB, <code>sick</code> excluded</td></tr>
+            <tr><td>Segmentation (nikhilpandey360)</td><td class="num">800 images / 704 masks</td><td>U-Net training only — separate from the classification pool</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>All six classification sources are pooled into <strong>one</strong> dataframe, deduplicated, quality-filtered, rebalanced to a 2:1 Normal:TB ratio, then split patient-wise 70/15/15.</p>
+
+      <h4>Preprocessing</h4>
+      <p>Single shared function, <code>preprocess_xray()</code> — see Section 2, Stage 2. Identical for every source, every split, and (architecturally required) inference.</p>
+
+      <h4>Augmentation — train split only</h4>
+      <ul>
+        <li>RandomRotation ±10°, RandomTranslation ±7%, RandomZoom ±8%</li>
+        <li>Random brightness (δ=15), random contrast (0.85–1.15), additive Gaussian noise (σ=6)</li>
+        <li><strong>No horizontal flip</strong> — CXR laterality (which lung a finding is in) is diagnostically meaningful</li>
+      </ul>
+
+      <h4>Loss functions</h4>
+      <p><code>CategoricalFocalCrossentropy</code> (γ=2.0, α=0.25) for every hard-label term — teacher training and the student's hard-label component inside distillation alike. KL-divergence (temperature-scaled) for the soft-target distillation term.</p>
+
+      <h4>Optimizer &amp; scheduler</h4>
+      <p>AdamW throughout, weight decay 1e-4. Custom warmup + cosine-decay schedule, per stage:</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Stage</th><th class="num">Peak LR</th><th class="num">Warmup epochs</th><th class="num">Total epochs</th></tr></thead>
+          <tbody>
+            <tr><td>Teacher head (frozen)</td><td class="num">1e-3</td><td class="num">5</td><td class="num">15</td></tr>
+            <tr><td>Teacher finetune (conv4/conv5 unfrozen)</td><td class="num">1e-4</td><td class="num">5</td><td class="num">40</td></tr>
+            <tr><td>Student head (frozen)</td><td class="num">1e-3</td><td class="num">10</td><td class="num">10</td></tr>
+            <tr><td>Student finetune (conv5_block* unfrozen)</td><td class="num">1e-4</td><td class="num">10</td><td class="num">100</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h4>Metrics</h4>
+      <p>Accuracy, precision, recall/sensitivity, F1, ROC-AUC, PR-AUC, specificity, balanced accuracy, MCC, Cohen's kappa, full confusion matrix and classification report — computed for teacher and student, on both validation and test splits.</p>
+
+      <h4>Validation &amp; threshold selection</h4>
+      <p>Patient-wise 70/15/15 split via <code>GroupShuffleSplit</code> on <code>patient_id</code>. Validation drives early stopping, checkpointing, and the operating threshold (Youden's J statistic, maximizing sensitivity + specificity − 1) — that threshold is then <strong>frozen</strong> and applied once to the test split, never refit on it.</p>
+
+      <h4>Checkpointing</h4>
+      <p>Each of the four training stages saves and reloads its own best-epoch weights independently (monitor: <code>val_accuracy</code>, mode max), with <code>restore_best_weights=True</code> plus an explicit reload as a second safeguard. Early-stopping patience: 15 (classification stages), 6 (segmentation).</p>
+
+      <h4>Complete training workflow, in execution order</h4>
+      <div class="stagelist">
+        <div class="stage"><div class="stage-idx">1</div><div><p class="stage-name">Train Attention U-Net</p><p class="stage-body">Independent dataset — no dependency on the classification pool.</p></div></div>
+        <div class="stage"><div class="stage-idx">2</div><div><p class="stage-name">Build pooled classification dataframe</p><p class="stage-body">All 6 sources merged.</p></div></div>
+        <div class="stage"><div class="stage-idx">3</div><div><p class="stage-name">Deduplicate</p><p class="stage-body">MD5 exact-match pass, then perceptual-hash near-duplicate pass (Hamming ≤3).</p></div></div>
+        <div class="stage"><div class="stage-idx">4</div><div><p class="stage-name">Image quality filter</p><p class="stage-body">Drops corrupted, blurry, near-blank images.</p></div></div>
+        <div class="stage"><div class="stage-idx">5</div><div><p class="stage-name">Mask-coverage filter</p><p class="stage-body">Needs the trained U-Net; drops implausible-coverage crops.</p></div></div>
+        <div class="stage"><div class="stage-idx">6</div><div><p class="stage-name">Rebalance to 2:1 Normal:TB</p><p class="stage-body">Downsamples majority class proportionally across sources.</p></div></div>
+        <div class="stage"><div class="stage-idx">7</div><div><p class="stage-name">Patient-wise 70/15/15 split</p></div></div>
+        <div class="stage"><div class="stage-idx">8</div><div><p class="stage-name">Export <code>train.csv</code> / <code>val.csv</code> / <code>test.csv</code></p><p class="stage-body">Exact, final split membership (path, label, source, patient_id) — a reproducibility/audit artifact. Nothing downstream reads these back; they exist so the split is inspectable without re-running the pipeline.</p></div></div>
+        <div class="stage"><div class="stage-idx">9</div><div><p class="stage-name">Train teacher (head → finetune)</p></div></div>
+        <div class="stage"><div class="stage-idx">10</div><div><p class="stage-name">Train student via distillation (head → finetune)</p></div></div>
+        <div class="stage"><div class="stage-idx">11</div><div><p class="stage-name">Evaluate, select Youden threshold, benchmark latency</p></div></div>
+        <div class="stage"><div class="stage-idx">12</div><div><p class="stage-name">Generate explainability visualizations</p></div></div>
+        <div class="stage"><div class="stage-idx">13</div><div><p class="stage-name">Export student to ONNX, validate the export</p></div></div>
+      </div>
+    </section>
+
+    <section id="s5">
+      <h2><span class="sec-num">05</span> Inference Architecture</h2>
+      <p class="dek">What must actually be loaded and run to score one uploaded image.</p>
+
+      <div class="note">
+        <span class="note-label">Deployment platform <span class="tag tag--decided">Decided</span></span>
+        <p><strong>Backend + model on Hugging Face Spaces. Frontend on Vercel.</strong> This isn't a new constraint introduced by that choice — it's confirmation of an assumption the training code already had baked in. <code>benchmark_inference_latency()</code>'s own docstring reads: <em>"forced onto CPU regardless of GPU availability, since the deployment target (HF Spaces free tier) is CPU-only"</em> — and the ONNX export stage's docstring cites the same reasoning for exporting rather than serving native Keras. The ~750–870ms/image DenseNet-121 CPU figure in Section&nbsp;3 was always measured with exactly this environment in mind, not a generic benchmark.</p>
+      </div>
+
+      <h4>Models loaded</h4>
+      <ul>
+        <li><strong>DenseNet-121 student</strong> — <span class="tag tag--confirmed">Confirmed</span>, exported to ONNX (opset 13). The only classifier deployed.</li>
+        <li><strong>Attention U-Net</strong> — <span class="tag tag--confirmed">Confirmed required</span>, because segmentation runs on every image, training or inference, as part of <code>preprocess_xray()</code>. Its export format is <span class="tag tag--notdef">Not defined</span>: the code saves it as a native <code>.keras</code> file (<code>model.save()</code>) — there is no ONNX export path for it anywhere in <code>nirikNetMain.py</code>. Whether the serving stack should add one, to match the student's ONNX-only design, was never decided.</li>
+      </ul>
+
+      <h4>Models NOT loaded</h4>
+      <ul>
+        <li><strong>ResNet-50 teacher</strong> — training-only by design. Loading it in a serving environment would be a deviation from this architecture, not a variant of it.</li>
+      </ul>
+
+      <div class="note gap">
+        <span class="note-label">Open architectural gap — explainability vs. ONNX</span>
+        <p>Grad-CAM/Grad-CAM++/LayerCAM/EigenCAM (<code>compute_gradcam</code> etc.) require a TensorFlow <code>GradientTape</code> over the live Keras model's intermediate layers. <strong>ONNX Runtime does not support this.</strong> If only the ONNX student is loaded in production, explainability as currently implemented cannot run against it. This was never resolved in this project. Two real options, neither decided: (a) keep the native Keras student loaded alongside the ONNX one, used only for explainability; (b) implement an ONNX-compatible CAM method separately. Marking this <span class="tag tag--notdef">Not defined</span> rather than picking one.</p>
+      </div>
+
+      <h4>Image preprocessing</h4>
+      <p>Must exactly replicate <code>preprocess_xray()</code> — CLAHE (2.0 / 8×8), 8.5%-padded lung-mask crop, resize to 224×224, canonical 0–255 RGB. Model-specific normalization is <strong>not</strong> a separate serving-side step — it's baked into the exported graph via each model's own <code>Lambda</code> layer.</p>
+
+      <h4>Output generation</h4>
+      <p>Softmax pair → apply the <strong>frozen</strong> Youden threshold from <code>metrics.json</code> (training-time artifact) to <code>P(Tuberculosis)</code> → binary screening flag. The threshold must never be recomputed at inference time.</p>
+    </section>
+
+    <section id="s6">
+      <h2><span class="sec-num">06</span> Explainability Architecture</h2>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Method</th><th>Mechanism</th><th>Needs class index?</th></tr></thead>
+          <tbody>
+            <tr><td>Grad-CAM</td><td>Gradient-weighted class activation mapping (Selvaraju et al.)</td><td>Yes</td></tr>
+            <tr><td>Grad-CAM++</td><td>Refined per-pixel weighting (squared/cubed gradient terms) for better multi-region localization</td><td>Yes</td></tr>
+            <tr><td>LayerCAM</td><td>Elementwise ReLU'd gradient weighting (finer-grained than Grad-CAM's global pooling)</td><td>Yes</td></tr>
+            <tr><td>EigenCAM</td><td>Gradient-free — principal component of the conv feature map's covariance, projected per pixel</td><td>No</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>All four operate on the student's DenseNet-121 backbone, target layer auto-detected by type (the nested backbone submodel), not by a hardcoded layer name.</p>
+
+      <div class="note absent">
+        <span class="note-label">Named but not implemented</span>
+        <p>The project's broader documentation describes a <strong>"Consensus CAM"</strong> (an average of the four normalized CAM outputs) as part of the canonical explainability stage. <strong>No such computation exists in <code>nirikNetMain.py</code></strong> — only the four individual CAM variants are generated and saved separately. This is a real gap between documented intent and implementation, not a naming difference.</p>
+      </div>
+
+      <div class="note absent">
+        <span class="note-label">Attention maps as an explainability output</span>
+        <p><span class="tag tag--notdef">Not defined</span>. As established in Section 3, attention only exists inside the segmentation U-Net's decoder gates. No code exposes those gate activations as a classification-explainability artifact — the segmentation <em>mask</em> itself is a real, available output, but it's a lung-localization boundary, not an attention heatmap over the classifier's decision.</p>
+      </div>
+
+      <h4>Confidence &amp; feature importance</h4>
+      <p>Confidence: raw <code>P(Tuberculosis)</code> softmax value (Section 2, Stage 6). Feature importance beyond the CAM family: <span class="tag tag--notdef">Not defined</span> — no SHAP, LIME, or permutation-importance code exists.</p>
+
+      <h4>How this should be exposed to the backend</h4>
+      <p><span class="tag tag--derived">Derived</span> — no serialization or API code exists for this. Each <code>compute_*</code> function returns a single-channel array normalized to <code>[0, 1]</code> at the input resolution; a reasonable backend contract is to overlay each onto the preprocessed (post-crop, post-CLAHE) image server-side and return either encoded images or the raw arrays, per endpoint design in Section 7.</p>
+    </section>
+
+    <section id="s7">
+      <h2><span class="sec-num">07</span> Backend Requirements</h2>
+      <p class="dek">Every item here is <span class="tag tag--derived">Derived</span> — a contract inferred from the model's actual I/O, not existing backend code. This project has a <code>backend/</code> directory already, but it was out of scope this session and has not been reconciled against this architecture (old model references, stale thresholds — see the closing note).</p>
+
+      <h4>Deployment target <span class="tag tag--decided">Decided</span></h4>
+      <p><strong>Hugging Face Spaces</strong> — both the backend API and the model artifacts. An <code>hf_space/</code> directory with a working <code>Dockerfile</code> already exists in this repository (<code>FROM python:3.11-slim</code>, <code>EXPOSE 7860</code> — the standard Hugging Face Spaces Docker-SDK port), so the container convention is already scaffolded; it hasn't been reconciled against the DenseNet-121/ONNX/Youden-threshold architecture described in this document. Concretely: the free tier's CPU-only constraint (Section 5) is the real reason the student was exported to ONNX at all rather than served as native Keras.</p>
+
+      <h4>Required endpoints (proposed)</h4>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Endpoint</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td class="mono">POST /predict</td><td>Full pipeline: preprocess → segment → classify → threshold → (optionally) explain, in one call</td></tr>
+            <tr><td class="mono">POST /explain</td><td>Heatmaps only, for an image already scored — separable from <code>/predict</code> if generating all four CAMs per request is too slow to bundle</td></tr>
+            <tr><td class="mono">GET /health</td><td>Liveness + confirms both required models are loaded</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Authentication, patient records, report generation, and DICOM-specific handling: <span class="tag tag--notdef">Not defined</span> by the model architecture itself — those are product decisions, not something derivable from <code>nirikNetMain.py</code>.</p>
+
+      <h4>Request format (proposed)</h4>
+      <p><code>multipart/form-data</code> image upload. Exact field naming, patient metadata fields, and auth headers: <span class="tag tag--notdef">Not defined</span>.</p>
+
+      <h4>Response format (proposed)</h4>
+      <pre><code>{
+  "prediction": "Tuberculosis" | "Normal",
+  "confidence": 0.62,
+  "threshold_used": 0.079,
+  "screening_note": "AI Screening Result — Suspicious for Pulmonary Tuberculosis",
+  "explainability": {
+    "gradcam": "&lt;image or url&gt;",
+    "gradcam_plus_plus": "&lt;image or url&gt;",
+    "layercam": "&lt;image or url&gt;",
+    "eigencam": "&lt;image or url&gt;"
+  }
+}</code></pre>
+      <p>The <code>threshold_used</code> value must be read from the training run's <code>metrics.json</code> (<code>student_youden_threshold</code>), never hardcoded to 0.5 and never recomputed server-side.</p>
+
+      <h4>Model loading strategy</h4>
+      <p>Load the student (ONNX Runtime session) and the U-Net (native Keras) <strong>once</strong>, at process startup — not per-request. The teacher must never be loaded in a serving process.</p>
+
+      <h4>Preprocessing / postprocessing requirements</h4>
+      <p>Preprocessing must exactly match <code>preprocess_xray()</code> (Section 2/5) — this is a hard requirement, not a suggestion. Postprocessing: apply the frozen threshold; do not apply any additional calibration not present in the training pipeline.</p>
+
+      <h4>Error handling (derived from the code's own failure surface)</h4>
+      <ul>
+        <li>Unreadable/corrupted image → <code>read_image_grayscale()</code> raises <code>ValueError</code> — map to a 4xx.</li>
+        <li>No lung region detected → the current code <strong>silently falls back</strong> to the full, uncropped image (<code>bounding_box_with_padding</code>'s empty-mask branch) rather than erroring. This is existing behavior, not a recommendation — worth flagging to a clinician-facing UI as a quality caveat rather than treating it as an error.</li>
+      </ul>
+    </section>
+
+    <section id="s8">
+      <h2><span class="sec-num">08</span> Frontend Requirements</h2>
+      <p class="dek"><span class="tag tag--derived">Derived</span> display contract — no frontend code was in scope. Deployment target is <span class="tag tag--decided">Decided</span>: <strong>Vercel</strong>. It calls the backend on Hugging Face Spaces (Section 7) as a remote API — it never loads any model itself.</p>
+
+      <ul>
+        <li><strong>Upload:</strong> single image, formats matching what <code>read_image_grayscale()</code> accepts.</li>
+        <li><strong>Prediction:</strong> must use the project's mandated clinical language — <em>"AI Screening Result — Suspicious for Pulmonary Tuberculosis"</em> or <em>"Normal"</em>. Never "Confirmed," never "Diagnosed."</li>
+        <li><strong>Confidence:</strong> show <code>P(Tuberculosis)</code> alongside the operating threshold it was compared against — Youden-derived thresholds observed in real runs were far from 0.5 (e.g. 0.079–0.124), so showing the raw probability without its threshold would read as confusing or arbitrary to a clinician.</li>
+        <li><strong>Heatmap:</strong> whichever CAM variant(s) the backend returns, overlaid on the cropped/preprocessed image.</li>
+        <li><strong>Attention visualization:</strong> <span class="tag tag--notdef">Not defined</span> as a classification artifact (Section 6). If the lung segmentation mask itself is shown, label it as segmentation/localization, not "attention."</li>
+        <li><strong>Explainability:</strong> the four individual CAM outputs. A "Consensus CAM" cannot be shown until it exists in the model pipeline (Section 6).</li>
+        <li><strong>Chat:</strong> <span class="tag tag--notdef">Not defined</span> — depends entirely on Section 9, which is itself unbuilt.</li>
+        <li><strong>Loading state:</strong> functionally necessary, not optional polish. Measured student latency alone is ~750–870ms/image on CPU; add U-Net segmentation plus up to four gradient-tape CAM passes, and a real end-to-end request is a multi-second operation.</li>
+        <li><strong>Error states:</strong> <span class="tag tag--notdef">Not defined</span> beyond what Section 7's error-handling notes imply.</li>
+      </ul>
+    </section>
+
+    <section id="s9">
+      <h2><span class="sec-num">09</span> LLM Integration</h2>
+      <p class="dek">The provider is <span class="tag tag--decided">Decided</span> — a real project decision, not yet implemented. Everything else below is still <span class="tag tag--derived">Derived</span>: a design recommendation inferred from the project's stated intent, not existing behavior.</p>
+
+      <h4>Provider <span class="tag tag--decided">Decided</span></h4>
+      <p><strong>Gemini 2.5 Flash</strong>, called via a Google AI Studio API key. No integration code exists yet — this section describes how that call should be shaped once it's built, not something already running.</p>
+      <div class="note absent">
+        <span class="note-label">Handling the API key</span>
+        <p>Server-side only, read from an environment variable / secrets manager — never bundled into the frontend, never logged alongside request/response payloads. This is a general requirement for any cloud LLM key, worth stating plainly since it's the most common way this kind of integration leaks credentials.</p>
+      </div>
+
+      <h4>Where it fits</h4>
+      <p>After classification and explainability are complete, before final display — it narrates already-computed results, it does not produce them.</p>
+
+      <h4>What it should receive</h4>
+      <p>Only structured, already-computed outputs: prediction label, confidence, threshold, and (if later implemented) a CAM-derived localization summary. <strong>Anatomical zone mapping (e.g. "right upper lobe") is described in the project's broader documentation but has no implementation in <code>nirikNetMain.py</code></strong> — do not assume it's available as an LLM input until it exists.</p>
+
+      <h4>What it should NEVER receive</h4>
+      <ul>
+        <li>The raw uploaded image, unless and until image-grounded generation is specifically validated for this task — passing it "for context" invites the model to freelance a visual read it has no validated grounding for.</li>
+        <li>Model weights, training data, or any patient-identifying information beyond what a report strictly requires.</li>
+        <li>Any instruction that could produce diagnostic-sounding language — the project's own clinical safety rules forbid "confirmed," "diagnosed," or similar framing.</li>
+      </ul>
+
+      <h4>Hallucination minimization</h4>
+      <p>Constrain the prompt to only comment on the numeric fields it's given; do not ask it to independently interpret the image. Enforce the clinical terminology rules (Section 8) at the system-prompt level, not just by convention.</p>
+
+      <h4>Follow-up questions</h4>
+      <p><span class="tag tag--notdef">Not defined</span>.</p>
+    </section>
+
+    <section id="s10">
+      <h2><span class="sec-num">10</span> Mermaid Architecture Diagram</h2>
+      <p class="dek">Training-time and inference-time paths are distinguished explicitly — the teacher subgraph only exists during training.</p>
+<pre><code>flowchart TD
+    subgraph TRAIN["Training-time only"]
+        direction TB
+        DS[("Pooled dataset\n6 sources, patient-wise 70/15/15")]
+        SEGTR["Attention U-Net\ntraining"]
+        TEACH["ResNet-50 Teacher\nhead train -&gt; finetune"]
+        KD["Knowledge Distillation\nDistillationModel: KLD + Focal CE"]
+        DS --> TEACH
+        DS --> KD
+        TEACH --> KD
+        SEGTR -.provides masks for.-> DS
+    end
+
+    UPLOAD(["User uploads X-ray"]) --> PRE
+    PRE["Preprocessing\nCLAHE + 8.5% padded crop + resize 224x224"]
+    SEG["Attention U-Net\n(inference)\n256x256 -> lung mask"]
+    STUD["DenseNet-121 Student\n(ONNX, deployed)"]
+    PRED["Softmax\nP(Normal), P(Tuberculosis)"]
+    THRESH["Youden Threshold\n(frozen, from training)"]
+    CONF["Confidence + Screening Flag"]
+    EXPLAIN["Explainability\nGrad-CAM / Grad-CAM++ / LayerCAM / EigenCAM"]
+    LLM["LLM narration\nNOT DEFINED"]
+    FE["Frontend\nNOT DEFINED"]
+
+    PRE --> SEG --> PRE
+    PRE --> STUD --> PRED --> THRESH --> CONF
+    STUD -.gradient access needed.-> EXPLAIN
+    CONF --> LLM --> FE
+    EXPLAIN --> FE
+
+    KD -.trains.-> STUD
+
+    classDef notdef stroke-dasharray: 4 3
+    class LLM,FE notdef
+</code></pre>
+    </section>
+
+    <section id="s11">
+      <h2><span class="sec-num">11</span> Folder Responsibilities</h2>
+      <p class="dek"><span class="tag tag--derived">Derived</span> — reflects what this architecture needs, not the repository's current layout.</p>
+      <pre><code>model/
+  segmentation/        # Attention U-Net: build, train, weights
+  teacher/              # ResNet-50: build, train (head + finetune)
+  student/               # DenseNet-121: build, train (head + finetune)
+  distillation/          # DistillationModel, KD loss math
+  export/                 # ONNX export + validation
+  explainability/         # Grad-CAM / Grad-CAM++ / LayerCAM / EigenCAM
+
+backend/                  # deploys to Hugging Face Spaces (Docker SDK) — DECIDED
+  Dockerfile               # already scaffolded in hf_space/: python:3.11-slim, EXPOSE 7860
+  api/                   # /predict, /explain, /health
+  inference/              # preprocessing (must mirror preprocess_xray exactly), model loading
+  postprocessing/          # threshold application, response shaping
+
+frontend/                 # deploys to Vercel — DECIDED, calls the HF Spaces backend as a remote API
+  upload/
+  results/                # prediction, confidence, threshold display
+  explainability/          # heatmap rendering
+  chat/                    # NOT DEFINED — depends on Section 9
+
+llm/
+  client/                  # Gemini 2.5 Flash call (Google AI Studio API key, server-side only)
+  prompts/                 # NOT DEFINED — no templates exist yet
+  guardrails/                # terminology enforcement, input allow-list
+
+config/
+  training_config.json       # mirrors Config dataclass in nirikNetMain.py
+  metrics.json                # frozen threshold, evaluation results — read by backend, never regenerated there
+
+exports/
+  train.csv / val.csv / test.csv   # final split membership — audit/reproducibility only, nothing reads these back
+
+weights/                  # ships to Hugging Face Spaces alongside backend/ — model is not a separate deployment target
+  attention_unet.keras
+  teacher_finetune_best.keras   # training artifact only — never shipped
+  densenet121_student.onnx       # the only model deployed
+</code></pre>
+    </section>
+
+    <section id="s12">
+      <h2><span class="sec-num">12</span> Final Source of Truth</h2>
+      <p class="dek">The load-bearing facts. If any future change contradicts this table, the change is wrong or this document is stale — not both silently coexisting.</p>
+
+      <div class="table-wrap">
+        <table>
+          <tbody>
+            <tr><td>Deployed classifier</td><td><strong>DenseNet-121 student only</strong>, exported to ONNX</td></tr>
+            <tr><td>Teacher (ResNet-50)</td><td>Training-time only — never loaded in serving</td></tr>
+            <tr><td>Input contract</td><td>224×224×3 canonical 0–255 RGB, model-internal normalization</td></tr>
+            <tr><td>Preprocessing</td><td>One shared function, train and inference alike — CLAHE 2.0/8×8, 8.5% padded lung crop</td></tr>
+            <tr><td>Decision threshold</td><td>Frozen, Youden-derived from validation — never 0.5, never recomputed at inference</td></tr>
+            <tr><td>Explainability</td><td>Grad-CAM, Grad-CAM++, LayerCAM, EigenCAM on the student — requires native Keras gradient access, unresolved against ONNX-only serving</td></tr>
+            <tr><td>Attention</td><td>Exists only inside the segmentation U-Net's decoder gates — not a classifier component</td></tr>
+            <tr><td>Consensus CAM</td><td>Documented elsewhere in the project, not implemented in code</td></tr>
+            <tr><td>Split reproducibility</td><td><code>train.csv</code> / <code>val.csv</code> / <code>test.csv</code> — final split membership, written once per run as an audit trail</td></tr>
+            <tr><td>LLM layer</td><td>Provider <strong>decided</strong> (Gemini 2.5 Flash, Google AI Studio API key) — integration itself not implemented; Section 9 is a design proposal for how it should be shaped</td></tr>
+            <tr><td>Deployment platforms</td><td>Backend + model: <strong>Hugging Face Spaces</strong> (Docker SDK, already scaffolded in <code>hf_space/</code>). Frontend: <strong>Vercel</strong>, calling HF Spaces as a remote API. Decided; not yet reconciled against this architecture.</td></tr>
+            <tr><td>Backend / Frontend</td><td>Not implemented against this architecture; Sections 7–8 are derived contracts</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>Every future backend, frontend, or LLM change should be checked against this document before merging. Where this document says <span class="tag tag--notdef">Not defined</span>, that is a decision to be made deliberately — not a gap to fill by assumption.</p>
+    </section>
+
+    <footer>
+      Nirikshon Architecture Specification · Generated from CNN Model Training/nirikNetMain.py · v1.2
+    </footer>
+  </main>
+</div>

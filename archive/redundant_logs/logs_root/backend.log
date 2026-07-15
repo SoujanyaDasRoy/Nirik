@@ -1,0 +1,50 @@
+TUBERCULOSIS CHEST X-RAY CLASSIFICATION PIPELINE
+25.4s 18
+==============================================================================
+25.4s 19
+Start time: 2026-07-12 02:19:41
+25.4s 20
+==============================================================================
+25.4s 21
+DATASET DISCOVERY
+25.4s 22
+==============================================================================
+33.2s 23
+[OK          ] TB             ->   4200 images  (/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database)
+33.2s 24
+[OK          ] Montgomery     ->    138 images  (/kaggle/input/datasets/raddar/tuberculosis-chest-xrays-montgomery/images/images)
+34.5s 25
+[OK          ] Shenzhen       ->    662 images  (/kaggle/input/datasets/raddar/tuberculosis-chest-xrays-shenzhen/images/images)
+34.7s 26
+[OK          ] India          ->    155 images  (/kaggle/input/datasets/raddar/chest-xrays-tuberculosis-from-india/images/images)
+51.0s 27
+[OK          ] TBX11K         ->   8400 images  (/kaggle/input/datasets/vbookshelf/tbx11k-simplified/tbx11k-simplified/images)
+53.7s 28
+TUBERCULOSIS CHEST X-RAY CLASSIFICATION PIPELINE 25.4s 18
+============================================================================== 25.4s 19
+Start time: 2026-07-12 02:19:41 25.4s 20
+============================================================================== 25.4s 21 28
+[OK          ] SegImages      ->    800 images  (/kaggle/input/datasets/nikhilpandey360/chest-xray-masks-and-labels/Lung Segmentation/CXR_png) 56.0s 29
+[OK          ] SegMasks       ->    704 images  (/kaggle/input/datasets/nikhilpandey360/chest-xray-masks-and-labels/Lung Segmentation/masks) 56.0s 30
+============================================================================== 56.0s 31
+Generating unified classification metadata ... 62.1s 32
+Per-source counts: 62.1s 33
+source      label 62.1s 34
+india       1          78 62.1s 35
+montgomery  0          81 62.1s 36
+1          57 62.1s 37
+shenzhen    0         326 62.1s 38
+1         336 62.1s 39
+tb          0        3500 62.1s 40
+1         700 62.1s 41
+tbx11k      1         799 62.1s 42
+dtype: int64 62.1s 43
+Per-class totals: {0: 3907, 1: 1970} 62.1s 42 44
+Total labelled images: 5877 62.1s 45
+Split -> train: 4113  val: 882  test: 882 62.1s 46
+============================================================================== 62.1s 47
+STAGE: LUNG SEGMENTATION (Attention U-Net) 62.1s 48
+============================================================================== 228.7s 49
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR 228.7s 50
+I0000 00:00:1783822985.208301      23 gpu_device.cc:2020] Created device /job:localhost/replica:0/task:0/device:GPU:0 with 15511 MB memory:  -> device: 0, name: Tesla P100-PCIE-16GB, pci bus id: 0000:00:04.0, compute capability: 6.0 228.8s 51
+Segmentation dataset: X=(704, 256, 256, 1)  Y=(704, 256, 256, 1) 229.0s 52

@@ -1,0 +1,12 @@
+Server initialized for threading.
+Using device: cpu
+2026-07-07 08:25:50,853 | INFO     | engineio.server | __init__:112 | Server initialized for threading.
+Starting Enterprise API Backend on 127.0.0.1:5000 (Debug: False)...
+ * Serving Flask app 'app'
+ * Debug mode: off
+Loaded calibrated clinical threshold from metadata: 0.62
+Model warm-up pass completed successfully ✓
+2026-07-07 09:04:51,655 | WARNING  | nirikshon | csrf_protect:192 | CSRF validation failed for /predict: Token mismatch or missing
+2026-07-07 09:04:51,655 | WARNING  | nirikshon | csrf_protect:192 | CSRF validation failed for /predict: Token mismatch or missing
+2026-07-07 15:16:54,832 | WARNING  | nirikshon | csrf_protect:192 | CSRF validation failed for /predict: Token mismatch or missing
+2026-07-07 15:16:54,832 | WARNING  | nirikshon | csrf_protect:192 | CSRF validation failed for /predict: Token mismatch or missing

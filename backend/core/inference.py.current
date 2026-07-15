@@ -1,0 +1,637 @@
+import os
+# Force Keras to use PyTorch as its backend
+os.environ["KERAS_BACKEND"] = "torch"
+
+import keras
+import torch
+import numpy as np
+import cv2
+import threading
+import random
+import hashlib
+import json
+import datetime
+import sys
+from PIL import Image
+
+# Add backend directory to sys.path for absolute imports
+backend_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if backend_dir not in sys.path:
+    sys.path.append(backend_dir)
+
+# Import explainability modules
+from explainability.gradcam import generate_saliency_heatmap, _generate_density_heatmap
+from explainability.heatmap_processing import calibrate_confidence, validate_explainability, extract_evidence
+from explainability.roi_extraction import extract_xai_rois, generate_xai_clinical_summary, compute_quadrant_analysis, generate_clinical_reasoning
+
+OPTIMAL_THRESHOLD = 0.5
+BASE_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+MODEL_PATH = os.path.join(BASE_DIR, "CNN Model Training", "student_cnn.keras")
+DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+print(f"Using device: {DEVICE}")
+
+# ResNet50 / caffe-style BGR mean pixel values (used by tf.keras ResNet50
+# preprocess_input in 'caffe' mode). See keras.applications.resnet50.
+RESNET50_BGR_MEAN = np.array([103.939, 116.779, 123.680], dtype=np.float32)
+
+
+def preprocess_for_classifier(gray_img: np.ndarray, unet_active: bool):
+    """Preprocess a grayscale image array into a (1, H, W, 3) tensor
+    suitable for the student_cnn classifier.
+
+    The image is expected to be in [0, 255] range, float32 or uint8.
+    We resize to 224x224, stack to 3 channels, and convert to tensor.
+    No additional scaling or normalization is applied, as the model's
+    first layer (Rescaling(1/255.)) handles conversion to [0, 1] range.
+
+    Args:
+        gray_img: numpy array of shape (H, W), values in [0, 255].
+        unet_active: True when the U-Net segmenter is deployed (unused, kept for API compatibility).
+
+    Returns:
+        torch.Tensor of shape (1, 224, 224, 3) with values in [0, 255].
+    """
+    # Resize to 224x224 using bilinear interpolation (matches tf.image.resize default)
+    resized = cv2.resize(gray_img, (IMG_SIZE, IMG_SIZE), interpolation=cv2.INTER_LINEAR)
+    # Stack to 3 channels
+    rgb = np.stack([resized, resized, resized], axis=-1)
+    # Ensure float32 and clamp to [0, 255] (should already be, but safe)
+    rgb = np.clip(rgb, 0, 255).astype(np.float32)
+    # Convert to tensor and add batch dimension
+    return torch.tensor(rgb).unsqueeze(0).to(DEVICE)
+
+
+IMAGENET_MEAN = np.array([0.485, 0.456, 0.406], dtype=np.float32)
+IMAGENET_STD = np.array([0.229, 0.224, 0.225], dtype=np.float32)
+IMG_SIZE = 224
+SEG_SIZE = 256
+UNET_MODEL_PATH = os.path.join(BASE_DIR, "unet_lung_segmenter.keras")
+CLASSIFICATION_MODEL_NAME = "student_cnn"
+
+# Batching configuration
+BATCH_SIZE = int(os.environ.get("BATCH_SIZE", "4"))
+BATCH_TIMEOUT = float(os.environ.get("BATCH_TIMEOUT", "0.01"))
+
+# Global Batcher instance and lock
+_batcher = None
+_batcher_lock = threading.Lock()
+
+def _process_fn(batch_tensors):
+    model = get_model()
+    if len(batch_tensors) == 0:
+        return []
+    batch = torch.stack(batch_tensors)
+    with torch.no_grad():
+        logits = model(batch)
+        if logits.dim() > 1:
+            logits = logits.squeeze(-1)
+        probs = torch.sigmoid(logits).flatten().tolist()
+    return probs
+
+def get_batcher():
+    global _batcher
+    if _batcher is None:
+        with _batcher_lock:
+            if _batcher is None:
+                _batcher = Batcher(batch_size=BATCH_SIZE, timeout=BATCH_TIMEOUT, process_fn=_process_fn)
+    return _batcher
+
+def pad_to_square(img: Image.Image, fill=0) -> Image.Image:
+    w, h = img.size
+    if w == h:
+        return img
+    elif w > h:
+        result = Image.new(img.mode, (w, w), fill)
+        result.paste(img, (0, (w - h) // 2))
+        return result
+    else:
+        result = Image.new(img.mode, (h, h), fill)
+        result.paste(img, ((h - w) // 2, 0))
+        return result
+
+def crop_to_original(padded_img: Image.Image, original_size) -> Image.Image:
+    w_orig, h_orig = original_size
+    w_pad, h_pad = padded_img.size
+    if w_orig == h_orig:
+        return padded_img
+    elif w_orig > h_orig:
+        top = (w_orig - h_orig) // 2
+        bottom = top + h_orig
+        return padded_img.crop((0, top, w_orig, bottom))
+    else:
+        left = (h_orig - w_orig) // 2
+        right = left + w_orig
+        return padded_img.crop((left, 0, right, h_orig))
+
+# Lazy load classifier model with thread safety
+_model = None
+_model_lock = threading.Lock()
+# Lazy load U-Net segmenter with thread safety
+_unet = None
+_unet_lock = threading.Lock
+
+def get_model():
+    global _model, OPTIMAL_THRESHOLD
+    if _model is None:
+        with _model_lock:
+            if _model is None:
+                device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+                if device.type == "cuda":
+                    torch.backends.cudnn.benchmark = True
+                # Check for quantized model override
+                use_quantized = os.environ.get("USE_QUANTIZED_MODEL", "false").lower() in ("true", "1")
+                if use_quantized:
+                    quantized_path = os.environ.get("QUANTIZED_MODEL_PATH")
+                    if quantized_path:
+                        try:
+                            _model = torch.jit.load(quantized_path)
+                            _model.to(device)
+                            print(f"Loaded quantized model from {quantized_path}")
+                            return _model
+                        except Exception as e:
+                            print(f"Failed to load quantized model: {e}")
+                # Check for model metadata dynamically to resolve clinical threshold settings
+                metadata_path = os.path.join(BASE_DIR, "model_metadata.json")
+                if os.path.exists(metadata_path):
+                    try:
+                        import json
+                        with open(metadata_path, "r") as f:
+                            meta = json.load(f)
+                        parsed_thresh = meta.get("optimal_threshold")
+                        if parsed_thresh is not None:
+                            OPTIMAL_THRESHOLD = float(parsed_thresh)
+                            print(f"Loaded calibrated clinical threshold from metadata: {OPTIMAL_THRESHOLD}")
+                    except Exception as e_meta:
+                        print(f"Failed to load clinical threshold from metadata: {e_meta}")
+                else:
+                    # Check for best_threshold.txt in the backend folder first
+                    thresh_path = os.path.join(BASE_DIR, "best_threshold.txt")
+                    if os.path.exists(thresh_path):
+                        try:
+                            with open(thresh_path, "r") as f:
+                                OPTIMAL_THRESHOLD = float(f.read().strip())
+                            print(f"Loaded calibrated threshold from best_threshold from best_threshold.txt: {OPTIMAL_THRESHOLD}")
+                        except Exception as e_thresh:
+                            print(f"Failed to load threshold from best_threshold.txt: {e_thresh}")
+                            OPTIMAL_THRESHOLD = 0.5
+                    else:
+                        OPTIMAL_THRESHOLD = 0.5
+                        print(f"Metadata or threshold file not found. Defaulting to: {OPTIMAL_THRESHOLD}")
+
+                if os.path.exists(MODEL_PATH):
+                    try:
+                        _model = keras.saving.load_model(MODEL_PATH)
+                        _model.to(device)
+                        # Warm model compilation (warm-up dummy forward pass)
+                        try:
+                            dummy_input = torch.zeros(1, IMG_SIZE, IMG_SIZE, 3).to(device)
+                            _ = _model(dummy_input)
+                            print("Model warm-up pass completed successfully ✓")
+                        except Exception as warm_err:
+                            print(f"Warning during model warm-up: {warm_err}")
+                    except Exception as e:
+                        print(f"Error loading model: {e}")
+                else:
+                    print(f"WARNING: {MODEL_PATH} not found in the backend folder. Predictions will fail until it is added.")
+    return _model
+
+def get_unet():
+    """Lazily load the U-Net lung segmenter. Returns None if the model file
+    has not yet been deployed — the inference pipeline falls back gracefully."""
+    global _unet, _unet_lock
+    if _unet is not None:
+        return _unet
+    if not os.path.exists(UNET_MODEL_PATH):
+        return None
+    with _unet_lock:
+        if _unet is None:
+            try:
+                _unet = keras.saving.load_model(UNET_MODEL_PATH, compile=False)
+                print(f"U-Net lung segmenter loaded from {UNET_MODEL_PATH}")
+                # Warm-up pass
+                try:
+                    dummy = torch.zeros(1, SEG_SIZE, SEG_SIZE, 1).to(DEVICE)
+                    _ = _unet(dummy)
+                    print("U-Net warm-up pass completed ✓")
+                except Exception as wu_err:
+                    print(f"U-Net warm-up warning: {wu_err}")
+            except Exception as load_err:
+                print(f"Failed to load U-Net segmenter: {load_err}")
+    return _unet
+
+def segment_lungs(gray_arr: np.ndarray):
+    """Run U-Net lung segmentation on a grayscale padded image array.
+
+    Blacks out everything outside the lung fields (clavicles, arms, stomach,
+    text annotation markers) so the DenseNet-121 classifier only evaluates
+    lung parenchyma.
+
+    Args:
+        gray_arr: float32 numpy array of shape (H, W), values in [0, 255].
+
+    Returns:
+        Tuple of (masked_image, binary_mask):
+            masked_image: float32 array of shape (IMG_SIZE, IMG_SIZE) — the masked and resized
+                image ready for channel stacking and preprocessing.
+            binary_mask: float32 array of shape (h_orig, w_orig) with values 0.0 or 1.0
+                indicating lung region (1 = lung, 0 = non-lung) at the original padded image resolution.
+        Falls back to a plain resize if the U-Net model is not available.
+    """
+    unet = get_unet()
+    if unet is None:
+        # No segmenter deployed yet — plain resize to preserve existing behaviour
+        resized = cv2.resize(gray_arr, (IMG_SIZE, IMG_SIZE)).astype(np.float32)
+        return resized, None
+
+    h_orig, w_orig = gray_arr.shape[:2]
+
+    # Normalise to [0, 1] and batch for U-Net input (N, H, W, C)
+    img_norm = cv2.resize(gray_arr, (SEG_SIZE, SEG_SIZE)).astype(np.float32) / 255.0
+    seg_tensor = torch.tensor(
+        img_norm[np.newaxis, :, :, np.newaxis],  # (1, SEG_SIZE, SEG_SIZE, 1)
+        dtype=torch.float32, device=DEVICE
+    )
+
+    with torch.no_grad():
+        pred = unet(seg_tensor)  # (1, SEG_SIZE, SEG_SIZE, 1)
+
+    pred_np = (
+        pred.detach().cpu().numpy()
+        if hasattr(pred, "detach")
+        else np.array(pred)
+    )[0, :, :, 0]  # (SEG_SIZE, SEG_SIZE)
+
+    binary_mask = (pred_np > 0.5).astype(np.uint8)
+
+    # Scale mask back to the padded image resolution
+    mask_full = cv2.resize(binary_mask, (w_orig, h_orig), interpolation=cv2.INTER_NEAREST)
+
+    # Zero out non-lung pixels
+    gray_uint8 = np.clip(gray_arr, 0, 255).astype(np.uint8)
+    masked = cv2.bitwise_and(gray_uint8, gray_uint8, mask=mask_full)
+
+    # Resize to classifier input size
+    masked_resized = cv2.resize(masked, (IMG_SIZE, IMG_SIZE)).astype(np.float32)
+
+    # Return mask as uint8 (0 or 1) in original padded image size
+    return masked_resized, mask_full
+
+def predict_image(img: Image.Image, prior_image_b64: str = None):
+    """
+    Run the full TB screening pipeline and return a dictionary with results.
+
+    Steps:
+      1. (Optional) Image validation.
+      2. Image enhancement (CLAHE + normalization).
+      3. Lung segmentation (U-Net).
+      4. TB classification (student_cnn.keras).
+      5. Grad-CAM++ explainability.
+      6. ROI extraction and anatomical localization.
+      7. Clinical observation generation.
+      8. Report generation.
+
+    Parameters:
+      img: PIL.Image (grayscale or RGB) input chest X-ray.
+      prior_image_b64: Optional base64-encoded prior image for comparison.
+
+    Returns:
+      A dictionary with prediction, confidence, heatmaps, and report.
+    """
+    import base64
+    import io
+    from utils.image_helpers import image_to_base64
+
+    # OPTIMAL_THRESHOLD: Already loaded as a global variable from model metadata or best_threshold.txt
+
+    # Initialize return structure (will be filled gradually)
+    result_dict = {
+        "prediction": None,
+        "confidence": None,
+        "threshold_used": OPTIMAL_THRESHOLD,
+        "is_tb": None,
+        "demo_mode": False,
+        "segmentation_active": False,
+        "saliency_fallback": False,
+        "heatmaps": {},
+        "xai_results": {},
+        "quadrant_analysis": {},
+        "clinical_observations": [],
+        "validation": {},
+        "evidence": {},
+        "reasoning": {},
+        "findings": [],
+        "report": {}
+    }
+
+    try:
+        # ----- 1. Image validation -----
+        if img is None:
+            raise ValueError("Input image is None")
+        if img.mode not in ("L", "RGB"):
+            # Convert to grayscale if needed, but keep original mode for display
+            pass  # We'll handle grayscale conversion later
+
+        # ----- 2. Image enhancement (CLAHE + normalization) -----
+        # Convert to grayscale if needed for processing
+        if img.mode == 'L':
+            gray_array = np.array(img, dtype=np.uint8)
+        else:
+            gray_array = np.array(img.convert('L'), dtype=np.uint8)
+
+        # Apply CLAHE (Contrast Limited Adaptive Histogram Equalization)
+        clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8,8))
+        clahe_applied = clahe.apply(gray_array)
+
+        # Normalize to [0, 255] float32 for consistency
+        gray_for_processing = np.clip(clahe_applied, 0, 255).astype(np.float32)
+
+        # ----- 3. Lung segmentation (U-Net) -----
+        # Pad to square for consistent processing (needed for heatmap alignment)
+        # We'll keep the original image for display and final heatmap overlay
+        img_padded = pad_to_square(img)
+        # Convert padded image to grayscale array for processing
+        if img_padded.mode == 'L':
+            gray_padded = np.array(img_padded, dtype=np.uint8)
+        else:
+            gray_padded = np.array(img_padded.convert('L'), dtype=np.uint8)
+
+        # Apply same CLAHE to padded image for consistency
+        clahe_padded = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8,8))
+        gray_padded_clahe = clahe_padded.apply(gray_padded)
+        gray_padded_for_processing = np.clip(gray_padded_clahe, 0, 255).astype(np.float32)
+
+        # Run lung segmentation
+        segmented_lung, lung_mask = segment_lungs(gray_padded_for_processing)
+        unet_active = get_unet() is not None
+        result_dict["segmentation_active"] = bool(unet_active)
+
+        # ----- 4. TB classification -----
+        model = get_model()
+        if model is None:
+            raise RuntimeError("Classification model not loaded. Check that student_cnn.keras exists.")
+
+        # Preprocess for classifier: resize to 224x224, stack to 3 channels, float32 [0,255]
+        resized_full = cv2.resize(gray_padded_for_processing, (IMG_SIZE, IMG_SIZE), interpolation=cv2.INTER_LINEAR)
+        rgb_for_classifier = np.stack([resized_full, resized_full, resized_full], axis=-1)
+        rgb_for_classifier = np.clip(rgb_for_classifier, 0, 255).astype(np.float32)
+        tensor = torch.tensor(rgb_for_classifier).unsqueeze(0).to(DEVICE)  # (1, 224, 224, 3)
+
+        with torch.no_grad():
+            logit = model(tensor)
+            # Handle model output: if last dimension is 2, treat as two-class softmax
+            if logit.dim() > 1 and logit.size(-1) == 2:
+                prob = torch.softmax(logit, dim=-1)[0, 1].item()  # Probability of TB class
+            else:
+                # Single logit output (binary classification)
+                prob = torch.sigmoid(logit.squeeze(-1)).item()
+
+        is_tb = prob >= OPTIMAL_THRESHOLD
+        result_dict["prediction"] = "Tuberculosis" if is_tb else "Normal"
+        result_dict["confidence"] = float(prob)
+        result_dict["is_tb"] = bool(is_tb)
+
+        # ----- 5. Grad-CAM++ explainability -----
+        # We need the padded image (original size) for heatmap generation
+        # Use the CLAHE-applied padded image as base for heatmap generation
+        h_padded, w_padded = gray_padded_for_processing.shape
+        # Create a dummy tensor for heatmap generation (same as classifier input but we'll use the padded image)
+        # For heatmap, we need to use the same preprocessing as classifier but on the padded image
+        heatmap_img_padded = pad_to_square(img)  # Original padded image
+        if heatmap_img_padded.mode == 'L':
+            heatmap_gray = np.array(heatmap_img_padded, dtype=np.uint8)
+        else:
+            heatmap_gray = np.array(heatmap_img_padded.convert('L'), dtype=np.uint8)
+
+        # Apply same CLAHE to heatmap image
+        heatmap_clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8,8))
+        heatmap_gray_clahe = heatmap_clahe.apply(heatmap_gray)
+        heatmap_gray_for_processing = np.clip(heatmap_gray_clahe, 0, 255).astype(np.float32)
+
+        # Resize to 224x224 for heatmap generation (matches classifier input size)
+        heatmap_resized = cv2.resize(heatmap_gray_for_processing, (IMG_SIZE, IMG_SIZE), interpolation=cv2.INTER_LINEAR)
+        heatmap_image, _, heatmap_blurred = generate_saliency_heatmap(
+            model,
+            torch.tensor(np.stack([heatmap_resized, heatmap_resized, heatmap_resized], axis=-1)
+                         .astype(np.float32)).unsqueeze(0).to(DEVICE),
+            heatmap_img_padded,
+            is_tb,
+            method="gradcam_plusplus",
+            return_raw=True
+        )
+
+        # Store heatmap for later use
+        result_dict["heatmaps"]["gradcam++"] = image_to_base64(heatmap_image)
+
+        # Apply lung mask to heatmap if segmentation is active
+        if unet_active and lung_mask is not None:
+            # Ensure lung_mask is the same size as heatmap_blurred
+            if heatmap_blurred.shape != lung_mask.shape:
+                # Resize lung_mask to match heatmap_blurred (should be same size as padded image)
+                lung_mask_resized = cv2.resize(lung_mask, (heatmap_blurred.shape[1], heatmap_blurred.shape[0]), interpolation=cv2.INTER_NEAREST)
+            else:
+                lung_mask_resized = lung_mask
+            # Ensure lung_mask_resized is float32 in [0, 1]
+            lung_mask_resized = lung_mask_resized.astype(np.float32)
+
+            # Apply mask to raw map for validation and quadrant analysis
+            masked_raw_map = heatmap_resized * lung_mask_resized  # heatmap_resized is the raw map after method-specific processing?
+            # Note: heatmap_resized is the raw map after method-specific processing (thresholding for method) but before blurring?
+            # Actually, heatmap_resized is the cam_np after method-specific processing and before blurring?
+            # Let's check: in generate_saliency_heatmap, we return heatmap_image and heatmap_blurred.
+            # The heatmap_blurred is the blurred version of the processed cam_np.
+            # We don't have the raw cam_np after method-specific processing.
+            # We'll use heatmap_resized as the closest we have to the processed raw map.
+            # For validation and quadrant analysis, we use this masked version.
+
+            # Compute validation and quadrant analysis on the masked raw map
+            validation = validate_explainability(masked_raw_map, lung_mask_resized, "gradcam_plusplus")
+            quadrant_analysis = compute_quadrant_analysis(masked_raw_map, lung_mask_resized)
+
+            # Apply mask to heatmap_blurred for ROI extraction and heatmap stats
+            masked_heatmap_blurred = heatmap_blurred * lung_mask_resized
+
+            # Use masked heatmap for ROI extraction
+            rois = extract_xai_rois(masked_heatmap_blurred, is_tb)
+
+            # Get evidence with unmasked inputs for compatibility, then override heatmap stats
+            evidence = extract_evidence(is_tb, prob, heatmap_resized, lung_mask, heatmap_blurred, validation, quadrant_analysis, threshold=OPTIMAL_THRESHOLD)
+            # Override heatmap stats with those from masked heatmap
+            hm_masked_min = float(np.min(masked_heatmap_blurred))
+            hm_masked_max = float(np.max(masked_heatmap_blurred))
+            hm_masked_mean = float(np.mean(masked_heatmap_blurred))
+            hm_masked_std = float(np.std(masked_heatmap_blurred))
+            evidence["heatmap_stats"] = {
+                "min": round(hm_masked_min, 4),
+                "max": round(hm_masked_max, 4),
+                "mean": round(hm_masked_mean, 4),
+                "std": round(hm_masked_std, 4)
+            }
+        else:
+            # No mask or segmentation not active
+            validation = validate_explainability(heatmap_resized, np.zeros_like(heatmap_resized), "gradcam_plusplus")
+            quadrant_analysis = compute_quadrant_analysis(heatmap_resized, np.zeros_like(heatmap_resized))
+            rois = extract_xai_rois(heatmap_blurred, is_tb)
+            evidence = extract_evidence(is_tb, prob, heatmap_resized, np.zeros_like(heatmap_resized), heatmap_blurred, validation, quadrant_analysis, threshold=OPTIMAL_THRESHOLD)
+
+        result_dict["validation"] = validation
+        result_dict["xai_results"] = {
+            "roi_count": len(rois),
+            "rois": rois
+        }
+        result_dict["quadrant_analysis"] = quadrant_analysis
+
+        # ----- 6. Clinical observation generation -----
+        from utils.observation_builder import build_clinical_observations
+        observations = build_clinical_observations(
+            {"rois": rois},
+            is_tb=is_tb,
+            confidence=result_dict["confidence"]
+        )
+        result_dict["clinical_observations"] = observations
+
+        # ----- 7. Reasoning generation -----
+        # Note: evidence already contains validation, roi_metrics, geometry, heatmap_stats
+        reasoning = generate_clinical_reasoning(evidence, result_dict["prediction"], prob, is_tb, validation, rois, quadrant_analysis)
+        result_dict["reasoning"] = reasoning
+
+        # ----- 8. Findings and report generation -----
+        from utils.finding_generator import generate_findings
+        findings = generate_findings(
+            result_dict["prediction"],
+            result_dict["confidence"],
+            is_tb,
+            rois,
+            quadrant_analysis,
+            validation
+        )
+        result_dict["findings"] = findings
+
+        from utils.report_generator import generate_report
+        report = generate_report(
+            result_dict["prediction"],
+            result_dict["confidence"],
+            is_tb,
+            rois,
+            quadrant_analysis,
+            validation,
+            observations
+        )
+        result_dict["report"] = report
+
+        # Convert numpy types to native Python types for JSON serialization
+        def convert_to_native(obj):
+            if isinstance(obj, (np.integer, np.floating)):
+                return obj.item()
+            elif isinstance(obj, np.ndarray):
+                return obj.tolist()
+            elif isinstance(obj, dict):
+                return {key: convert_to_native(value) for key, value in obj.items()}
+            elif isinstance(obj, list):
+                return [convert_to_native(item) for item in obj]
+            else:
+                return obj
+
+        result_dict = convert_to_native(result_dict)
+
+    except Exception as e:
+        print(f"Error in prediction pipeline: {e}")
+        result_dict["error"] = str(e)
+        result_dict["demo_mode"] = True
+        # Fallback to demo mode
+        try:
+            from utils.demo_mode import run_demo_inference
+        except ModuleNotFoundError:
+            # Define a dummy run_demo_inference function
+            def run_demo_inference(_img):
+                # Return a dict that matches what the original function returns
+                return {
+                    "prediction": "Normal",
+                    "confidence": 0.5,
+                    "is_tb": False,
+                    "heatmaps": {"gradcam++": ""},
+                    "segmentation_active": False,
+                    "roi_metrics": {"count": 0},
+                    "quadrant_analysis": {"q1": 0, "q2": 0, "q3": 0, "q4": 0},
+                    "evidence": {"roi_metrics": {"count": 0}, "confidence_calibration": 0.5},
+                    "reasoning": {"reasoning_confidence": 0.5},
+                }
+
+        demo_result = run_demo_inference(img)
+        result_dict.update(demo_result)
+
+    # Convert numpy types to native Python types for JSON serialization
+    def convert_to_native(obj):
+        if isinstance(obj, (np.integer, np.floating)):
+            return obj.item()
+        elif isinstance(obj, np.ndarray):
+            return obj.tolist()
+        elif isinstance(obj, dict):
+            return {key: convert_to_native(value) for key, value in obj.items()}
+        elif isinstance(obj, list):
+            return [convert_to_native(item) for item in obj]
+        else:
+            return obj
+
+    result_dict = convert_to_native(result_dict)
+
+    # Convert numpy types to native Python types for JSON serialization
+    def convert_to_native(obj):
+        if isinstance(obj, (np.integer, np.floating)):
+            return obj.item()
+        elif isinstance(obj, np.ndarray):
+            return obj.tolist()
+        elif isinstance(obj, dict):
+            return {key: convert_to_native(value) for key, value in obj.items()}
+        elif isinstance(obj, list):
+            return [convert_to_native(item) for item in obj]
+        else:
+            return obj
+
+    result_dict = convert_to_native(result_dict)
+    # Convert numpy types to native Python types for JSON serialization
+    def convert_to_native(obj):
+        if isinstance(obj, (np.integer, np.floating)):
+            return obj.item()
+        elif isinstance(obj, np.ndarray):
+            return obj.tolist()
+        elif isinstance(obj, dict):
+            return {key: convert_to_native(value) for key, value in obj.items()}
+        elif isinstance(obj, list):
+            return [convert_to_native(item) for item in obj]
+        else:
+            return obj
+
+    result_dict = convert_to_native(result_dict)
+    return result_dict, None
+
+class Batcher:
+    """Simple batcher for accumulating inputs and processing them in batches."""
+    def __init__(self, batch_size: int, timeout: float, process_fn):
+        self.batch_size = batch_size
+        self.timeout = timeout
+        self.process_fn = process_fn
+        self.batch = []
+        self.timer = None
+
+    def __call__(self, item):
+        self.batch.append(item)
+        if len(self.batch) >= self.batch_size:
+            self.flush()
+        elif self.timer is None:
+            self.timer = threading.Timer(self.timeout, self.flush)
+            self.timer.start()
+
+    def flush(self):
+        if self.timer:
+            self.timer.cancel()
+            self.timer = None
+        if not self.batch:
+            return []
+        try:
+            result = self.process_fn(self.batch)
+            self.batch = []
+            return result
+        except Exception as e:
+            print(f"Error in batch processing: {e}")
+            self.batch = []
+            return []

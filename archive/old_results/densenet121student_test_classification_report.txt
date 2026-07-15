@@ -1,0 +1,8 @@
+              precision    recall  f1-score   support
+
+      Normal       0.86      0.40      0.55       371
+Tuberculosis       0.39      0.85      0.53       163
+
+    accuracy                           0.54       534
+   macro avg       0.62      0.63      0.54       534
+weighted avg       0.72      0.54      0.54       534

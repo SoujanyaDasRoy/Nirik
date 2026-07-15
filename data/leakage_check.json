@@ -1,0 +1,8 @@
+{
+  "hamming_threshold": 3,
+  "train_size": 2490,
+  "val_size": 534,
+  "test_size": 534,
+  "num_flagged_pairs": 0,
+  "flagged_pairs": []
+}

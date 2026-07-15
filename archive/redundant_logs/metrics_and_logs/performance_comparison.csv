@@ -1,0 +1,3 @@
+Model,Accuracy,AUC,F1 (TB),Params (M),Size (MB),Inference (ms/img)
+Teacher (ResNet50),0.6580,0.9240,0.5651,23.59,471.92,7.58
+Student (DenseNet121),0.9380,0.9643,0.8558,7.04,29.66,14.81

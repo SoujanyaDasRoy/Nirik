@@ -1,0 +1,7 @@
+{
+  "n_audited": 49,
+  "mean_gradcam_lung_overlap": 0.3487472556227324,
+  "fraction_below_overlap_threshold": 0.8775510204081632,
+  "overlap_threshold": 0.5,
+  "fraction_edge_flagged": 0.5918367346938775
+}

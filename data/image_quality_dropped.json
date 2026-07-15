@@ -1,0 +1,3830 @@
+[
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-472.png",
+    "reason": "blurry",
+    "laplacian_var": 85.4107284618076
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h1764.png",
+    "reason": "blurry",
+    "laplacian_var": 98.83563172235154
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h1307.png",
+    "reason": "blurry",
+    "laplacian_var": 90.34551192796789
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h1804.png",
+    "reason": "blurry",
+    "laplacian_var": 79.21784262149595
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h3055.png",
+    "reason": "blurry",
+    "laplacian_var": 90.72118109371513
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-1950.png",
+    "reason": "blurry",
+    "laplacian_var": 98.24513678788207
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-44.png",
+    "reason": "blurry",
+    "laplacian_var": 70.6880344802048
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h1701.png",
+    "reason": "blurry",
+    "laplacian_var": 83.93498535058461
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-1366.png",
+    "reason": "blurry",
+    "laplacian_var": 67.47304859175347
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h0835.png",
+    "reason": "blurry",
+    "laplacian_var": 84.10537068522535
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h1256.png",
+    "reason": "blurry",
+    "laplacian_var": 99.49723337497562
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-656.png",
+    "reason": "blurry",
+    "laplacian_var": 42.90589450648986
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h0617.png",
+    "reason": "blurry",
+    "laplacian_var": 99.00237969961017
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h1050.png",
+    "reason": "blurry",
+    "laplacian_var": 75.88688796758652
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-1686.png",
+    "reason": "blurry",
+    "laplacian_var": 90.66907708137296
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h4732.png",
+    "reason": "blurry",
+    "laplacian_var": 71.95609377324581
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h2997.png",
+    "reason": "blurry",
+    "laplacian_var": 79.89855306968093
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-1949.png",
+    "reason": "blurry",
+    "laplacian_var": 82.28670179471374
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h0184.png",
+    "reason": "blurry",
+    "laplacian_var": 84.9474178829696
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h3512.png",
+    "reason": "blurry",
+    "laplacian_var": 97.64236485748552
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_test_nd533.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h2640.png",
+    "reason": "blurry",
+    "laplacian_var": 94.58589003770612
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h2128.png",
+    "reason": "blurry",
+    "laplacian_var": 91.06543385609984
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h2439.png",
+    "reason": "blurry",
+    "laplacian_var": 91.76227640337311
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-657.png",
+    "reason": "blurry",
+    "laplacian_var": 39.744657799368724
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-470.png",
+    "reason": "blurry",
+    "laplacian_var": 95.9298298722133
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-592.png",
+    "reason": "blurry",
+    "laplacian_var": 76.75517148873769
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h1166.png",
+    "reason": "blurry",
+    "laplacian_var": 93.11324302013963
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-190.png",
+    "reason": "blurry",
+    "laplacian_var": 73.9085601111874
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-2879.png",
+    "reason": "blurry",
+    "laplacian_var": 75.13322834460996
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-2917.png",
+    "reason": "blurry",
+    "laplacian_var": 68.00010902970098
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_train_n27.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h3386.png",
+    "reason": "blurry",
+    "laplacian_var": 80.05990993604064
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h1981.png",
+    "reason": "blurry",
+    "laplacian_var": 92.08138902089559
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-490.png",
+    "reason": "blurry",
+    "laplacian_var": 78.83383950940333
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-2484.png",
+    "reason": "blurry",
+    "laplacian_var": 98.40942530310713
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h3466.png",
+    "reason": "blurry",
+    "laplacian_var": 94.72245085588656
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h2994.png",
+    "reason": "blurry",
+    "laplacian_var": 83.37888611014932
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h3896.png",
+    "reason": "blurry",
+    "laplacian_var": 89.92927527427673
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h1070.png",
+    "reason": "blurry",
+    "laplacian_var": 83.4170693969354
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-243.png",
+    "reason": "blurry",
+    "laplacian_var": 28.739872141741216
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h1089.png",
+    "reason": "blurry",
+    "laplacian_var": 81.90598753746599
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-419.png",
+    "reason": "blurry",
+    "laplacian_var": 44.279907040065154
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h1956.png",
+    "reason": "blurry",
+    "laplacian_var": 96.0702038386371
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_train_n34.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-2878.png",
+    "reason": "blurry",
+    "laplacian_var": 81.53219609498046
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h1940.png",
+    "reason": "blurry",
+    "laplacian_var": 96.96001563966274
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h0876.png",
+    "reason": "blurry",
+    "laplacian_var": 92.547911032103
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h1319.png",
+    "reason": "blurry",
+    "laplacian_var": 80.46666754386388
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h3881.png",
+    "reason": "blurry",
+    "laplacian_var": 91.0111229007598
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h1697.png",
+    "reason": "blurry",
+    "laplacian_var": 67.4717178826686
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_train_n45.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-375.png",
+    "reason": "blurry",
+    "laplacian_var": 97.49322016700171
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-1613.png",
+    "reason": "blurry",
+    "laplacian_var": 99.65801113075577
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-621.png",
+    "reason": "blurry",
+    "laplacian_var": 36.565869360929355
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-521.png",
+    "reason": "blurry",
+    "laplacian_var": 59.38440351909958
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/tb/tb1120.png",
+    "reason": "blurry",
+    "laplacian_var": 82.27296072407626
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_train_n50.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-1517.png",
+    "reason": "blurry",
+    "laplacian_var": 78.50526826805435
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h1955.png",
+    "reason": "blurry",
+    "laplacian_var": 93.50516539439559
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-462.png",
+    "reason": "blurry",
+    "laplacian_var": 80.63711775746197
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-1967.png",
+    "reason": "blurry",
+    "laplacian_var": 56.55523361056112
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-683.png",
+    "reason": "blurry",
+    "laplacian_var": 21.01798603660427
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h4462.png",
+    "reason": "blurry",
+    "laplacian_var": 83.76047072163783
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_train_n41.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-3047.png",
+    "reason": "blurry",
+    "laplacian_var": 99.79858706891537
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-696.png",
+    "reason": "blurry",
+    "laplacian_var": 23.3506209643092
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_test_nd234.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_train_p9.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-128.png",
+    "reason": "blurry",
+    "laplacian_var": 93.3200867837295
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h0186.png",
+    "reason": "blurry",
+    "laplacian_var": 92.92554939328693
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h1933.png",
+    "reason": "blurry",
+    "laplacian_var": 71.01360436878167
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h3805.png",
+    "reason": "blurry",
+    "laplacian_var": 98.93801566585898
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-572.png",
+    "reason": "blurry",
+    "laplacian_var": 91.07342287315987
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-53.png",
+    "reason": "blurry",
+    "laplacian_var": 99.16978757991455
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_test_nd944.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-2076.png",
+    "reason": "blurry",
+    "laplacian_var": 90.40111016388983
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-323.png",
+    "reason": "blurry",
+    "laplacian_var": 89.34577864198945
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h1840.png",
+    "reason": "blurry",
+    "laplacian_var": 91.7891922404524
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_train_n13.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-334.png",
+    "reason": "blurry",
+    "laplacian_var": 31.71937949117273
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h4467.png",
+    "reason": "blurry",
+    "laplacian_var": 83.92698710784316
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-183.png",
+    "reason": "blurry",
+    "laplacian_var": 40.885245566954836
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-1947.png",
+    "reason": "blurry",
+    "laplacian_var": 89.95714620104991
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h1419.png",
+    "reason": "blurry",
+    "laplacian_var": 68.49638865888119
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-517.png",
+    "reason": "blurry",
+    "laplacian_var": 76.15470510348678
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h4680.png",
+    "reason": "blurry",
+    "laplacian_var": 91.26220432831906
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-502.png",
+    "reason": "blurry",
+    "laplacian_var": 86.53830278571695
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-2558.png",
+    "reason": "blurry",
+    "laplacian_var": 97.59006063803099
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h3046.png",
+    "reason": "blurry",
+    "laplacian_var": 88.09636746998876
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h0282.png",
+    "reason": "blurry",
+    "laplacian_var": 97.93234219937585
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h4707.png",
+    "reason": "blurry",
+    "laplacian_var": 89.7602874727454
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_test_nd531.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h0278.png",
+    "reason": "blurry",
+    "laplacian_var": 83.64583104848862
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h2385.png",
+    "reason": "blurry",
+    "laplacian_var": 96.63240006542765
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-1041.png",
+    "reason": "blurry",
+    "laplacian_var": 63.8806523734238
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h2058.png",
+    "reason": "blurry",
+    "laplacian_var": 75.64564834511839
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h4340.png",
+    "reason": "blurry",
+    "laplacian_var": 81.50852052657865
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-3479.png",
+    "reason": "blurry",
+    "laplacian_var": 75.20438462472521
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-626.png",
+    "reason": "blurry",
+    "laplacian_var": 28.376783594489098
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h4360.png",
+    "reason": "blurry",
+    "laplacian_var": 82.95992145477794
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h0874.png",
+    "reason": "blurry",
+    "laplacian_var": 98.89454879215918
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-2827.png",
+    "reason": "blurry",
+    "laplacian_var": 90.6361954768654
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h3379.png",
+    "reason": "blurry",
+    "laplacian_var": 83.07371878041886
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h0528.png",
+    "reason": "blurry",
+    "laplacian_var": 73.10193222388625
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h3225.png",
+    "reason": "blurry",
+    "laplacian_var": 84.25952592119575
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h1469.png",
+    "reason": "blurry",
+    "laplacian_var": 92.1527052426245
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-584.png",
+    "reason": "blurry",
+    "laplacian_var": 81.82360578235239
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-3221.png",
+    "reason": "blurry",
+    "laplacian_var": 76.69167149718851
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h1250.png",
+    "reason": "blurry",
+    "laplacian_var": 84.0838125795126
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h4938.png",
+    "reason": "blurry",
+    "laplacian_var": 97.78794127609581
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_test_pd861.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-547.png",
+    "reason": "blurry",
+    "laplacian_var": 97.27039340673946
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_test_pd846.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-2189.png",
+    "reason": "blurry",
+    "laplacian_var": 92.6146095150616
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-1992.png",
+    "reason": "blurry",
+    "laplacian_var": 83.9195174574852
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_train_n31.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-505.png",
+    "reason": "blurry",
+    "laplacian_var": 29.89796755439602
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h3807.png",
+    "reason": "blurry",
+    "laplacian_var": 88.64330097823404
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-659.png",
+    "reason": "blurry",
+    "laplacian_var": 22.369048594497144
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-1070.png",
+    "reason": "blurry",
+    "laplacian_var": 55.02792543172836
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-496.png",
+    "reason": "blurry",
+    "laplacian_var": 68.0561044216156
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h2202.png",
+    "reason": "blurry",
+    "laplacian_var": 98.49081039428711
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h0393.png",
+    "reason": "blurry",
+    "laplacian_var": 99.0457816568669
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/tb/tb1190.png",
+    "reason": "blurry",
+    "laplacian_var": 84.85494600771926
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h1624.png",
+    "reason": "blurry",
+    "laplacian_var": 85.71553615387529
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-136.png",
+    "reason": "blurry",
+    "laplacian_var": 74.08333394839428
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-602.png",
+    "reason": "blurry",
+    "laplacian_var": 91.47227726876736
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h4649.png",
+    "reason": "blurry",
+    "laplacian_var": 91.48901878297329
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_train_n29.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-3277.png",
+    "reason": "blurry",
+    "laplacian_var": 96.35786724742502
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-606.png",
+    "reason": "blurry",
+    "laplacian_var": 66.67816631658934
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h1252.png",
+    "reason": "blurry",
+    "laplacian_var": 87.28955846070312
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h4247.png",
+    "reason": "blurry",
+    "laplacian_var": 99.11907979473472
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-3470.png",
+    "reason": "blurry",
+    "laplacian_var": 95.36918507516384
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-554.png",
+    "reason": "blurry",
+    "laplacian_var": 80.56952082272619
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h3180.png",
+    "reason": "blurry",
+    "laplacian_var": 72.10255055781454
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h1932.png",
+    "reason": "blurry",
+    "laplacian_var": 85.93657099828124
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h2239.png",
+    "reason": "blurry",
+    "laplacian_var": 90.70460182405077
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-273.png",
+    "reason": "blurry",
+    "laplacian_var": 96.71694328240119
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h1406.png",
+    "reason": "blurry",
+    "laplacian_var": 98.54610842093825
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_test_pd150.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-2682.png",
+    "reason": "blurry",
+    "laplacian_var": 99.84802042297088
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-432.png",
+    "reason": "blurry",
+    "laplacian_var": 92.09753382927738
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h2991.png",
+    "reason": "blurry",
+    "laplacian_var": 98.11184379085898
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-500.png",
+    "reason": "blurry",
+    "laplacian_var": 83.98150309547782
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-1941.png",
+    "reason": "blurry",
+    "laplacian_var": 77.81122682220303
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-849.png",
+    "reason": "blurry",
+    "laplacian_var": 89.54416443943046
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_test_nd434.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h3123.png",
+    "reason": "blurry",
+    "laplacian_var": 77.33462998922914
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h1367.png",
+    "reason": "blurry",
+    "laplacian_var": 92.49226476973854
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h4639.png",
+    "reason": "blurry",
+    "laplacian_var": 97.27692953846417
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-2910.png",
+    "reason": "blurry",
+    "laplacian_var": 72.03053376055323
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h4461.png",
+    "reason": "blurry",
+    "laplacian_var": 92.05973936524242
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-1491.png",
+    "reason": "blurry",
+    "laplacian_var": 75.40878989454359
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-429.png",
+    "reason": "blurry",
+    "laplacian_var": 92.41610473394394
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-643.png",
+    "reason": "blurry",
+    "laplacian_var": 26.232470287941396
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h3061.png",
+    "reason": "blurry",
+    "laplacian_var": 82.00474478094839
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h1094.png",
+    "reason": "blurry",
+    "laplacian_var": 90.38655905332416
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h1625.png",
+    "reason": "blurry",
+    "laplacian_var": 90.47815973963588
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-2055.png",
+    "reason": "blurry",
+    "laplacian_var": 98.75510068959557
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h0623.png",
+    "reason": "blurry",
+    "laplacian_var": 94.22846770077012
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-2758.png",
+    "reason": "blurry",
+    "laplacian_var": 85.47847674787045
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h2561.png",
+    "reason": "blurry",
+    "laplacian_var": 92.27671640273184
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_test_nd436.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_train_n26.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-541.png",
+    "reason": "blurry",
+    "laplacian_var": 69.92439640220255
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_test_nd736.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-325.png",
+    "reason": "blurry",
+    "laplacian_var": 69.00354717671871
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h1105.png",
+    "reason": "blurry",
+    "laplacian_var": 89.90325697883964
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-2706.png",
+    "reason": "blurry",
+    "laplacian_var": 81.12034219503403
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h1462.png",
+    "reason": "blurry",
+    "laplacian_var": 94.45753828040324
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h4508.png",
+    "reason": "blurry",
+    "laplacian_var": 86.5694650055375
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-575.png",
+    "reason": "blurry",
+    "laplacian_var": 47.830139571568
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_test_nd342.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-286.png",
+    "reason": "blurry",
+    "laplacian_var": 34.21993392333388
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h3768.png",
+    "reason": "blurry",
+    "laplacian_var": 99.70140003948472
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-915.png",
+    "reason": "blurry",
+    "laplacian_var": 89.2871019707527
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-2502.png",
+    "reason": "blurry",
+    "laplacian_var": 57.7387792726513
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-233.png",
+    "reason": "blurry",
+    "laplacian_var": 94.84272596403025
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-2691.png",
+    "reason": "blurry",
+    "laplacian_var": 90.7894627219066
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-2305.png",
+    "reason": "blurry",
+    "laplacian_var": 98.47999759670347
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-814.png",
+    "reason": "blurry",
+    "laplacian_var": 74.08415867295116
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-2330.png",
+    "reason": "blurry",
+    "laplacian_var": 89.86955577787012
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-3387.png",
+    "reason": "blurry",
+    "laplacian_var": 98.5055650358554
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h1397.png",
+    "reason": "blurry",
+    "laplacian_var": 99.6926270565018
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h2159.png",
+    "reason": "blurry",
+    "laplacian_var": 95.1725763080176
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h4659.png",
+    "reason": "blurry",
+    "laplacian_var": 87.32428227714263
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-2987.png",
+    "reason": "blurry",
+    "laplacian_var": 85.49473729357123
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h1605.png",
+    "reason": "blurry",
+    "laplacian_var": 99.1399042820558
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_train_p10.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/da/da_test_nx19.jpg",
+    "reason": "blurry",
+    "laplacian_var": 95.83221191703342
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_test_pd755.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h1465.png",
+    "reason": "blurry",
+    "laplacian_var": 86.11567650642246
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-413.png",
+    "reason": "blurry",
+    "laplacian_var": 84.26295560225844
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-552.png",
+    "reason": "blurry",
+    "laplacian_var": 23.4192637167871
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-204.png",
+    "reason": "blurry",
+    "laplacian_var": 47.4875313481316
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-304.png",
+    "reason": "blurry",
+    "laplacian_var": 20.331851422786713
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-145.png",
+    "reason": "blurry",
+    "laplacian_var": 81.90270174085163
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h1380.png",
+    "reason": "blurry",
+    "laplacian_var": 90.15765175130218
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h4428.png",
+    "reason": "blurry",
+    "laplacian_var": 87.70969498879276
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_train_p7.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h3502.png",
+    "reason": "blurry",
+    "laplacian_var": 66.54405044368468
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h1858.png",
+    "reason": "blurry",
+    "laplacian_var": 96.82898620306514
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-581.png",
+    "reason": "blurry",
+    "laplacian_var": 63.0578948110342
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_train_n11.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_test_pd940.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-503.png",
+    "reason": "blurry",
+    "laplacian_var": 85.91279770596884
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-3158.png",
+    "reason": "blurry",
+    "laplacian_var": 89.63966895989142
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-2426.png",
+    "reason": "blurry",
+    "laplacian_var": 34.570982720470056
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-2316.png",
+    "reason": "blurry",
+    "laplacian_var": 98.84709041169845
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_train_n5.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-2703.png",
+    "reason": "blurry",
+    "laplacian_var": 81.92278163856827
+  },
+  {
+    "path": "/kaggle/input/datasets/raddar/chest-xrays-tuberculosis-from-india/images/images/TEST_nx13.jpg",
+    "reason": "blurry",
+    "laplacian_var": 78.38820093101822
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-677.png",
+    "reason": "blurry",
+    "laplacian_var": 34.16391606046818
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_train_n48.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_train_n19.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h4273.png",
+    "reason": "blurry",
+    "laplacian_var": 81.30056737153791
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-425.png",
+    "reason": "blurry",
+    "laplacian_var": 22.51562905847095
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_train_n47.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_train_n2.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h2530.png",
+    "reason": "blurry",
+    "laplacian_var": 85.42971333279274
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_test_nd741.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_test_nd841.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-2054.png",
+    "reason": "blurry",
+    "laplacian_var": 82.19097351189703
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h2328.png",
+    "reason": "blurry",
+    "laplacian_var": 96.35244935750961
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-559.png",
+    "reason": "blurry",
+    "laplacian_var": 23.926781084155664
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_train_n1.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-555.png",
+    "reason": "blurry",
+    "laplacian_var": 97.80136602278799
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-202.png",
+    "reason": "blurry",
+    "laplacian_var": 28.19181226193905
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-2528.png",
+    "reason": "blurry",
+    "laplacian_var": 81.73922502622008
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h4302.png",
+    "reason": "blurry",
+    "laplacian_var": 93.67878125025891
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h3890.png",
+    "reason": "blurry",
+    "laplacian_var": 72.70301816030405
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-627.png",
+    "reason": "blurry",
+    "laplacian_var": 30.76395508274436
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-1377.png",
+    "reason": "blurry",
+    "laplacian_var": 97.29595190449618
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h2533.png",
+    "reason": "blurry",
+    "laplacian_var": 72.91922937240452
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_test_pd237.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-81.png",
+    "reason": "blurry",
+    "laplacian_var": 69.68758213147521
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-2614.png",
+    "reason": "blurry",
+    "laplacian_var": 64.08046514447778
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h0450.png",
+    "reason": "blurry",
+    "laplacian_var": 77.30213420442306
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-2289.png",
+    "reason": "blurry",
+    "laplacian_var": 94.46744374162517
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h3535.png",
+    "reason": "blurry",
+    "laplacian_var": 71.29391562566161
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/tb/tb0326.png",
+    "reason": "blurry",
+    "laplacian_var": 91.98935460089706
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-2051.png",
+    "reason": "blurry",
+    "laplacian_var": 71.34722147043794
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h1427.png",
+    "reason": "blurry",
+    "laplacian_var": 89.00059392675757
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_train_p14.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-3293.png",
+    "reason": "blurry",
+    "laplacian_var": 84.72920936346054
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-1620.png",
+    "reason": "blurry",
+    "laplacian_var": 81.84140106663108
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h1005.png",
+    "reason": "blurry",
+    "laplacian_var": 82.40413119248115
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-1871.png",
+    "reason": "blurry",
+    "laplacian_var": 56.03817273583263
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-638.png",
+    "reason": "blurry",
+    "laplacian_var": 69.68452678970061
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h1460.png",
+    "reason": "blurry",
+    "laplacian_var": 86.07343456870876
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h4191.png",
+    "reason": "blurry",
+    "laplacian_var": 81.79752891417593
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-553.png",
+    "reason": "blurry",
+    "laplacian_var": 79.71181384078227
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_train_n35.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-1214.png",
+    "reason": "blurry",
+    "laplacian_var": 85.53584205149673
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-351.png",
+    "reason": "blurry",
+    "laplacian_var": 68.16294316179119
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-2273.png",
+    "reason": "blurry",
+    "laplacian_var": 96.84434339567088
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-613.png",
+    "reason": "blurry",
+    "laplacian_var": 76.3495772050228
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-175.png",
+    "reason": "blurry",
+    "laplacian_var": 72.03379920287989
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/tb/tb0647.png",
+    "reason": "blurry",
+    "laplacian_var": 92.9921436002478
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h0585.png",
+    "reason": "blurry",
+    "laplacian_var": 98.34886286314577
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-3467.png",
+    "reason": "blurry",
+    "laplacian_var": 88.18144114292227
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-124.png",
+    "reason": "blurry",
+    "laplacian_var": 89.58917308389209
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-1529.png",
+    "reason": "blurry",
+    "laplacian_var": 65.52057814598083
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-269.png",
+    "reason": "blurry",
+    "laplacian_var": 35.22578070964664
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-545.png",
+    "reason": "blurry",
+    "laplacian_var": 22.371888875961304
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h3431.png",
+    "reason": "blurry",
+    "laplacian_var": 74.24461296736263
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-200.png",
+    "reason": "blurry",
+    "laplacian_var": 85.03824091609567
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_train_n9.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-2.png",
+    "reason": "blurry",
+    "laplacian_var": 39.734559651464224
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-625.png",
+    "reason": "blurry",
+    "laplacian_var": 64.42406497313641
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-571.png",
+    "reason": "blurry",
+    "laplacian_var": 96.15429627499543
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h2657.png",
+    "reason": "blurry",
+    "laplacian_var": 90.3787901988253
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h4017.png",
+    "reason": "blurry",
+    "laplacian_var": 89.63732796069235
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h4272.png",
+    "reason": "blurry",
+    "laplacian_var": 81.52777864015661
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-2066.png",
+    "reason": "blurry",
+    "laplacian_var": 83.67370891198516
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-434.png",
+    "reason": "blurry",
+    "laplacian_var": 56.02250432129949
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h1630.png",
+    "reason": "blurry",
+    "laplacian_var": 84.98056813864969
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-1805.png",
+    "reason": "blurry",
+    "laplacian_var": 96.27016129693948
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-561.png",
+    "reason": "blurry",
+    "laplacian_var": 48.29247707128525
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-332.png",
+    "reason": "blurry",
+    "laplacian_var": 67.73680866113864
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-317.png",
+    "reason": "blurry",
+    "laplacian_var": 43.89556199219078
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-622.png",
+    "reason": "blurry",
+    "laplacian_var": 32.895680523477495
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_train_p3.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-861.png",
+    "reason": "blurry",
+    "laplacian_var": 73.91717475652695
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-596.png",
+    "reason": "blurry",
+    "laplacian_var": 28.275450347922742
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-2938.png",
+    "reason": "blurry",
+    "laplacian_var": 84.56584670767188
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h1997.png",
+    "reason": "blurry",
+    "laplacian_var": 87.94724459736608
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_train_n6.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h0071.png",
+    "reason": "blurry",
+    "laplacian_var": 83.17383279069327
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-3187.png",
+    "reason": "blurry",
+    "laplacian_var": 84.99057007371448
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-3414.png",
+    "reason": "blurry",
+    "laplacian_var": 96.51877715601586
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h1803.png",
+    "reason": "blurry",
+    "laplacian_var": 75.4412993544247
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h3173.png",
+    "reason": "blurry",
+    "laplacian_var": 78.36807353771292
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-1650.png",
+    "reason": "blurry",
+    "laplacian_var": 75.8911353610456
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_train_p12.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-343.png",
+    "reason": "blurry",
+    "laplacian_var": 99.65154799446464
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-691.png",
+    "reason": "blurry",
+    "laplacian_var": 65.89108538045548
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h0521.png",
+    "reason": "blurry",
+    "laplacian_var": 75.35621617734432
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-2228.png",
+    "reason": "blurry",
+    "laplacian_var": 94.69980078563094
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-1435.png",
+    "reason": "blurry",
+    "laplacian_var": 83.2829283324536
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-354.png",
+    "reason": "blurry",
+    "laplacian_var": 78.96491707768291
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h2508.png",
+    "reason": "blurry",
+    "laplacian_var": 87.86081288917921
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-686.png",
+    "reason": "blurry",
+    "laplacian_var": 86.22401040792465
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h4061.png",
+    "reason": "blurry",
+    "laplacian_var": 69.79367032274604
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-551.png",
+    "reason": "blurry",
+    "laplacian_var": 13.76843839045614
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-1774.png",
+    "reason": "blurry",
+    "laplacian_var": 77.24581667687744
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-435.png",
+    "reason": "blurry",
+    "laplacian_var": 90.78425981011242
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-591.png",
+    "reason": "blurry",
+    "laplacian_var": 50.69848036766052
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_test_nd840.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_train_p4.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-330.png",
+    "reason": "blurry",
+    "laplacian_var": 91.6845673918724
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h0619.png",
+    "reason": "blurry",
+    "laplacian_var": 84.16366118914448
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-2981.png",
+    "reason": "blurry",
+    "laplacian_var": 84.35617582662962
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-2592.png",
+    "reason": "blurry",
+    "laplacian_var": 84.21634673234075
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h2442.png",
+    "reason": "blurry",
+    "laplacian_var": 98.92752491286956
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h1486.png",
+    "reason": "blurry",
+    "laplacian_var": 82.81920461263508
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/tb/tb0930.png",
+    "reason": "blurry",
+    "laplacian_var": 83.67396716680378
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h0093.png",
+    "reason": "blurry",
+    "laplacian_var": 71.24300965294242
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_train_n22.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-2301.png",
+    "reason": "blurry",
+    "laplacian_var": 87.11530567612499
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-407.png",
+    "reason": "blurry",
+    "laplacian_var": 61.79160216986202
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-201.png",
+    "reason": "blurry",
+    "laplacian_var": 53.01995525415987
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-203.png",
+    "reason": "blurry",
+    "laplacian_var": 42.440698789199814
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h1175.png",
+    "reason": "blurry",
+    "laplacian_var": 84.22738158609718
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h3937.png",
+    "reason": "blurry",
+    "laplacian_var": 90.89617953356355
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-1067.png",
+    "reason": "blurry",
+    "laplacian_var": 80.56741168256849
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_train_n17.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_test_pd534.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_train_p1.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h3223.png",
+    "reason": "blurry",
+    "laplacian_var": 98.30273867002688
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-287.png",
+    "reason": "blurry",
+    "laplacian_var": 66.50533718965016
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-4.png",
+    "reason": "blurry",
+    "laplacian_var": 84.22451318707317
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-3007.png",
+    "reason": "blurry",
+    "laplacian_var": 82.59582732594572
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-699.png",
+    "reason": "blurry",
+    "laplacian_var": 20.860917653888464
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_test_pd661.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_test_pd639.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-593.png",
+    "reason": "blurry",
+    "laplacian_var": 20.03272298630327
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h3825.png",
+    "reason": "blurry",
+    "laplacian_var": 86.50949823483825
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h4842.png",
+    "reason": "blurry",
+    "laplacian_var": 79.00196320470423
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h4169.png",
+    "reason": "blurry",
+    "laplacian_var": 82.02709087706171
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-245.png",
+    "reason": "blurry",
+    "laplacian_var": 31.310409234603867
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h0644.png",
+    "reason": "blurry",
+    "laplacian_var": 88.35003377101384
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-542.png",
+    "reason": "blurry",
+    "laplacian_var": 36.80374692380428
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-598.png",
+    "reason": "blurry",
+    "laplacian_var": 39.2410607105121
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-464.png",
+    "reason": "blurry",
+    "laplacian_var": 62.13359959400259
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-864.png",
+    "reason": "blurry",
+    "laplacian_var": 89.90315297036432
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-3168.png",
+    "reason": "blurry",
+    "laplacian_var": 76.06518666422926
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/tb/tb0724.png",
+    "reason": "blurry",
+    "laplacian_var": 99.80309887020849
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_test_pd162.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-2481.png",
+    "reason": "blurry",
+    "laplacian_var": 84.79078294499777
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-285.png",
+    "reason": "blurry",
+    "laplacian_var": 88.91470804437995
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h2788.png",
+    "reason": "blurry",
+    "laplacian_var": 98.90895427553914
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h1281.png",
+    "reason": "blurry",
+    "laplacian_var": 99.5333549939096
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-272.png",
+    "reason": "blurry",
+    "laplacian_var": 92.12366884737276
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h2229.png",
+    "reason": "blurry",
+    "laplacian_var": 96.94137204042636
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-207.png",
+    "reason": "blurry",
+    "laplacian_var": 93.36663874611259
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-717.png",
+    "reason": "blurry",
+    "laplacian_var": 69.67636089376174
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/da/da_train_px4.jpg",
+    "reason": "blurry",
+    "laplacian_var": 82.89442814490758
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_train_p5.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-536.png",
+    "reason": "blurry",
+    "laplacian_var": 30.12520303367637
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/tb/tb0321.png",
+    "reason": "blurry",
+    "laplacian_var": 77.80378006398678
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h2825.png",
+    "reason": "blurry",
+    "laplacian_var": 83.82136503770016
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_train_n25.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-663.png",
+    "reason": "blurry",
+    "laplacian_var": 82.68526809569448
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-694.png",
+    "reason": "blurry",
+    "laplacian_var": 27.828434608643875
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-619.png",
+    "reason": "blurry",
+    "laplacian_var": 93.2836255794391
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h4731.png",
+    "reason": "blurry",
+    "laplacian_var": 98.16864120750688
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-162.png",
+    "reason": "blurry",
+    "laplacian_var": 95.86738045420498
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_train_n12.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_test_nd648.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-283.png",
+    "reason": "blurry",
+    "laplacian_var": 90.35684865876101
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-309.png",
+    "reason": "blurry",
+    "laplacian_var": 97.04931315407157
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-1245.png",
+    "reason": "blurry",
+    "laplacian_var": 84.25187041983008
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h1060.png",
+    "reason": "blurry",
+    "laplacian_var": 92.3795752292499
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h0325.png",
+    "reason": "blurry",
+    "laplacian_var": 98.85031882650219
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-563.png",
+    "reason": "blurry",
+    "laplacian_var": 39.30227266973816
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_train_p2.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-2635.png",
+    "reason": "blurry",
+    "laplacian_var": 86.94959880318493
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h4304.png",
+    "reason": "blurry",
+    "laplacian_var": 99.44971307739615
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-1554.png",
+    "reason": "blurry",
+    "laplacian_var": 96.16105169057846
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h2902.png",
+    "reason": "blurry",
+    "laplacian_var": 87.97411792702042
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-695.png",
+    "reason": "blurry",
+    "laplacian_var": 63.629578470950946
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h1345.png",
+    "reason": "blurry",
+    "laplacian_var": 99.20393985509872
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_train_p15.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-687.png",
+    "reason": "blurry",
+    "laplacian_var": 99.26914233132266
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h2577.png",
+    "reason": "blurry",
+    "laplacian_var": 99.60542180761695
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h1876.png",
+    "reason": "blurry",
+    "laplacian_var": 88.9981285892427
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-599.png",
+    "reason": "blurry",
+    "laplacian_var": 23.87871380499564
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-237.png",
+    "reason": "blurry",
+    "laplacian_var": 72.60234285052866
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h0408.png",
+    "reason": "blurry",
+    "laplacian_var": 90.07307402952574
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_test_pd446.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h2733.png",
+    "reason": "blurry",
+    "laplacian_var": 82.93292965344153
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-1591.png",
+    "reason": "blurry",
+    "laplacian_var": 84.61674922332168
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_test_pd165.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-897.png",
+    "reason": "blurry",
+    "laplacian_var": 81.67809080705047
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-2162.png",
+    "reason": "blurry",
+    "laplacian_var": 78.58581949747168
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_train_n21.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-2711.png",
+    "reason": "blurry",
+    "laplacian_var": 74.46676426753402
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h2612.png",
+    "reason": "blurry",
+    "laplacian_var": 73.65970062441193
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-1456.png",
+    "reason": "blurry",
+    "laplacian_var": 88.35536299063824
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-631.png",
+    "reason": "blurry",
+    "laplacian_var": 69.59070796426386
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-338.png",
+    "reason": "blurry",
+    "laplacian_var": 85.71927860728465
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-2423.png",
+    "reason": "blurry",
+    "laplacian_var": 74.8510856681969
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h4738.png",
+    "reason": "blurry",
+    "laplacian_var": 74.15081824711524
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-1183.png",
+    "reason": "blurry",
+    "laplacian_var": 93.17831872403622
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-632.png",
+    "reason": "blurry",
+    "laplacian_var": 21.271192110143602
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-345.png",
+    "reason": "blurry",
+    "laplacian_var": 90.20562710985541
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-508.png",
+    "reason": "blurry",
+    "laplacian_var": 42.30500909104012
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h4538.png",
+    "reason": "blurry",
+    "laplacian_var": 80.91033934708685
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-180.png",
+    "reason": "blurry",
+    "laplacian_var": 41.09771138057113
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-212.png",
+    "reason": "blurry",
+    "laplacian_var": 79.04878007993102
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h1424.png",
+    "reason": "blurry",
+    "laplacian_var": 80.47682413086295
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-2250.png",
+    "reason": "blurry",
+    "laplacian_var": 74.56898420210928
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-618.png",
+    "reason": "blurry",
+    "laplacian_var": 9.255531646078452
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-560.png",
+    "reason": "blurry",
+    "laplacian_var": 32.22083273506723
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-863.png",
+    "reason": "blurry",
+    "laplacian_var": 56.84242117032409
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h2185.png",
+    "reason": "blurry",
+    "laplacian_var": 82.32171213044785
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-684.png",
+    "reason": "blurry",
+    "laplacian_var": 96.70929355826229
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-1783.png",
+    "reason": "blurry",
+    "laplacian_var": 93.9029852708336
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_train_n43.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-617.png",
+    "reason": "blurry",
+    "laplacian_var": 29.550298865884542
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-577.png",
+    "reason": "blurry",
+    "laplacian_var": 12.38826713617891
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-454.png",
+    "reason": "blurry",
+    "laplacian_var": 94.103759765625
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h3320.png",
+    "reason": "blurry",
+    "laplacian_var": 97.53288951492868
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-2270.png",
+    "reason": "blurry",
+    "laplacian_var": 80.44413289334625
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-3120.png",
+    "reason": "blurry",
+    "laplacian_var": 55.24647095426917
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-527.png",
+    "reason": "blurry",
+    "laplacian_var": 93.63509842380881
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_train_n16.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-824.png",
+    "reason": "blurry",
+    "laplacian_var": 79.03327140188776
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h2484.png",
+    "reason": "blurry",
+    "laplacian_var": 84.17973670526408
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-550.png",
+    "reason": "blurry",
+    "laplacian_var": 27.830605374416336
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-700.png",
+    "reason": "blurry",
+    "laplacian_var": 40.63584226369858
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h0247.png",
+    "reason": "blurry",
+    "laplacian_var": 80.41252112295479
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-1389.png",
+    "reason": "blurry",
+    "laplacian_var": 91.16799168940634
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_test_pd235.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_train_n30.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-167.png",
+    "reason": "blurry",
+    "laplacian_var": 51.59485141350888
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-1646.png",
+    "reason": "blurry",
+    "laplacian_var": 61.49623957998119
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-371.png",
+    "reason": "blurry",
+    "laplacian_var": 69.47912400751375
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-374.png",
+    "reason": "blurry",
+    "laplacian_var": 96.30679025873542
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-603.png",
+    "reason": "blurry",
+    "laplacian_var": 34.3733769422397
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-331.png",
+    "reason": "blurry",
+    "laplacian_var": 82.5162836574018
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-463.png",
+    "reason": "blurry",
+    "laplacian_var": 80.17935716523789
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-3048.png",
+    "reason": "blurry",
+    "laplacian_var": 76.42725391103886
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-1664.png",
+    "reason": "blurry",
+    "laplacian_var": 86.5876155809965
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-2632.png",
+    "reason": "blurry",
+    "laplacian_var": 83.34387657954358
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_train_n28.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_train_p16.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-2313.png",
+    "reason": "blurry",
+    "laplacian_var": 71.16002996172756
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-453.png",
+    "reason": "blurry",
+    "laplacian_var": 77.21737594879232
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-189.png",
+    "reason": "blurry",
+    "laplacian_var": 43.04179456993006
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_train_p22.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h0126.png",
+    "reason": "blurry",
+    "laplacian_var": 92.82377383019775
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-2239.png",
+    "reason": "blurry",
+    "laplacian_var": 89.68340442678891
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-475.png",
+    "reason": "blurry",
+    "laplacian_var": 92.14093573740683
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-2506.png",
+    "reason": "blurry",
+    "laplacian_var": 62.457138085504994
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-196.png",
+    "reason": "blurry",
+    "laplacian_var": 41.80844413861632
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h0268.png",
+    "reason": "blurry",
+    "laplacian_var": 99.50275379582308
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h4925.png",
+    "reason": "blurry",
+    "laplacian_var": 96.61246157041751
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-2752.png",
+    "reason": "blurry",
+    "laplacian_var": 79.11660088202916
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h2642.png",
+    "reason": "blurry",
+    "laplacian_var": 92.82419274165295
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-693.png",
+    "reason": "blurry",
+    "laplacian_var": 38.468030366813764
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h4161.png",
+    "reason": "blurry",
+    "laplacian_var": 74.7798338746652
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h3549.png",
+    "reason": "blurry",
+    "laplacian_var": 96.9822998708114
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h3757.png",
+    "reason": "blurry",
+    "laplacian_var": 99.02064047730528
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-3.png",
+    "reason": "blurry",
+    "laplacian_var": 98.5137597748544
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-3133.png",
+    "reason": "blurry",
+    "laplacian_var": 83.75076303537935
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_train_p17.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-7.png",
+    "reason": "blurry",
+    "laplacian_var": 88.55822343728505
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h2071.png",
+    "reason": "blurry",
+    "laplacian_var": 96.3255685409531
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-2112.png",
+    "reason": "blurry",
+    "laplacian_var": 73.99764436483383
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-195.png",
+    "reason": "blurry",
+    "laplacian_var": 39.2021660709288
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/tb/tb0480.png",
+    "reason": "blurry",
+    "laplacian_var": 95.26981417741627
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h2390.png",
+    "reason": "blurry",
+    "laplacian_var": 89.84299257560633
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-2413.png",
+    "reason": "blurry",
+    "laplacian_var": 99.61767405620776
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_train_n24.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-687.png",
+    "reason": "blurry",
+    "laplacian_var": 79.39050992485136
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-326.png",
+    "reason": "blurry",
+    "laplacian_var": 76.80160121968947
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_test_nd169.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-491.png",
+    "reason": "blurry",
+    "laplacian_var": 54.41513986047357
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_train_n49.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-308.png",
+    "reason": "blurry",
+    "laplacian_var": 84.49449681397527
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h2768.png",
+    "reason": "blurry",
+    "laplacian_var": 92.37387116160244
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_test_nd751.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-1342.png",
+    "reason": "blurry",
+    "laplacian_var": 95.33278840780258
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_test_nd858.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-697.png",
+    "reason": "blurry",
+    "laplacian_var": 42.51109450845979
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-689.png",
+    "reason": "blurry",
+    "laplacian_var": 9.74903882946819
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h0023.png",
+    "reason": "blurry",
+    "laplacian_var": 74.85242396499962
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-2258.png",
+    "reason": "blurry",
+    "laplacian_var": 70.15942841395736
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h1304.png",
+    "reason": "blurry",
+    "laplacian_var": 87.35591625329107
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h2097.png",
+    "reason": "blurry",
+    "laplacian_var": 99.83384187682532
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h4977.png",
+    "reason": "blurry",
+    "laplacian_var": 91.60806226637214
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h1200.png",
+    "reason": "blurry",
+    "laplacian_var": 81.13265394396149
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-27.png",
+    "reason": "blurry",
+    "laplacian_var": 85.03824615268968
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-568.png",
+    "reason": "blurry",
+    "laplacian_var": 69.0507198041305
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h1978.png",
+    "reason": "blurry",
+    "laplacian_var": 84.35394512838684
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-2110.png",
+    "reason": "blurry",
+    "laplacian_var": 92.99092215951532
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-633.png",
+    "reason": "blurry",
+    "laplacian_var": 82.10057049966417
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-555.png",
+    "reason": "blurry",
+    "laplacian_var": 94.59923481545411
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_train_n4.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h1603.png",
+    "reason": "blurry",
+    "laplacian_var": 94.87760561681353
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-636.png",
+    "reason": "blurry",
+    "laplacian_var": 29.318321691593155
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h2837.png",
+    "reason": "blurry",
+    "laplacian_var": 87.81163308932446
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h3829.png",
+    "reason": "blurry",
+    "laplacian_var": 94.12696335255168
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h2534.png",
+    "reason": "blurry",
+    "laplacian_var": 97.21153356856667
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_train_n32.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-2308.png",
+    "reason": "blurry",
+    "laplacian_var": 98.2916301523801
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-1999.png",
+    "reason": "blurry",
+    "laplacian_var": 91.37401935085654
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h3178.png",
+    "reason": "blurry",
+    "laplacian_var": 68.62903241231106
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h3382.png",
+    "reason": "blurry",
+    "laplacian_var": 96.80831258650869
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h1378.png",
+    "reason": "blurry",
+    "laplacian_var": 95.34498220658861
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-629.png",
+    "reason": "blurry",
+    "laplacian_var": 85.16973943798803
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h0890.png",
+    "reason": "blurry",
+    "laplacian_var": 93.57562811090611
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-377.png",
+    "reason": "blurry",
+    "laplacian_var": 80.51354242465459
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-2200.png",
+    "reason": "blurry",
+    "laplacian_var": 67.33701743907295
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-2440.png",
+    "reason": "blurry",
+    "laplacian_var": 98.69000771548599
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_test_pd447.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_train_n15.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-3159.png",
+    "reason": "blurry",
+    "laplacian_var": 98.56075344211422
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_train_n37.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-511.png",
+    "reason": "blurry",
+    "laplacian_var": 92.79331955662929
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-270.png",
+    "reason": "blurry",
+    "laplacian_var": 48.545133139705285
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-522.png",
+    "reason": "blurry",
+    "laplacian_var": 52.275775821646675
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h0216.png",
+    "reason": "blurry",
+    "laplacian_var": 90.75404260214418
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h1570.png",
+    "reason": "blurry",
+    "laplacian_var": 97.14772504195571
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-251.png",
+    "reason": "blurry",
+    "laplacian_var": 49.632736690109596
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_test_nd859.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_train_n14.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-1755.png",
+    "reason": "blurry",
+    "laplacian_var": 87.24053189810365
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h3023.png",
+    "reason": "blurry",
+    "laplacian_var": 76.24244392639957
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_test_pd955.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h1523.png",
+    "reason": "blurry",
+    "laplacian_var": 82.96634182985872
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-2153.png",
+    "reason": "blurry",
+    "laplacian_var": 91.2463007287588
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h2200.png",
+    "reason": "blurry",
+    "laplacian_var": 89.14595840871334
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_test_nd549.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h3438.png",
+    "reason": "blurry",
+    "laplacian_var": 97.97653018659912
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h0640.png",
+    "reason": "blurry",
+    "laplacian_var": 86.29451321414672
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-1323.png",
+    "reason": "blurry",
+    "laplacian_var": 93.33009388460778
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-623.png",
+    "reason": "blurry",
+    "laplacian_var": 47.71624150662683
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-3321.png",
+    "reason": "blurry",
+    "laplacian_var": 96.93228886183351
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-539.png",
+    "reason": "blurry",
+    "laplacian_var": 85.61400216817856
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-624.png",
+    "reason": "blurry",
+    "laplacian_var": 40.93324273824692
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-586.png",
+    "reason": "blurry",
+    "laplacian_var": 77.50800237595104
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-3087.png",
+    "reason": "blurry",
+    "laplacian_var": 66.80289283022285
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h2719.png",
+    "reason": "blurry",
+    "laplacian_var": 73.0353107303381
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-1585.png",
+    "reason": "blurry",
+    "laplacian_var": 92.30375966057181
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_train_n40.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-2505.png",
+    "reason": "blurry",
+    "laplacian_var": 97.43377014598809
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h2510.png",
+    "reason": "blurry",
+    "laplacian_var": 92.03031055233441
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-483.png",
+    "reason": "blurry",
+    "laplacian_var": 90.89912576880306
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-3020.png",
+    "reason": "blurry",
+    "laplacian_var": 88.46781276888214
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-635.png",
+    "reason": "blurry",
+    "laplacian_var": 29.552099581807852
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-457.png",
+    "reason": "blurry",
+    "laplacian_var": 99.28959594666958
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-217.png",
+    "reason": "blurry",
+    "laplacian_var": 95.61398371960968
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-1351.png",
+    "reason": "blurry",
+    "laplacian_var": 78.68368313251995
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-2916.png",
+    "reason": "blurry",
+    "laplacian_var": 64.89944480266422
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h0483.png",
+    "reason": "blurry",
+    "laplacian_var": 93.17602597177029
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h1407.png",
+    "reason": "blurry",
+    "laplacian_var": 90.51472067832947
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_test_nd153.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-2018.png",
+    "reason": "blurry",
+    "laplacian_var": 64.32553936447948
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h2972.png",
+    "reason": "blurry",
+    "laplacian_var": 81.29214407410473
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-477.png",
+    "reason": "blurry",
+    "laplacian_var": 55.76727225538343
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-673.png",
+    "reason": "blurry",
+    "laplacian_var": 87.05185227002949
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-615.png",
+    "reason": "blurry",
+    "laplacian_var": 44.350494056008756
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-1502.png",
+    "reason": "blurry",
+    "laplacian_var": 98.21227294113487
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h0045.png",
+    "reason": "blurry",
+    "laplacian_var": 76.80576345231384
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_train_n10.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_train_n42.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-2589.png",
+    "reason": "blurry",
+    "laplacian_var": 94.26062383851968
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_train_n8.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-206.png",
+    "reason": "blurry",
+    "laplacian_var": 89.57946753501892
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-688.png",
+    "reason": "blurry",
+    "laplacian_var": 99.29584499821067
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-3306.png",
+    "reason": "blurry",
+    "laplacian_var": 93.28311799373478
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h4363.png",
+    "reason": "blurry",
+    "laplacian_var": 80.23923217877746
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h1620.png",
+    "reason": "blurry",
+    "laplacian_var": 82.82204868434928
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-2418.png",
+    "reason": "blurry",
+    "laplacian_var": 95.97202658653259
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-465.png",
+    "reason": "blurry",
+    "laplacian_var": 64.35406308993697
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-680.png",
+    "reason": "blurry",
+    "laplacian_var": 80.66013544774614
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-2521.png",
+    "reason": "blurry",
+    "laplacian_var": 92.53332891291939
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-220.png",
+    "reason": "blurry",
+    "laplacian_var": 75.42147694691084
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-428.png",
+    "reason": "blurry",
+    "laplacian_var": 91.70704742893577
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-853.png",
+    "reason": "blurry",
+    "laplacian_var": 66.32119776844047
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h3636.png",
+    "reason": "blurry",
+    "laplacian_var": 65.74949000775814
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h2019.png",
+    "reason": "blurry",
+    "laplacian_var": 88.23462364729494
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h4307.png",
+    "reason": "blurry",
+    "laplacian_var": 90.57324309996329
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h3927.png",
+    "reason": "blurry",
+    "laplacian_var": 85.96601751353592
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-594.png",
+    "reason": "blurry",
+    "laplacian_var": 19.77853357582353
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-435.png",
+    "reason": "blurry",
+    "laplacian_var": 94.81406024261378
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_train_p11.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-1930.png",
+    "reason": "blurry",
+    "laplacian_var": 93.35474915709347
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-2145.png",
+    "reason": "blurry",
+    "laplacian_var": 66.67334721889347
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-160.png",
+    "reason": "blurry",
+    "laplacian_var": 63.274266209453344
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-2175.png",
+    "reason": "blurry",
+    "laplacian_var": 99.90344280004501
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-3122.png",
+    "reason": "blurry",
+    "laplacian_var": 80.24180351104587
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-621.png",
+    "reason": "blurry",
+    "laplacian_var": 90.83444214775227
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-570.png",
+    "reason": "blurry",
+    "laplacian_var": 97.5576477907598
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-2835.png",
+    "reason": "blurry",
+    "laplacian_var": 78.73895218758844
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-485.png",
+    "reason": "blurry",
+    "laplacian_var": 92.56408229260705
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h2903.png",
+    "reason": "blurry",
+    "laplacian_var": 98.87153349048458
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h2598.png",
+    "reason": "blurry",
+    "laplacian_var": 87.3234975328669
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-292.png",
+    "reason": "blurry",
+    "laplacian_var": 61.774076130241156
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_test_nd652.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-223.png",
+    "reason": "blurry",
+    "laplacian_var": 42.848295494681224
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-1461.png",
+    "reason": "blurry",
+    "laplacian_var": 75.80182577087544
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h3332.png",
+    "reason": "blurry",
+    "laplacian_var": 96.8823580944445
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-2540.png",
+    "reason": "blurry",
+    "laplacian_var": 94.64191947877407
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-1496.png",
+    "reason": "blurry",
+    "laplacian_var": 88.70810594782233
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_train_p21.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h4813.png",
+    "reason": "blurry",
+    "laplacian_var": 92.18913173675537
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h1754.png",
+    "reason": "blurry",
+    "laplacian_var": 88.52171886875294
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h4406.png",
+    "reason": "blurry",
+    "laplacian_var": 90.81961753754877
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_train_p18.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-1244.png",
+    "reason": "blurry",
+    "laplacian_var": 94.70397875620984
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_test_pd845.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-518.png",
+    "reason": "blurry",
+    "laplacian_var": 65.35658479388803
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-459.png",
+    "reason": "blurry",
+    "laplacian_var": 65.18442174699157
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-1621.png",
+    "reason": "blurry",
+    "laplacian_var": 85.26822417974472
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-199.png",
+    "reason": "blurry",
+    "laplacian_var": 74.86945085390471
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-188.png",
+    "reason": "blurry",
+    "laplacian_var": 44.55500542279333
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h2604.png",
+    "reason": "blurry",
+    "laplacian_var": 90.60671009030193
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-543.png",
+    "reason": "blurry",
+    "laplacian_var": 67.47695707692765
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_test_pd532.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h4777.png",
+    "reason": "blurry",
+    "laplacian_var": 91.39487596973777
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h4344.png",
+    "reason": "blurry",
+    "laplacian_var": 94.09891189611517
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_test_pd733.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_test_pd337.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-3161.png",
+    "reason": "blurry",
+    "laplacian_var": 85.5555169582367
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-548.png",
+    "reason": "blurry",
+    "laplacian_var": 54.708818811690435
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-316.png",
+    "reason": "blurry",
+    "laplacian_var": 33.682004425441846
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-2155.png",
+    "reason": "blurry",
+    "laplacian_var": 83.30925245932303
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h4396.png",
+    "reason": "blurry",
+    "laplacian_var": 89.03904341696762
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-487.png",
+    "reason": "blurry",
+    "laplacian_var": 38.37206345424056
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h1919.png",
+    "reason": "blurry",
+    "laplacian_var": 96.89514737483114
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-524.png",
+    "reason": "blurry",
+    "laplacian_var": 22.349738288437948
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_train_n18.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-611.png",
+    "reason": "blurry",
+    "laplacian_var": 29.956089071696624
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-1763.png",
+    "reason": "blurry",
+    "laplacian_var": 99.16005270089954
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_train_p6.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_train_p19.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h3944.png",
+    "reason": "blurry",
+    "laplacian_var": 80.65795835480094
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-610.png",
+    "reason": "blurry",
+    "laplacian_var": 98.29456353839487
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h0147.png",
+    "reason": "blurry",
+    "laplacian_var": 89.40617149858736
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-1.png",
+    "reason": "blurry",
+    "laplacian_var": 43.03792878612876
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-333.png",
+    "reason": "blurry",
+    "laplacian_var": 75.27965854108334
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-1032.png",
+    "reason": "blurry",
+    "laplacian_var": 92.60441874503158
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h2160.png",
+    "reason": "blurry",
+    "laplacian_var": 91.01494334638119
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-417.png",
+    "reason": "blurry",
+    "laplacian_var": 75.27832787833177
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-135.png",
+    "reason": "blurry",
+    "laplacian_var": 77.36023627221584
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_test_nd453.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h4569.png",
+    "reason": "blurry",
+    "laplacian_var": 90.17858745064586
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h1828.png",
+    "reason": "blurry",
+    "laplacian_var": 81.28961553773843
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-661.png",
+    "reason": "blurry",
+    "laplacian_var": 99.33332533179782
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-1547.png",
+    "reason": "blurry",
+    "laplacian_var": 64.26518987095915
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-481.png",
+    "reason": "blurry",
+    "laplacian_var": 16.11607692297548
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_train_n44.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h2230.png",
+    "reason": "blurry",
+    "laplacian_var": 98.10673304554075
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h1874.png",
+    "reason": "blurry",
+    "laplacian_var": 83.30548813100904
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-2399.png",
+    "reason": "blurry",
+    "laplacian_var": 77.01514863595366
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-1146.png",
+    "reason": "blurry",
+    "laplacian_var": 69.5694164109882
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_train_n3.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h3618.png",
+    "reason": "blurry",
+    "laplacian_var": 63.61501249647699
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-1047.png",
+    "reason": "blurry",
+    "laplacian_var": 72.07445370778441
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-607.png",
+    "reason": "blurry",
+    "laplacian_var": 42.17374286032282
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-271.png",
+    "reason": "blurry",
+    "laplacian_var": 65.09835571050644
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-685.png",
+    "reason": "blurry",
+    "laplacian_var": 34.644073989242315
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h0272.png",
+    "reason": "blurry",
+    "laplacian_var": 92.87947767879814
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h0195.png",
+    "reason": "blurry",
+    "laplacian_var": 86.64504092931747
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-1649.png",
+    "reason": "blurry",
+    "laplacian_var": 93.66573932557367
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h3688.png",
+    "reason": "blurry",
+    "laplacian_var": 72.34752314910293
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h4526.png",
+    "reason": "blurry",
+    "laplacian_var": 98.77967076352797
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-569.png",
+    "reason": "blurry",
+    "laplacian_var": 21.804603656521067
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-88.png",
+    "reason": "blurry",
+    "laplacian_var": 94.77703170268796
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h1422.png",
+    "reason": "blurry",
+    "laplacian_var": 88.3377066438552
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-438.png",
+    "reason": "blurry",
+    "laplacian_var": 73.20017051324248
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h3577.png",
+    "reason": "blurry",
+    "laplacian_var": 95.09857016429305
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_train_n20.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-2830.png",
+    "reason": "blurry",
+    "laplacian_var": 93.61357852444053
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h4350.png",
+    "reason": "blurry",
+    "laplacian_var": 93.47236977517605
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h4033.png",
+    "reason": "blurry",
+    "laplacian_var": 93.78336850157939
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-187.png",
+    "reason": "blurry",
+    "laplacian_var": 45.864998958073556
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-457.png",
+    "reason": "blurry",
+    "laplacian_var": 78.43644783552736
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h1529.png",
+    "reason": "blurry",
+    "laplacian_var": 80.3708434922155
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h1848.png",
+    "reason": "blurry",
+    "laplacian_var": 89.40082296333276
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h0416.png",
+    "reason": "blurry",
+    "laplacian_var": 97.11795481666923
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_train_p13.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h2268.png",
+    "reason": "blurry",
+    "laplacian_var": 84.46287565585226
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h3437.png",
+    "reason": "blurry",
+    "laplacian_var": 87.4061100052204
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-574.png",
+    "reason": "blurry",
+    "laplacian_var": 76.6203872372862
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-2442.png",
+    "reason": "blurry",
+    "laplacian_var": 88.86811727285385
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-259.png",
+    "reason": "blurry",
+    "laplacian_var": 43.223067411920056
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h0570.png",
+    "reason": "blurry",
+    "laplacian_var": 81.15343422605656
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h4001.png",
+    "reason": "blurry",
+    "laplacian_var": 97.87570911250077
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h2621.png",
+    "reason": "blurry",
+    "laplacian_var": 78.49844136741012
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-158.png",
+    "reason": "blurry",
+    "laplacian_var": 74.27689266204834
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_test_pd336.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-380.png",
+    "reason": "blurry",
+    "laplacian_var": 92.00439690053463
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_train_n46.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h4497.png",
+    "reason": "blurry",
+    "laplacian_var": 95.84696703753434
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-556.png",
+    "reason": "blurry",
+    "laplacian_var": 70.53474746621214
+  },
+  {
+    "path": "/kaggle/input/datasets/raddar/chest-xrays-tuberculosis-from-india/images/images/TEST_nx15.jpg",
+    "reason": "blurry",
+    "laplacian_var": 91.45338220871054
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h4610.png",
+    "reason": "blurry",
+    "laplacian_var": 96.0240118354559
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h1169.png",
+    "reason": "blurry",
+    "laplacian_var": 91.5009094492998
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_test_pd658.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_train_p8.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_train_n23.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h0552.png",
+    "reason": "blurry",
+    "laplacian_var": 93.29709779843688
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h4782.png",
+    "reason": "blurry",
+    "laplacian_var": 77.58416598662734
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-1808.png",
+    "reason": "blurry",
+    "laplacian_var": 92.44440184137784
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h0912.png",
+    "reason": "blurry",
+    "laplacian_var": 98.5370306931436
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h3511.png",
+    "reason": "blurry",
+    "laplacian_var": 95.50672940071672
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-1362.png",
+    "reason": "blurry",
+    "laplacian_var": 55.69482306181453
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-482.png",
+    "reason": "blurry",
+    "laplacian_var": 63.86664943373762
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_test_pd149.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_test_pd939.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-1830.png",
+    "reason": "blurry",
+    "laplacian_var": 91.27208023425192
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_test_nd458.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-1484.png",
+    "reason": "blurry",
+    "laplacian_var": 69.79420574661344
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-132.png",
+    "reason": "blurry",
+    "laplacian_var": 89.87137133232318
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-222.png",
+    "reason": "blurry",
+    "laplacian_var": 44.35326216276735
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_test_pd637.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-2091.png",
+    "reason": "blurry",
+    "laplacian_var": 86.89846233814023
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-288.png",
+    "reason": "blurry",
+    "laplacian_var": 16.24958763923496
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-191.png",
+    "reason": "blurry",
+    "laplacian_var": 69.78089771326631
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h0704.png",
+    "reason": "blurry",
+    "laplacian_var": 95.37414012453519
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/tb/tb1181.png",
+    "reason": "blurry",
+    "laplacian_var": 81.86255563027225
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h0073.png",
+    "reason": "blurry",
+    "laplacian_var": 85.86214122897945
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_train_n38.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-339.png",
+    "reason": "blurry",
+    "laplacian_var": 26.148897912353277
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-620.png",
+    "reason": "blurry",
+    "laplacian_var": 33.737896458944306
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-376.png",
+    "reason": "blurry",
+    "laplacian_var": 74.24259048863314
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-862.png",
+    "reason": "blurry",
+    "laplacian_var": 99.40316351293586
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-521.png",
+    "reason": "blurry",
+    "laplacian_var": 26.26910349354148
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_train_n33.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-2467.png",
+    "reason": "blurry",
+    "laplacian_var": 88.72932605794631
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-306.png",
+    "reason": "blurry",
+    "laplacian_var": 70.59170343633741
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h3216.png",
+    "reason": "blurry",
+    "laplacian_var": 79.34198269899935
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_train_n7.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h2353.png",
+    "reason": "blurry",
+    "laplacian_var": 79.2115506818518
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_test_nd548.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h4309.png",
+    "reason": "blurry",
+    "laplacian_var": 96.4515962516889
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-590.png",
+    "reason": "blurry",
+    "laplacian_var": 64.35447253263555
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-612.png",
+    "reason": "blurry",
+    "laplacian_var": 26.263120043789968
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-412.png",
+    "reason": "blurry",
+    "laplacian_var": 88.74341375357471
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-678.png",
+    "reason": "blurry",
+    "laplacian_var": 31.967998802429065
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_test_nd332.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h1607.png",
+    "reason": "blurry",
+    "laplacian_var": 90.2200795263052
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h4931.png",
+    "reason": "blurry",
+    "laplacian_var": 80.48737651458941
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-418.png",
+    "reason": "blurry",
+    "laplacian_var": 42.039779947837815
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h3168.png",
+    "reason": "blurry",
+    "laplacian_var": 87.17751967534423
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-1515.png",
+    "reason": "blurry",
+    "laplacian_var": 90.17159625492059
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-311.png",
+    "reason": "blurry",
+    "laplacian_var": 98.12394205643795
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h3704.png",
+    "reason": "blurry",
+    "laplacian_var": 93.81397054134868
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/tb/tb1074.png",
+    "reason": "blurry",
+    "laplacian_var": 88.29894775152206
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h2771.png",
+    "reason": "blurry",
+    "laplacian_var": 74.61683349101804
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-3270.png",
+    "reason": "blurry",
+    "laplacian_var": 88.69144007167779
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h0922.png",
+    "reason": "blurry",
+    "laplacian_var": 80.96864099777304
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h3594.png",
+    "reason": "blurry",
+    "laplacian_var": 93.81812269589864
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-538.png",
+    "reason": "blurry",
+    "laplacian_var": 22.145609483122826
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-61.png",
+    "reason": "blurry",
+    "laplacian_var": 88.76418735994957
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-76.png",
+    "reason": "blurry",
+    "laplacian_var": 99.25329171773046
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-541.png",
+    "reason": "blurry",
+    "laplacian_var": 58.00290688849054
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_train_p20.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-2843.png",
+    "reason": "blurry",
+    "laplacian_var": 84.47154495655559
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-906.png",
+    "reason": "blurry",
+    "laplacian_var": 81.62457802519202
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-1546.png",
+    "reason": "blurry",
+    "laplacian_var": 96.211520612007
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h2158.png",
+    "reason": "blurry",
+    "laplacian_var": 85.55240883096121
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-637.png",
+    "reason": "blurry",
+    "laplacian_var": 52.60326427221298
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-548.png",
+    "reason": "blurry",
+    "laplacian_var": 88.62402020394802
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_test_pd735.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h1185.png",
+    "reason": "blurry",
+    "laplacian_var": 73.11916291341186
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-576.png",
+    "reason": "blurry",
+    "laplacian_var": 55.82756502088159
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h0466.png",
+    "reason": "blurry",
+    "laplacian_var": 88.35065761744045
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h2296.png",
+    "reason": "blurry",
+    "laplacian_var": 78.95084599009715
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-1056.png",
+    "reason": "blurry",
+    "laplacian_var": 93.65353214531206
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h4551.png",
+    "reason": "blurry",
+    "laplacian_var": 88.99611366447061
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h4884.png",
+    "reason": "blurry",
+    "laplacian_var": 87.90219499520026
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Tuberculosis/Tuberculosis-499.png",
+    "reason": "blurry",
+    "laplacian_var": 62.146832002094015
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/tb/tb0166.png",
+    "reason": "blurry",
+    "laplacian_var": 93.26946550235152
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_train_n39.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h3729.png",
+    "reason": "blurry",
+    "laplacian_var": 90.85363302542828
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h2101.png",
+    "reason": "blurry",
+    "laplacian_var": 76.77281166589819
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h4184.png",
+    "reason": "blurry",
+    "laplacian_var": 82.33013608283363
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_test_nd152.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset/TB_Chest_Radiography_Database/Normal/Normal-1691.png",
+    "reason": "blurry",
+    "laplacian_var": 96.30384612083435
+  },
+  {
+    "path": "/kaggle/input/datasets/usmanshams/tbx-11/TBX11K/imgs/health/h4844.png",
+    "reason": "blurry",
+    "laplacian_var": 90.08877607807517
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_test_nd943.dcm",
+    "reason": "corrupted"
+  },
+  {
+    "path": "/kaggle/input/datasets/vbookshelf/da-and-db-tb-chest-x-ray-datasets/images/db/db_train_n36.dcm",
+    "reason": "corrupted"
+  }
+]

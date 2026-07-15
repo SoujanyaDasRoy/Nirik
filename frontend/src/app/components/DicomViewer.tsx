@@ -12,15 +12,6 @@ export interface DicomViewerProps {
   viewMode?: "original" | "heatmap" | string;
   heatmapOpacity?: number;
   setHeatmapOpacity?: (opacity: number) => void;
-  observationFocusRegion?: {
-    x1: number;
-    y1: number;
-    x2: number;
-    y2: number;
-    zoom: number;
-    panX: number;
-    panY: number;
-  } | null;
   // Kept for backward compatibility with ScreeningWorkstation
   [key: string]: any; 
 }
@@ -32,10 +23,8 @@ export default function DicomViewer({
   label = "Nirikshon Viewport",
   viewMode = "original",
   heatmapOpacity = 0.6,
-  observationFocusRegion,
 }: DicomViewerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
 
   // View state
   const [zoom, setZoom] = useState(1.0);
@@ -50,14 +39,6 @@ export default function DicomViewer({
   useEffect(() => {
     setShowHeatmap(viewMode === "heatmap");
   }, [viewMode]);
-
-  // Sync with AI observation focus
-  useEffect(() => {
-    if (observationFocusRegion) {
-      setZoom(observationFocusRegion.zoom);
-      setPan({ x: observationFocusRegion.panX, y: observationFocusRegion.panY });
-    }
-  }, [observationFocusRegion]);
 
   // Handle interaction
   const handleMouseDown = (e: ReactMouseEvent<HTMLDivElement>) => {
@@ -102,43 +83,6 @@ export default function DicomViewer({
   const handleZoomIn = () => setZoom((z) => Math.min(10.0, z + 0.2));
   const handleZoomOut = () => setZoom((z) => Math.max(0.1, z - 0.2));
 
-  // Draw focus region box on top
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    // We make the canvas match its styled size
-    const rect = canvas.getBoundingClientRect();
-    canvas.width = rect.width;
-    canvas.height = rect.height;
-
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    if (observationFocusRegion) {
-      ctx.strokeStyle = "#22c55e";
-      ctx.lineWidth = 3;
-      
-      // Map AI coordinates (assumed 224x224 standard) to current responsive canvas size
-      const scaleX = canvas.width / 224;
-      const scaleY = canvas.height / 224;
-      
-      const fx1 = observationFocusRegion.x1 * scaleX;
-      const fy1 = observationFocusRegion.y1 * scaleY;
-      const fx2 = observationFocusRegion.x2 * scaleX;
-      const fy2 = observationFocusRegion.y2 * scaleY;
-
-      ctx.strokeRect(fx1, fy1, fx2 - fx1, fy2 - fy1);
-      ctx.fillStyle = "rgba(34, 197, 94, 0.15)";
-      ctx.fillRect(fx1, fy1, fx2 - fx1, fy2 - fy1);
-
-      ctx.font = "bold 10px Inter, sans-serif";
-      ctx.fillStyle = "#22c55e";
-      ctx.fillText("ATTENTION AREA FOCUS", fx1 + 4, fy1 - 5);
-    }
-  }, [observationFocusRegion, zoom, pan]); // Redraw on changes
-
   return (
     <div className="relative w-full h-full flex flex-col bg-[#090909] rounded-[24px] border border-white/5 overflow-hidden">
       {/* Viewer Header */}
@@ -146,12 +90,6 @@ export default function DicomViewer({
         <div className="px-3 py-1 bg-black/60 backdrop-blur-md rounded-full border border-white/10 text-xs font-medium text-white/70">
           {label}
         </div>
-        {observationFocusRegion && (
-          <div className="px-3 py-1 bg-emerald-500/20 backdrop-blur-md rounded-full border border-emerald-500/30 text-xs font-bold text-emerald-400 flex items-center gap-2">
-            <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            AI FOCUS
-          </div>
-        )}
       </div>
 
       {/* Main Image Stage */}
@@ -193,13 +131,6 @@ export default function DicomViewer({
               style={{ width: "100%", height: "100%", opacity: showHeatmap ? heatmapOpacity : 0 }}
             />
           )}
-
-          {/* Annotation Canvas (Focus Box) */}
-          <canvas
-            ref={canvasRef}
-            className="absolute max-w-full max-h-full pointer-events-none"
-            style={{ width: "100%", height: "100%" }}
-          />
         </div>
       </div>
 
