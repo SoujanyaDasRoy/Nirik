@@ -585,53 +585,11 @@ export function ScreeningWorkstation({
   // ---------- Render ----------
 
   return (
-    <div className="w-full min-h-[calc(100vh-4rem)] bg-[#090909] text-[#ffffff] overflow-y-auto overflow-x-hidden">
-      {/* Main container: flex-col on mobile, flex-row on extra large screens */}
-      <div className="flex flex-col xl:flex-row h-full xl:min-h-[calc(100vh-6rem)] w-full p-4 lg:p-6 gap-4">
-        {/* 1. LEFT DOCK (horizontal on mobile, vertical on xl) */}
-        <aside
-          className="w-full xl:w-[80px] shrink-0 flex flex-row xl:flex-col justify-center xl:justify-start items-center p-3 xl:py-6 gap-4 bg-[#141414] backdrop-blur-2xl border border-[#262626] rounded-3xl xl:rounded-[30px] shadow-2xl relative z-20"
-        >
-          <div className="flex flex-row xl:flex-col gap-4">
-            {/* Clinical View button */}
-            <button
-              onClick={() => setWorkstationMode("clinical")}
-              className={`p-3.5 lg:p-4 rounded-full transition-all duration-300 relative z-10 ${
-                workstationMode === "clinical"
-                  ? "bg-[#ffffff] text-[#000000] shadow-[0_0_20px_rgba(var(--primary),0.5)] scale-105"
-                  : "bg-[#1c1c1c] text-[#999999] hover:bg-[#262626] hover:text-white"
-              }`}
-              title="Clinical View"
-            >
-              <LayoutDashboard className="w-5 h-5 lg:w-6 lg:h-6" />
-            </button>
-            {/* AI Observations button */}
-            <button
-              onClick={() => setWorkstationMode("xai")}
-              className={`p-3.5 lg:p-4 rounded-full transition-all duration-300 relative z-10 ${
-                workstationMode === "xai"
-                  ? "bg-[#ffffff] text-[#000000] shadow-[0_0_20px_rgba(var(--primary),0.5)] scale-105"
-                  : "bg-[#1c1c1c] text-[#999999] hover:bg-[#262626] hover:text-white"
-              }`}
-              title="AI Observations"
-            >
-              <Layers className="w-5 h-5 lg:w-6 lg:h-6" />
-            </button>
-          </div>
-
-          <div className="ml-auto xl:mt-auto xl:ml-0 space-y-4">
-            <button
-              className="p-3.5 lg:p-4 rounded-full bg-[#1c1c1c] text-[#999999] hover:bg-[#262626] hover:text-white transition-all duration-300"
-              title="Workspace Settings"
-            >
-              <Settings className="w-5 h-5 lg:w-6 lg:h-6" />
-            </button>
-          </div>
-        </aside>
-
-        {/* 2. CENTRAL WORKSPACE */}
+    <div className="w-full bg-[#090909] text-[#ffffff]">
+      <div className="flex flex-col w-full gap-8">
+        {/* 1. CENTRAL WORKSPACE (IMAGE) */}
         <section
-          className="flex-1 flex flex-col min-h-[60vh] xl:min-h-0 relative rounded-3xl xl:rounded-[30px] overflow-hidden bg-[#1c1c1c] border border-[#262626] shadow-2xl"
+          className="flex-1 flex flex-col w-full min-h-[60vh] relative rounded-3xl overflow-hidden bg-[#1c1c1c] border border-[#262626] shadow-2xl"
         >
           {/* Floating status bars */}
           {activeResult?.demo_mode && (
@@ -684,7 +642,7 @@ export function ScreeningWorkstation({
 
         {/* 3. RIGHT PANEL */}
         <aside
-          className="w-full xl:w-[420px] shrink-0 flex flex-col xl:h-full bg-[#141414] backdrop-blur-2xl border border-[#262626] rounded-3xl xl:rounded-[30px] shadow-2xl overflow-hidden relative z-20"
+          className="w-full shrink-0 flex flex-col bg-[#141414] backdrop-blur-2xl border border-[#262626] rounded-3xl xl:rounded-[30px] shadow-2xl overflow-hidden relative z-20"
         >
           {/* Verdict Header */}
           <div className="p-6 border-b border-[#262626] relative overflow-hidden shrink-0 bg-gradient-to-b from-white/[0.02] to-transparent">
@@ -773,7 +731,6 @@ export function ScreeningWorkstation({
             <div className="flex bg-[#141414] p-1.5 rounded-full border border-[#262626] relative shadow-inner">
               {[
                 { id: "diagnosis", label: "Evidence" },
-                { id: "chat", label: "Co-Pilot" },
                 { id: "report", label: "Report" },
               ].map((tab) => (
                 <button
@@ -789,14 +746,12 @@ export function ScreeningWorkstation({
                 </button>
               ))}
               {/* Animated highlight background */}
-              <div className="absolute top-1.5 bottom-1.5 w-[calc(33.333%-4px)] bg-[#ffffff] rounded-full transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] z-0 shadow-[0_0_20px_rgba(var(--primary),0.4)]"
+              <div className="absolute top-1.5 bottom-1.5 w-[calc(50%-4px)] bg-[#ffffff] rounded-full transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] z-0 shadow-[0_0_20px_rgba(var(--primary),0.4)]"
                 style={{
                   left:
                     activeRightTab === "diagnosis"
                       ? "6px"
-                      : activeRightTab === "chat"
-                      ? "calc(33.333% + 2px)"
-                      : "calc(66.666% - 2px)",
+                      : "calc(50% + 2px)",
                 }}
               />
             </div>

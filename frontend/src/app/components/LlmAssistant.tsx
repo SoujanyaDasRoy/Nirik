@@ -28,25 +28,35 @@ export default function LlmAssistant({ activeResult }: { activeResult: AnalysisR
     setMessages(prev => [...prev, { role: "user", content: userMessage }]);
     setIsTyping(true);
 
-    // TODO: Hook up to actual LLM backend endpoint here
-    // For now, we stub the response
-    setTimeout(() => {
-      let reply = "I can see the model predicted this result based on standard visual features. Let me know if you need specific details!";
-      
-      const lower = userMessage.toLowerCase();
-      if (lower.includes("why") || lower.includes("explain")) {
-        reply = activeResult?.is_tb 
-          ? "The model detected increased opacity and characteristic nodular patterns indicative of tuberculosis. The Grad-CAM heatmap highlights the specific active regions it focused on."
-          : "The lung fields appear clear without significant consolidations or pleural effusions, leading to a Normal prediction.";
-      } else if (lower.includes("confidence")) {
-        reply = `The model is ${( (activeResult?.confidence || 0) * 100).toFixed(1)}% confident in this prediction based on its learned features.`;
-      } else if (lower.includes("quality")) {
-        reply = "The image quality assessment indicates it is suitable for AI analysis, with adequate exposure and full lung coverage.";
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/chat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          message: userMessage,
+          context: {
+            prediction: activeResult?.prediction || "Unknown",
+            confidence: activeResult?.confidence || 0,
+            threshold: activeResult?.threshold_used || 0.5,
+            patientId: activeResult?.metadata?.patient_id || "Unknown Patient",
+            isTb: activeResult?.is_tb || false
+          }
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to get response");
       }
 
-      setMessages(prev => [...prev, { role: "assistant", content: reply }]);
+      const data = await response.json();
+      setMessages(prev => [...prev, { role: "assistant", content: data.reply }]);
+    } catch (error) {
+      console.error("LLM Error:", error);
+      setMessages(prev => [...prev, { role: "assistant", content: "I'm sorry, I encountered an error while trying to process your request. Please try again." }]);
+    } finally {
       setIsTyping(false);
-    }, 1500);
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
