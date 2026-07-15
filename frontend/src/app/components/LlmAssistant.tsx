@@ -35,7 +35,7 @@ export default function LlmAssistant({ activeResult }: { activeResult: AnalysisR
         credentials: "include",
         body: JSON.stringify({
           message: userMessage,
-          context: {
+          llm_context: {
             prediction: activeResult?.prediction || "Unknown",
             confidence: activeResult?.confidence || 0,
             threshold: activeResult?.threshold_used || 0.5,
@@ -50,7 +50,7 @@ export default function LlmAssistant({ activeResult }: { activeResult: AnalysisR
       }
 
       const data = await response.json();
-      setMessages(prev => [...prev, { role: "assistant", content: data.reply }]);
+      setMessages(prev => [...prev, { role: "assistant", content: data.response || "No response generated." }]);
     } catch (error) {
       console.error("LLM Error:", error);
       setMessages(prev => [...prev, { role: "assistant", content: "I'm sorry, I encountered an error while trying to process your request. Please try again." }]);
