@@ -1,4 +1,4 @@
-def enforce_guardrails(llm_response: str) -> str:
+def enforce_guardrails(llm_response: str, is_fallback: bool = False) -> str:
     """
     Enforces terminology guardrails on the LLM output.
     Softens assertive findings terms like 'shows', 'confirms', 'diagnosed', 'is present'
@@ -30,9 +30,8 @@ def enforce_guardrails(llm_response: str) -> str:
         pattern = re.compile(bad_pattern, re.IGNORECASE)
         llm_response = pattern.sub(good_term, llm_response)
             
-    # Always append the exact request disclaimer footer
-    # If the response contains a custom structured screening notice, use that structured version
-    if "Structured screening summary" in llm_response:
+    # Always append the exact request disclaimer footer based on the explicit is_fallback flag
+    if is_fallback:
         disclaimer_footer = (
             "\n\n---\n"
             "AI-assisted decision support only. Structured screening summary — full narrative "

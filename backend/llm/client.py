@@ -60,13 +60,16 @@ def generate_template_fallback(llm_context: dict, user_message: str) -> str:
     LLM API is unreachable, times out, or is unconfigured.
     """
     pred_class = llm_context.get('prediction', 'Unknown')
-    conf_val = llm_context.get('confidence', 0.0)
-    conf_score = f"{conf_val * 100:.1f}"
+    p_tb = llm_context.get('confidence', 0.0)
     is_tb = llm_context.get('isTb', False) or (pred_class.lower() == "tuberculosis")
     threshold = llm_context.get('threshold', 0.5)
     
     # Check if confidence score is borderline (within +/- 0.10 of threshold)
-    is_borderline = abs(conf_val - threshold) <= 0.10
+    is_borderline = abs(p_tb - threshold) <= 0.10
+    
+    # Calculate confidence of the predicted class: P(TB) if TB predicted, otherwise 1.0 - P(TB)
+    predicted_conf = p_tb if is_tb else (1.0 - p_tb)
+    conf_score = f"{predicted_conf * 100:.1f}"
     
     xai = llm_context.get('xaiResults', {}) or {}
     rois = xai.get('rois', []) if xai else []
@@ -106,10 +109,7 @@ def generate_template_fallback(llm_context: dict, user_message: str) -> str:
 {impression}
 
 ## Recommendation
-{rec_str}
-
----
-AI-assisted decision support only. Structured screening summary — full narrative analysis was unavailable for this case. All findings require independent verification against the source image."""
+{rec_str}"""
 
     return fallback_report
 
@@ -193,19 +193,19 @@ Saliency & Heatmap Information
                 return enforce_guardrails(raw_text)
             else:
                 print(f"[LLM] Local LLM returned status code {res.status_code}. Using template fallback.")
-                return enforce_guardrails(generate_template_fallback(llm_context, user_message))
+                return enforce_guardrails(generate_template_fallback(llm_context, user_message), is_fallback=True)
         except Exception as e:
             print(f"[LLM] Local LLM request failed: {e}. Using template fallback.")
-            return enforce_guardrails(generate_template_fallback(llm_context, user_message))
+            return enforce_guardrails(generate_template_fallback(llm_context, user_message), is_fallback=True)
 
     # --- Option 2: Gemini API ---
     if not HAS_GENAI:
         print("[LLM] google-generativeai SDK missing. Using template fallback.")
-        return enforce_guardrails(generate_template_fallback(llm_context, user_message))
+        return enforce_guardrails(generate_template_fallback(llm_context, user_message), is_fallback=True)
 
     if not api_key:
         print("[LLM] GEMINI_API_KEY environment variable is not set. Using template fallback.")
-        return enforce_guardrails(generate_template_fallback(llm_context, user_message))
+        return enforce_guardrails(generate_template_fallback(llm_context, user_message), is_fallback=True)
 
     # Try models in order: best available first
     MODELS_TO_TRY = [
@@ -235,7 +235,7 @@ Saliency & Heatmap Information
 
     # All models failed: return structured template fallback
     print(f"[LLM] All models failed. Falling back to template. Error: {last_error}")
-    return enforce_guardrails(generate_template_fallback(llm_context, user_message))
+    return enforce_guardrails(generate_template_fallback(llm_context, user_message), is_fallback=True)
 
 
 def generate_chat_response_stream(llm_context: dict, user_message: str):
@@ -371,5 +371,5 @@ Saliency & Heatmap Information
 
     # --- Option 3: Fallback Template Stream ---
     fallback_report = generate_template_fallback(llm_context, user_message)
-    yield enforce_guardrails(fallback_report)
+    yield enforce_guardrails(fallback_report, is_fallback=True)
     return
