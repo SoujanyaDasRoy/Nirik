@@ -31,10 +31,19 @@ def enforce_guardrails(llm_response: str) -> str:
         llm_response = pattern.sub(good_term, llm_response)
             
     # Always append the exact request disclaimer footer
-    disclaimer_footer = (
-        "\n\n---\n"
-        "AI-assisted decision support only. All visual observations require independent verification against the source image."
-    )
+    # If the response contains a custom structured screening notice, use that structured version
+    if "Structured screening summary" in llm_response:
+        disclaimer_footer = (
+            "\n\n---\n"
+            "AI-assisted decision support only. Structured screening summary — full narrative "
+            "analysis was unavailable for this case. All findings require independent "
+            "verification against the source image."
+        )
+    else:
+        disclaimer_footer = (
+            "\n\n---\n"
+            "AI-assisted decision support only. All visual observations require independent verification against the source image."
+        )
     
     # Strip any existing duplicate footer to prevent accumulation
     clean_response = llm_response.split("AI-assisted decision support only")[0].strip()

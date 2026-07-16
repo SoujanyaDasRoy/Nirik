@@ -60,52 +60,56 @@ def generate_template_fallback(llm_context: dict, user_message: str) -> str:
     LLM API is unreachable, times out, or is unconfigured.
     """
     pred_class = llm_context.get('prediction', 'Unknown')
-    conf_score = f"{llm_context.get('confidence', 0) * 100:.1f}%"
-    is_tb = llm_context.get('isTb', False)
+    conf_val = llm_context.get('confidence', 0.0)
+    conf_score = f"{conf_val * 100:.1f}"
+    is_tb = llm_context.get('isTb', False) or (pred_class.lower() == "tuberculosis")
+    threshold = llm_context.get('threshold', 0.5)
+    
+    # Check if confidence score is borderline (within +/- 0.10 of threshold)
+    is_borderline = abs(conf_val - threshold) <= 0.10
     
     xai = llm_context.get('xaiResults', {}) or {}
     rois = xai.get('rois', []) if xai else []
-    roi_str = ", ".join([f"{r.get('location')} (Contribution: {r.get('contribution', 0):.1f}%)" for r in rois]) if rois else "No focal ROI detected"
     
-    if is_tb:
-        impression = f"AI screening is suspicious for pulmonary tuberculosis based on the detected focal saliency anomalies (Confidence: {conf_score})."
-        recommendations = (
-            "1. Obtain sputum smear for Acid-Fast Bacilli (AFB) x 3.\n"
-            "2. Correlate with molecular tests (GeneXpert MTB/RIF or Truenat).\n"
-            "3. Clinical evaluation for constitutional symptoms (cough, fever, weight loss).\n"
-            "4. Consult a qualified pulmonologist or radiologist for clinical confirmation."
-        )
-        patient_summary = "The AI model detected changes in the lungs that are suspicious for tuberculosis. Further laboratory tests and evaluation by a healthcare provider are required to establish a screening result."
+    if rois:
+        # Sort ROIs by contribution descending to present the primary area
+        sorted_rois = sorted(rois, key=lambda x: x.get('contribution', 0.0), reverse=True)
+        primary_roi = sorted_rois[0]
+        zone_name = primary_roi.get('location', 'indicated lung field')
+        contribution = f"{primary_roi.get('contribution', 0.0):.1f}"
+        findings = f"Attention was concentrated in the {zone_name}, contributing {contribution}% to the classification."
     else:
-        impression = f"No radiographic evidence of active pulmonary tuberculosis detected by the model (Confidence: {conf_score})."
-        recommendations = (
-            "1. Clinical correlation with patient's presenting symptoms.\n"
-            "2. Repeat chest radiograph in 4-6 weeks if clinical symptoms persist.\n"
-            "3. If clinical suspicion remains high, consider further microbiological investigation."
-        )
-        patient_summary = "The AI model did not detect any changes in the lungs suspicious for tuberculosis. Please consult your healthcare provider if you have persistent symptoms."
-
-    fallback_report = f"""# AI-Assisted Chest X-ray Report (Fallback Template Mode)
-
-## AI Prediction
+        findings = "No areas of focal attention were identified by the screening model."
+        
+    if is_tb:
+        impression = f"Radiographic pattern consistent with tuberculosis was identified (confidence: {conf_score}%)."
+        rec_micro = "3. Consider confirmatory microbiological testing (e.g., sputum AFB smear, GeneXpert, Truenat)."
+    else:
+        impression = f"No radiographic evidence of active pulmonary tuberculosis was identified (confidence: {conf_score}%)."
+        rec_micro = "3. Repeat chest radiograph in 4–6 weeks if clinical symptoms persist."
+        
+    recommendations = ["1. Clinical correlation with patient's presenting symptoms and history."]
+    if is_borderline:
+        recommendations.append("2. Given the borderline confidence score, closer radiologist review is recommended.")
+    recommendations.append(rec_micro)
+    
+    rec_str = "\n".join(recommendations)
+    
+    fallback_report = f"""## AI Prediction
 * Predicted Class: {pred_class}
-* Confidence: {conf_score}
+* Confidence: {conf_score}%
 
 ## Findings
-The chest radiograph was analyzed using the Nirikhshon screening model.
-* Lung Saliency Zones: {roi_str}
+{findings}
 
 ## Impression
 {impression}
 
-## Explainability
-The saliency analysis highlights the lung zones contributing most strongly to this screening result. This visualization represents neural attention weights and is intended for clinical correlation only.
-
 ## Recommendation
-{recommendations}
+{rec_str}
 
-## Patient-Friendly Summary
-{patient_summary}"""
+---
+AI-assisted decision support only. Structured screening summary — full narrative analysis was unavailable for this case. All findings require independent verification against the source image."""
 
     return fallback_report
 
@@ -367,6 +371,5 @@ Saliency & Heatmap Information
 
     # --- Option 3: Fallback Template Stream ---
     fallback_report = generate_template_fallback(llm_context, user_message)
-    fallback_report = filter_text(fallback_report)
-    yield fallback_report
-    yield disclaimer_footer
+    yield enforce_guardrails(fallback_report)
+    return
