@@ -282,11 +282,15 @@ def build_clinical_observations(
         # Pick label/code by TB vs non-TB.
         if is_tb:
             label, code = _TB_LABELS.get(zone, ("Consolidative opacity", "A15.0"))
+            rule_id = f"RULE-TB-{zone.upper()}"
+            rule_source = f"_TB_LABELS['{zone}']"
             followup = list(_TB_FOLLOWUP)
             differentials = list(_TB_DIFFERENTIALS)
             descriptor = "TB-specific"
         else:
             label, code = _NORMAL_LABELS.get(zone, ("Parenchymal shadow", "R91.1"))
+            rule_id = f"RULE-NORMAL-{zone.upper()}"
+            rule_source = f"_NORMAL_LABELS['{zone}']"
             followup = list(_NORMAL_FOLLOWUP)
             differentials = list(_NORMAL_DIFFERENTIALS)
             descriptor = "Non-TB"
@@ -350,6 +354,8 @@ def build_clinical_observations(
             "narrative": narrative,
             "recommended_followup": followup,
             "differential_diagnoses": differentials,
+            "rule_id": rule_id,
+            "rule_source": rule_source,
         })
 
     return out

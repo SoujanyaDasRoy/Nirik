@@ -11,9 +11,70 @@ except ImportError:
     print("[LLM] WARNING: google-generativeai not installed. Gemini will not be available.")
 
 
+def generate_template_fallback(llm_context: dict, user_message: str) -> str:
+    """
+    Generates a structured fallback radiology report template when the third-party
+    LLM API is unreachable, times out, or is unconfigured.
+    """
+    pred_class = llm_context.get('prediction', 'Unknown')
+    conf_score = f"{llm_context.get('confidence', 0) * 100:.1f}%"
+    is_tb = llm_context.get('isTb', False)
+    
+    xai = llm_context.get('xaiResults', {}) or {}
+    rois = xai.get('rois', []) if xai else []
+    roi_str = ", ".join([f"{r.get('location')} (Contribution: {r.get('contribution', 0):.1f}%)" for r in rois]) if rois else "No focal ROI detected"
+    
+    observations = llm_context.get('observations', [])
+    obs_list = [obs.get('narrative') for obs in observations if obs.get('narrative')]
+    obs_str = "; ".join(obs_list) if obs_list else "No specific radiographic abnormalities reported."
+    
+    if is_tb:
+        impression = f"AI findings are suspicious for pulmonary tuberculosis based on the detected focal abnormalities (Confidence: {conf_score})."
+        recommendations = (
+            "1. Obtain sputum smear for Acid-Fast Bacilli (AFB) x 3.\n"
+            "2. Correlate with molecular tests (GeneXpert MTB/RIF or Truenat).\n"
+            "3. Clinical evaluation for constitutional symptoms (cough, fever, weight loss).\n"
+            "4. Consult a qualified pulmonologist or radiologist for clinical confirmation."
+        )
+        patient_summary = "The AI model detected changes in the lungs that are suspicious for tuberculosis. Further laboratory tests and evaluation by a healthcare provider are required to establish a diagnosis."
+    else:
+        impression = f"No radiographic evidence of active pulmonary tuberculosis detected by the model (Confidence: {conf_score})."
+        recommendations = (
+            "1. Clinical correlation with patient's presenting symptoms.\n"
+            "2. Repeat chest radiograph in 4-6 weeks if clinical symptoms persist.\n"
+            "3. If clinical suspicion remains high, consider further microbiological investigation."
+        )
+        patient_summary = "The AI model did not detect any changes in the lungs suspicious for tuberculosis. Please consult your healthcare provider if you have persistent symptoms."
+
+    fallback_report = f"""# AI-Assisted Chest X-ray Report (Fallback Template Mode)
+
+## AI Prediction
+* Predicted Class: {pred_class}
+* Confidence: {conf_score}
+
+## Findings
+The chest radiograph was analyzed using the Nirikhshon screening model.
+* Lung Segmentation: {roi_str}
+* Radiographic Findings: {obs_str}
+
+## Impression
+{impression}
+
+## Explainability
+The saliency analysis highlights the lung zones contributing most strongly to this screening result. This visualization represents neural attention weights and is intended for clinical correlation only.
+
+## Recommendation
+{recommendations}
+
+## Patient-Friendly Summary
+{patient_summary}"""
+
+    return fallback_report
+
+
 def generate_chat_response(llm_context: dict, user_message: str) -> str:
     """
-    Generates a response using Gemini, a local LLM, or a mock.
+    Generates a response using Gemini, a local LLM, or a fallback template.
     Falls back gracefully with informative error messages.
     """
     use_local = os.environ.get("USE_LOCAL_LLM", "false").lower() == "true"
@@ -21,8 +82,7 @@ def generate_chat_response(llm_context: dict, user_message: str) -> str:
 
     # Build prompt
     system_prompt = build_system_prompt()
-    # Format input variables to conform to the requested structured format
-    patient_id = llm_context.get('patientId', 'Unknown')
+    # Format input variables to conform to the requested structured format (omitting patientId for PHI minimization)
     age = llm_context.get('patientAge', 'Unknown')
     sex = llm_context.get('patientSex', 'Unknown')
     view = llm_context.get('view', 'PA')
@@ -80,7 +140,6 @@ def generate_chat_response(llm_context: dict, user_message: str) -> str:
     context_str = f"""Patient Information
 * Age: {age}
 * Sex: {sex}
-* Patient ID: {patient_id}
 
 Image Information
 * View (PA/AP): {view}
@@ -127,31 +186,25 @@ Additional Notes
                 "model": local_model,
                 "prompt": full_prompt,
                 "stream": False
-            }, timeout=30)
+            }, timeout=10.0)  # Bounded timeout for local LLM requests
             if res.status_code == 200:
                 raw_text = res.json().get("response", "")
                 return enforce_guardrails(raw_text)
             else:
-                return enforce_guardrails(f"Local LLM returned error {res.status_code}.")
+                print(f"[LLM] Local LLM returned status code {res.status_code}. Using template fallback.")
+                return enforce_guardrails(generate_template_fallback(llm_context, user_message))
         except Exception as e:
-            print(f"[LLM] Local LLM request failed: {e}")
-            return enforce_guardrails("Local LLM is unreachable. Please check Ollama is running.")
+            print(f"[LLM] Local LLM request failed: {e}. Using template fallback.")
+            return enforce_guardrails(generate_template_fallback(llm_context, user_message))
 
     # --- Option 2: Gemini API ---
     if not HAS_GENAI:
-        return enforce_guardrails(
-            "The google-generativeai SDK is not installed on this server. "
-            "Please add 'google-generativeai>=0.8.0' to requirements.txt."
-        )
+        print("[LLM] google-generativeai SDK missing. Using template fallback.")
+        return enforce_guardrails(generate_template_fallback(llm_context, user_message))
 
     if not api_key:
-        print("[LLM] ERROR: GEMINI_API_KEY environment variable is not set.")
-        return enforce_guardrails(
-            "The AI assistant is not configured (missing API key). "
-            f"Based on the model data: the scan was classified as '{llm_context.get('prediction', 'Unknown')}' "
-            f"with {llm_context.get('confidence', 0) * 100:.1f}% confidence. "
-            "Please consult a qualified radiologist for clinical interpretation."
-        )
+        print("[LLM] GEMINI_API_KEY environment variable is not set. Using template fallback.")
+        return enforce_guardrails(generate_template_fallback(llm_context, user_message))
 
     # Try models in order: best available first
     MODELS_TO_TRY = [
@@ -168,7 +221,10 @@ Additional Notes
         try:
             print(f"[LLM] Trying model: {model_name}")
             model = genai.GenerativeModel(model_name)
-            response = model.generate_content(full_prompt)
+            response = model.generate_content(
+                full_prompt,
+                request_options={"timeout": 10.0}  # Fixed 10-second timeout to prevent hanging
+            )
             print(f"[LLM] Success with model: {model_name}")
             return enforce_guardrails(response.text)
         except Exception as e:
@@ -176,10 +232,6 @@ Additional Notes
             last_error = e
             continue
 
-    # All models failed
-    return enforce_guardrails(
-        f"The AI assistant encountered an error: {str(last_error)}. "
-        f"The scan was classified as '{llm_context.get('prediction', 'Unknown')}' "
-        f"with {llm_context.get('confidence', 0) * 100:.1f}% confidence. "
-        "Please consult a qualified radiologist for clinical interpretation."
-    )
+    # All models failed: return structured template fallback
+    print(f"[LLM] All models failed. Falling back to template. Error: {last_error}")
+    return enforce_guardrails(generate_template_fallback(llm_context, user_message))
