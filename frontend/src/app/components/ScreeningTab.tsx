@@ -204,8 +204,10 @@ export function ScreeningTab({
   const [dbRegistered, setDbRegistered] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
 
-  // XAI method
-  const [xaiMethod, setXaiMethod] = useState<"gradcam_plusplus">("gradcam_plusplus");
+  // XAI method (single-method view — the real backend key is gradcam_plus_plus,
+  // with the underscore; the old "gradcam_plusplus" never matched and silently
+  // fell through to heatmap_image).
+  const [xaiMethod, setXaiMethod] = useState<"gradcam_plus_plus">("gradcam_plus_plus");
 
   // -------------- Effects --------------
 

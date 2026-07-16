@@ -168,14 +168,18 @@ export function usePrediction(
             original_image: data.original_image || prevUrl || null,
             heatmap_image: data.explainability?.gradcam_plus_plus || data.explainability?.gradcam || null,
             study_id: data.request_id || "unknown",
+            // The backend does not compute image-quality metrics. When absent,
+            // fall back to an honest "not assessed" block instead of fabricating
+            // precise-looking values (e.g. quality_score: 95, "2048 x 2048
+            // pixels") that a clinician could mistake for measured results.
             image_quality: data.image_quality || {
-               exposure: "Adequate Exposure",
-               coverage: "Full Lung Coverage",
-               resolution: "2048 x 2048 pixels",
-               rotation: "No Rotation",
-               quality_score: 95,
-               suitable_for_ai: true,
-               warnings: []
+               exposure: "Not assessed",
+               coverage: "Not assessed",
+               resolution: "Unknown",
+               rotation: "Not assessed",
+               quality_score: null,
+               suitable_for_ai: null,
+               warnings: ["Automated image-quality assessment is not available in this build."]
             },
             heatmaps: data.explainability || null,
             xai_results: data.xai_results || data.explainability || null,

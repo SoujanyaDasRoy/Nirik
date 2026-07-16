@@ -34,16 +34,25 @@ export interface AnalysisResult {
     coverage: string;
     resolution: string;
     rotation: string;
-    suitable_for_ai: boolean;
-    quality_score: number;
+    // Nullable: the backend does not compute image quality, so these carry
+    // an honest null ("not assessed") rather than a fabricated value.
+    suitable_for_ai: boolean | null;
+    quality_score: number | null;
     warnings: string[];
   };
   heatmaps?: {
-    gradcam: string;
-    gradcam_plusplus: string;
-    attention: string;
-    coverage: string;
-    attribution: string;
+    // Real backend explainability keys (base64 data URIs from data.explainability).
+    gradcam?: string;
+    gradcam_plus_plus?: string;
+    layercam?: string;
+    eigencam?: string;
+    /**
+     * Legacy misspelled key: ScreeningTab/ScreeningWorkstation still index
+     * heatmaps[xaiMethod] with xaiMethod === "gradcam_plusplus". The backend
+     * never emits this key, so it resolves to undefined and those views fall
+     * back to heatmap_image. Kept only so those components keep type-checking.
+     */
+    gradcam_plusplus?: string;
   };
   demo_mode?: boolean;
   saliency_fallback?: boolean;

@@ -34,7 +34,7 @@ export default function XaiVisualization({
   const [showBbox, setShowBbox] = useState<boolean>(true);
   const [showCircle, setShowCircle] = useState<boolean>(false);
   const [showContour, setShowContour] = useState<boolean>(true);
-  const [heatmapMode, setHeatmapMode] = useState<"gradcam" | "gradcam_plusplus" | "attention" | "coverage" | "attribution">("gradcam_plusplus");
+  const [heatmapMode, setHeatmapMode] = useState<"gradcam" | "gradcam_plus_plus" | "layercam" | "eigencam">("gradcam_plus_plus");
   const [hoveredRoiId, setHoveredRoiId] = useState<string | null>(null);
 
   const imgRef = useRef<HTMLImageElement>(null);
@@ -153,7 +153,7 @@ export default function XaiVisualization({
                 
                 {/* Segmented Button Selector for Heatmap Mode */}
                 <div className="flex flex-wrap bg-[#1c1c1c] dark:bg-[#141414] p-1 rounded-3xl border border-[#262626] backdrop-blur-md w-full sm:w-auto">
-                  {(["gradcam_plusplus", "gradcam", "attention", "coverage"] as const).map(mode => (
+                  {(["gradcam_plus_plus", "gradcam", "layercam", "eigencam"] as const).map(mode => (
                     <button
                       key={mode}
                       onClick={() => setHeatmapMode(mode)}
@@ -163,10 +163,10 @@ export default function XaiVisualization({
                           : "text-[#999999] hover:text-[#ffffff] hover:bg-[#1c1c1c]"
                       }`}
                     >
-                      {mode === "gradcam_plusplus" && "Grad-CAM++"}
-                      {mode === "gradcam" && "Standard"}
-                      {mode === "attention" && "Attention"}
-                      {mode === "coverage" && "Coverage"}
+                      {mode === "gradcam_plus_plus" && "Grad-CAM++"}
+                      {mode === "gradcam" && "Grad-CAM"}
+                      {mode === "layercam" && "LayerCAM"}
+                      {mode === "eigencam" && "Eigen-CAM"}
                     </button>
                   ))}
                 </div>
