@@ -204,10 +204,18 @@ export function ScreeningTab({
   const [dbRegistered, setDbRegistered] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
 
-  // XAI method (single-method view — the real backend key is gradcam_plus_plus,
-  // with the underscore; the old "gradcam_plusplus" never matched and silently
-  // fell through to heatmap_image).
-  const [xaiMethod, setXaiMethod] = useState<"gradcam_plus_plus">("gradcam_plus_plus");
+  // XAI method — the backend returns all four real CAM methods
+  // (gradcam, gradcam_plus_plus, layercam, eigencam); this was previously
+  // hard-locked to gradcam_plus_plus with no selector ever wired up in the
+  // "clinical" quick-view (the "xai" tab's XaiVisualization already has one).
+  const XAI_METHODS = [
+    { key: "gradcam_plus_plus", label: "Grad-CAM++" },
+    { key: "gradcam", label: "Grad-CAM" },
+    { key: "layercam", label: "LayerCAM" },
+    { key: "eigencam", label: "Eigen-CAM" },
+  ] as const;
+  type XaiMethod = (typeof XAI_METHODS)[number]["key"];
+  const [xaiMethod, setXaiMethod] = useState<XaiMethod>("gradcam_plus_plus");
 
   // -------------- Effects --------------
 
@@ -660,6 +668,36 @@ export function ScreeningTab({
               STUDY: {activeResult.study_id}
             </div>
           )}
+
+          {/* XAI method selector — quick-view only; only render a method the
+              backend actually returned for this result */}
+          {workstationMode === "clinical" &&
+            activeResult?.status === "success" &&
+            (activeResult?.heatmaps?.[xaiMethod] || activeResult?.heatmap_image) && (
+              <div className="absolute top-5 left-1/2 -translate-x-1/2 z-50 flex flex-wrap bg-black/40 backdrop-blur-md p-1 rounded-full border border-white/10 shadow-lg">
+                {XAI_METHODS.map(({ key, label }) => {
+                  const available = Boolean(activeResult?.heatmaps?.[key]);
+                  return (
+                    <button
+                      key={key}
+                      type="button"
+                      disabled={!available}
+                      onClick={() => setXaiMethod(key)}
+                      title={available ? label : `${label} not available for this result`}
+                      className={`px-3 py-1.5 rounded-full text-[11px] font-semibold tracking-wide transition-colors ${
+                        xaiMethod === key
+                          ? "bg-primary text-primary-foreground"
+                          : available
+                            ? "text-white/60 hover:text-white hover:bg-white/10 cursor-pointer"
+                            : "text-white/20 cursor-not-allowed"
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
 
           <div className="flex-1 w-full h-full p-2 relative z-10">
             {workstationMode === "xai" ? (

@@ -222,10 +222,17 @@ export function ScreeningWorkstation({
   const [dbRegistered, setDbRegistered] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
 
-  // XAI method (single-method view — the real backend key is gradcam_plus_plus,
-  // with the underscore; the old "gradcam_plusplus" never matched and silently
-  // fell through to heatmap_image).
-  const [xaiMethod, setXaiMethod] = useState<"gradcam_plus_plus">("gradcam_plus_plus");
+  // XAI method — the backend returns all four real CAM methods
+  // (gradcam, gradcam_plus_plus, layercam, eigencam); this was previously
+  // hard-locked to gradcam_plus_plus with no selector ever wired up.
+  const XAI_METHODS = [
+    { key: "gradcam_plus_plus", label: "Grad-CAM++" },
+    { key: "gradcam", label: "Grad-CAM" },
+    { key: "layercam", label: "LayerCAM" },
+    { key: "eigencam", label: "Eigen-CAM" },
+  ] as const;
+  type XaiMethod = (typeof XAI_METHODS)[number]["key"];
+  const [xaiMethod, setXaiMethod] = useState<XaiMethod>("gradcam_plus_plus");
 
   // -------------- Effects --------------
 
@@ -643,10 +650,36 @@ export function ScreeningWorkstation({
           {/* Grad-CAM Overlay – only shown when available */}
           {activeResult?.status === "success" && (activeResult?.heatmaps?.[xaiMethod] || activeResult?.heatmap_image) && (
             <div className="flex flex-col gap-2 animate-fadein">
-              <h2 className="text-[16px] font-medium tracking-tight flex items-center gap-2 text-[#0099ff]">
-                <Layers className="w-4 h-4" />
-                Grad-CAM Overlay
-              </h2>
+              <div className="flex items-center justify-between gap-2 flex-wrap">
+                <h2 className="text-[16px] font-medium tracking-tight flex items-center gap-2 text-[#0099ff]">
+                  <Layers className="w-4 h-4" />
+                  Grad-CAM Overlay
+                </h2>
+                {/* Method selector — only enable a method the backend actually returned */}
+                <div className="flex flex-wrap bg-[#141414] p-1 rounded-full border border-[#262626]">
+                  {XAI_METHODS.map(({ key, label }) => {
+                    const available = Boolean(activeResult?.heatmaps?.[key]);
+                    return (
+                      <button
+                        key={key}
+                        type="button"
+                        disabled={!available}
+                        onClick={() => setXaiMethod(key)}
+                        title={available ? label : `${label} not available for this result`}
+                        className={`px-3 py-1 rounded-full text-[11px] font-semibold transition-colors ${
+                          xaiMethod === key
+                            ? "bg-[#0099ff] text-[#ffffff]"
+                            : available
+                              ? "text-[#999999] hover:text-[#ffffff] hover:bg-white/5 cursor-pointer"
+                              : "text-[#444444] cursor-not-allowed"
+                        }`}
+                      >
+                        {label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
               <div className="w-full h-[340px] rounded-[20px] overflow-hidden bg-[#141414] border border-[#262626] shadow-xl relative">
                 <DicomViewer
                   imageBase64={activeResult?.original_image ?? ""}

@@ -135,12 +135,18 @@ export default function DicomViewer({
             />
           )}
 
-          {/* Grad-CAM overlay */}
+          {/* Grad-CAM overlay — the backend already bakes the heatmap onto the
+              X-ray server-side (cv2.addWeighted in create_base64_heatmap), so
+              heatmapSrc is a complete, already-composited image, not a
+              transparent layer. A plain opacity crossfade against the raw
+              X-ray underneath is correct here; a CSS blend mode (e.g.
+              mix-blend-screen) would double-blend two near-identical photos
+              and wash the whole image out, not just the heatmap region. */}
           {hasHeatmap && heatmapSrc && (
             <img
               src={heatmapSrc}
               alt="Grad-CAM Heatmap"
-              className="absolute inset-0 w-full h-full object-contain pointer-events-none mix-blend-screen transition-opacity duration-300"
+              className="absolute inset-0 w-full h-full object-contain pointer-events-none transition-opacity duration-300"
               style={{ opacity: showHeatmap ? heatmapOpacity : 0 }}
               draggable={false}
             />
