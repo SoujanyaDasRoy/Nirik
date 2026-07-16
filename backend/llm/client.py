@@ -43,8 +43,8 @@ COMPILED_REPLACEMENTS = [
 LONGEST_PATTERN_LEN = max(len(k) for k in REPLACEMENTS.keys())
 SAFETY_WINDOW_SIZE = LONGEST_PATTERN_LEN + 15
 
-# Assert that the safety window size can never be smaller than the longest pattern
-assert SAFETY_WINDOW_SIZE > LONGEST_PATTERN_LEN, "Hold-back window must be larger than the longest replacement pattern."
+# Ensure replacements configuration is valid and not empty
+assert len(REPLACEMENTS) > 0, "REPLACEMENTS dictionary must not be empty."
 
 
 def filter_text(text: str) -> str:

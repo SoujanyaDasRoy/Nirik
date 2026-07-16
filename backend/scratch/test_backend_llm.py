@@ -49,11 +49,11 @@ def test_sliding_window_stream():
     import google.generativeai as genai
     original_model = genai.GenerativeModel
     
-    # We will add near-miss words to verify true-negatives
+    # We will add near-miss words containing literal substrings of guarded terms to verify true-negatives
     chunks = [
         MockChunk("This scan con"),
         MockChunk("firms the diagnosis of disease. It sho"),
-        MockChunk("ws some features. Here is confirmation, conference, diagnosability, and a shower.")
+        MockChunk("ws some features. Here is unconfirmed news, undiagnosed case, slideshows, and a shower.")
     ]
     
     class MockGenerativeModel:
@@ -84,14 +84,15 @@ def test_sliding_window_stream():
         print(f"\nFull reconstructed text:\n{full_text}")
         
         # Assertions
-        assert "confirms" not in full_text, "Assertive term 'confirms' was not replaced!"
-        assert "shows" not in full_text, "Assertive term 'shows' was not replaced!"
+        import re
+        assert not re.search(r"\bconfirms\b", full_text, re.IGNORECASE), "Assertive term 'confirms' was not replaced!"
+        assert not re.search(r"\bshows\b", full_text, re.IGNORECASE), "Assertive term 'shows' was not replaced!"
         assert "suggests" in full_text or "appears consistent with" in full_text or "suspected" in full_text, "Replacement terms missing!"
         
         # True-negative assertions (near-misses should remain untouched)
-        assert "confirmation" in full_text, "True-negative 'confirmation' was incorrectly replaced!"
-        assert "conference" in full_text, "True-negative 'conference' was incorrectly replaced!"
-        assert "diagnosability" in full_text, "True-negative 'diagnosability' was incorrectly replaced!"
+        assert "unconfirmed" in full_text, "True-negative 'unconfirmed' was incorrectly replaced!"
+        assert "undiagnosed" in full_text, "True-negative 'undiagnosed' was incorrectly replaced!"
+        assert "slideshows" in full_text, "True-negative 'slideshows' was incorrectly replaced!"
         assert "shower" in full_text, "True-negative 'shower' was incorrectly replaced!"
         
         print("\nSuccess: Sliding window stream and true-negative checks passed!")
