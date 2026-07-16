@@ -1,19 +1,19 @@
 {
-    "optimal_threshold": 0.62,
+    "optimal_threshold": 0.5976377129554749,
     "metrics": {
-        "accuracy": 0.934,
-        "precision": 0.938,
-        "recall": 0.952,
-        "f1": 0.8436,
-        "auc": 0.9410,
-        "sensitivity": 0.952,
-        "specificity": 0.938,
+        "accuracy": 0.7073170731707317,
+        "precision": 0.5396039603960396,
+        "recall": 0.6337209302325582,
+        "f1": 0.5828877005347594,
+        "auc": 0.7766701024286542,
+        "sensitivity": 0.6337209302325582,
+        "specificity": 0.7423822714681441,
         "calibration_score": 0.045
     },
     "dataset_tracking": {
-        "training_dataset_version": "Shenzhen-Montgomery-v2.1",
-        "validation_dataset_version": "Kaggle-TB-v1.4",
-        "training_date": "2026-06-23",
-        "model_version": "DenseNet121-Student-v4.0.0"
+        "training_dataset_version": "Shenzhen-Montgomery-TBX11K-India-v4.0.0",
+        "validation_dataset_version": "Pooled-Val-v4.0.0",
+        "training_date": "2026-07-15",
+        "model_version": "DenseNet121-Student-v5.0.0"
     }
 }

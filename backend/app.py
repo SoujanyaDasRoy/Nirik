@@ -10,6 +10,32 @@ from flask import Flask, request, jsonify, session
 from flask_cors import CORS
 from flask_socketio import SocketIO
 
+# Load environment variables from .env file if it exists
+def load_dotenv():
+    # Try looking in the parent directory (root of the workspace) and the current directory
+    for base in [os.path.dirname(os.path.abspath(__file__)), os.path.dirname(os.path.dirname(os.path.abspath(__file__)))]:
+        dotenv_path = os.path.join(base, '.env')
+        if os.path.exists(dotenv_path):
+            try:
+                with open(dotenv_path, 'r', encoding='utf-8') as f:
+                    for line in f:
+                        line = line.strip()
+                        if not line or line.startswith('#'):
+                            continue
+                        parts = line.split('=', 1)
+                        if len(parts) == 2:
+                            key, val = parts
+                            key = key.strip()
+                            val = val.strip().strip('"').strip("'")
+                            if key not in os.environ:
+                                os.environ[key] = val
+                break
+            except Exception as e:
+                print(f"[LOAD_DOTENV] Error reading {dotenv_path}: {e}")
+
+load_dotenv()
+
+
 # Import modular components
 from .core.inference import get_model, predict_image, OPTIMAL_THRESHOLD, CLASSIFICATION_MODEL_NAME
 from .utils.dicom_parser import process_dicom, extract_metadata
@@ -182,8 +208,8 @@ def _setup_request_hooks(app: Flask):
         if app.config.get("CSRF_DISABLED"):
             return
         if request.method in ['POST', 'PUT', 'DELETE', 'PATCH']:
-            # Exclude stateless third-party blueprint routes, login, and bearer authenticated requests
-            if request.path.startswith('/api/v1/') or request.path == '/login' or request.headers.get("Authorization"):
+            # Exclude stateless third-party blueprint routes, login, chat co-pilot, and bearer authenticated requests
+            if request.path.startswith('/api/v1/') or request.path == '/login' or request.path == '/chat' or request.headers.get("Authorization"):
                 return
 
             csrf_cookie = request.cookies.get('csrf_token')
@@ -999,9 +1025,92 @@ def get_audit_logs():
     except Exception as e:
         app.logger.error("Exception in get_audit_logs", exc_info=True)
         return jsonify({"logs": [], "count": 0})
+# === LLM Co-Pilot Endpoints ===
+@app.route('/chat', methods=['POST'])
+def chat_endpoint():
+    # Session check (consistent with rest of app.py)
+    if "username" not in session:
+        return jsonify({"error": "Authentication required"}), 401
+    
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": {"code": "INVALID_JSON", "message": "Request body must be JSON", "status": 400}}), 400
+        
+    llm_context = data.get('llm_context')
+    user_message = data.get('message')
+    
+    if not llm_context or not user_message:
+        return jsonify({"error": {"code": "MISSING_FIELDS", "message": "Both llm_context and message are required", "status": 400}}), 400
+    
+    # Check if API key is configured before even calling
+    api_key = os.environ.get("GEMINI_API_KEY", "").strip()
+    use_local = os.environ.get("USE_LOCAL_LLM", "false").lower() == "true"
+    if not api_key and not use_local:
+        # Return a useful degraded response instead of an error
+        prediction = llm_context.get('prediction', 'Unknown')
+        confidence = llm_context.get('confidence', 0) * 100
+        is_tb = llm_context.get('isTb', False)
+        degraded_msg = (
+            f"DISCLAIMER: This is an AI screening result, not a definitive medical diagnosis. "
+            f"The AI model classified this chest X-ray as: **{prediction}** with {confidence:.1f}% confidence. "
+            + ("The scan shows features that may be consistent with Tuberculosis. Urgent radiologist review is recommended." 
+               if is_tb else 
+               "The scan does not show typical Tuberculosis features. Normal findings noted. Clinical correlation advised.")
+        )
+        return jsonify({"response": degraded_msg})
+
+    try:
+        from llm.client import generate_chat_response
+        response_text = generate_chat_response(llm_context, user_message)
+        return jsonify({
+            "response": response_text
+        })
+    except Exception as e:
+        app.logger.error(f"Error generating LLM response: {e}")
+        return jsonify({"error": f"LLM error: {str(e)}"}), 500
+
+
+@app.route('/chat/status', methods=['GET'])
+def chat_status():
+    if "username" not in session:
+        return jsonify({"error": "Authentication required"}), 401
+    
+    api_key = os.environ.get("GEMINI_API_KEY", "").strip()
+    use_local = os.environ.get("USE_LOCAL_LLM", "false").lower() == "true"
+    return jsonify({
+        "gemini_configured": bool(api_key),
+        "local_llm_enabled": use_local,
+        "llm_available": bool(api_key) or use_local
+    })
+
+
+@app.route('/chat/models', methods=['GET'])
+def list_gemini_models():
+    if "username" not in session:
+        return jsonify({"error": "Authentication required"}), 401
+        
+    api_key = os.environ.get("GEMINI_API_KEY", "").strip()
+    if not api_key:
+        return jsonify({"error": "GEMINI_API_KEY not configured"}), 400
+    try:
+        import google.generativeai as genai
+        genai.configure(api_key=api_key)
+        models = []
+        for m in genai.list_models():
+            if "generateContent" in (m.supported_generation_methods or []):
+                models.append({
+                    "name": m.name,
+                    "display_name": m.display_name,
+                    "description": getattr(m, "description", ""),
+                })
+        return jsonify({"models": models, "count": len(models)})
+    except Exception as e:
+        app.logger.error(f"Error listing Gemini models: {e}")
+        return jsonify({"error": str(e)}), 500
 
 
 if __name__ == '__main__':
+
 
     debug_mode = os.environ.get("FLASK_DEBUG", "false").lower() == "true"
     port_val = int(os.environ.get("PORT", 5000))

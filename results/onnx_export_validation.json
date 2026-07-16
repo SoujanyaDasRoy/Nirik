@@ -1,0 +1,8 @@
+{
+  "onnx_path": "/kaggle/working/densenet121_student.onnx",
+  "opset": 13,
+  "n_validation_samples": 8,
+  "max_abs_diff": 3.790855407714844e-05,
+  "tolerance": 0.002,
+  "passed": true
+}

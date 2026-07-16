@@ -14,6 +14,7 @@ from datetime import timezone
 import tensorflow as tf
 
 OPTIMAL_THRESHOLD = 0.5
+CLASSIFICATION_MODEL_NAME = "student_cnn"
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 MODEL_PATH = os.path.join(BASE_DIR, "..", "results", "student_best.weights.h5")
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")

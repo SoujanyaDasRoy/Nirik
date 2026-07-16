@@ -1,0 +1,53 @@
+{
+  "per_source": [
+    {
+      "source": "da",
+      "n": 9,
+      "n_tb": 9,
+      "n_normal": 0,
+      "accuracy": 0.3333333333333333,
+      "recall_tb": 0.3333333333333333
+    },
+    {
+      "source": "india",
+      "n": 10,
+      "n_tb": 6,
+      "n_normal": 4,
+      "accuracy": 0.8,
+      "recall_tb": 0.8333333333333334
+    },
+    {
+      "source": "montgomery",
+      "n": 14,
+      "n_tb": 5,
+      "n_normal": 9,
+      "accuracy": 0.6428571428571429,
+      "recall_tb": 0.4
+    },
+    {
+      "source": "shenzhen",
+      "n": 57,
+      "n_tb": 38,
+      "n_normal": 19,
+      "accuracy": 0.631578947368421,
+      "recall_tb": 0.6052631578947368
+    },
+    {
+      "source": "tb",
+      "n": 345,
+      "n_tb": 50,
+      "n_normal": 295,
+      "accuracy": 0.7391304347826086,
+      "recall_tb": 0.78
+    },
+    {
+      "source": "tbx11k",
+      "n": 98,
+      "n_tb": 64,
+      "n_normal": 34,
+      "accuracy": 0.673469387755102,
+      "recall_tb": 0.578125
+    }
+  ],
+  "accuracy_spread": 0.46666666666666673
+}

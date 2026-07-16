@@ -375,7 +375,22 @@ class Config:
     max_seg_samples: int = 0
 
     # ---- Class imbalance --------------------------------------------------------------------
-    use_class_weights: bool = True
+    # Was True. Disabled after consistent, repeated evidence across every
+    # training run this session: sensitivity 0.85-0.87 vs. specificity
+    # 0.40-0.41 on the student, every single time - a structural bias
+    # toward predicting TB, not run-to-run noise. Root cause: this flag's
+    # own justification (see target_normal_tb_ratio below) was written
+    # against the RAW pooled ratio (~3.4:1) before pool-wide 2:1
+    # rebalancing was added - once that rebalancing exists, val comes out
+    # to ~1.55:1 (325:209 in a real run), and compute_class_weight
+    # ("balanced") still applies a SECOND, independent ~2x upweighting of
+    # TB on top of a distribution the data itself already corrected -
+    # stacked, unvalidated double-correction, not a deliberate choice.
+    # Focal Loss (gamma=2.0) is left untouched - it targets hard examples
+    # generally, not specifically class frequency, so it isn't redundant
+    # with the data-level rebalancing the way inverse-frequency sample
+    # weighting is.
+    use_class_weights: bool = False
     # Pool-wide Normal:TB target ratio, enforced by downsampling the
     # majority (Normal) class after all sources are merged (see
     # build_classification_dataframe). 2.0 rather than the ~3-6:1 the raw
@@ -1828,6 +1843,28 @@ def preprocess_xray(path, unet, cfg=CFG):
     fill_value = float(lung_pixels.mean()) if lung_pixels.size > 0 else float(resized.mean())
     resized = np.where(binary_mask, resized, fill_value).astype("float32")
     rgb = np.stack([resized, resized, resized], axis=-1).astype("float32")
+
+    if not np.isfinite(rgb).all():
+        # Confirmed as a real, reproducible failure mode, not a defensive
+        # guess: a NaN-loss training collapse recurred at the identical
+        # epoch across two separate full runs with a fixed random seed
+        # (make_dataset's dataset.shuffle(seed=SEED) means both runs see
+        # the same batch ordering), pointing at one specific, deterministic
+        # training image rather than generic numerical instability. Most
+        # likely mechanism: if `lung_pixels` above already contained a NaN
+        # (e.g. from a corrupted/degenerate source image that slipped past
+        # filter_image_quality), `fill_value` becomes NaN, and
+        # np.where(...) then writes that single NaN into every non-lung
+        # pixel of the tensor - silently turning one bad value into an
+        # entire poisoned training image. Raising here lets the existing
+        # try/except in _sample_generator skip this image exactly like any
+        # other corrupted one (and log its path), instead of feeding NaN
+        # straight into the model.
+        raise ValueError(
+            f"preprocess_xray produced a non-finite (NaN/Inf) tensor for {path} - "
+            f"skipping rather than poisoning a training/eval batch with it."
+        )
+
     return rgb
 
 # %%
