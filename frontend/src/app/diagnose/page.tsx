@@ -148,7 +148,7 @@ export default function DiagnosePage() {
           <div
             onDragEnter={handleDrag} onDragOver={handleDrag} onDragLeave={handleDrag} onDrop={handleDrop}
             onClick={() => fileInputRef.current?.click()}
-            className="w-full py-16 rounded-[30px] flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-300 shadow-2xl relative overflow-hidden group"
+            className="w-full py-10 rounded-[24px] flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-300 shadow-2xl relative overflow-hidden group"
             style={{
               border: `2px dashed ${isDragActive ? "#0099ff" : "#262626"}`,
               background: isDragActive ? "rgba(0,153,255,0.05)" : "#141414",
@@ -159,18 +159,18 @@ export default function DiagnosePage() {
             
             <input type="file" ref={fileInputRef} onChange={handleFileInput} multiple className="hidden" accept=".dcm,.png,.jpg,.jpeg" />
             
-            <div className="w-20 h-20 rounded-full flex items-center justify-center mb-6 transition-all duration-300 border border-[#262626] group-hover:scale-110 group-hover:shadow-[0_0_30px_rgba(255,255,255,0.1)]"
+            <div className="w-16 h-16 rounded-full flex items-center justify-center mb-4 transition-all duration-300 border border-[#262626] group-hover:scale-110 group-hover:shadow-[0_0_30px_rgba(255,255,255,0.1)]"
               style={{ background: isDragActive ? "#0099ff" : "#1c1c1c" }}>
-              <UploadCloud className="w-8 h-8" style={{ color: "#ffffff" }} strokeWidth={1.5} />
+              <UploadCloud className="w-6 h-6" style={{ color: "#ffffff" }} strokeWidth={1.5} />
             </div>
             
-            <p className="text-[22px] font-medium text-white tracking-[-0.5px]">
+            <p className="text-[18px] font-medium text-white tracking-[-0.5px]">
               {isDragActive ? "Drop files now" : "Drag & drop X-ray images here"}
             </p>
-            <p className="text-[15px] mt-3" style={{ color: "#999999" }}>
+            <p className="text-[13px] mt-2" style={{ color: "#999999" }}>
               or <span className="text-[#ffffff] font-medium group-hover:underline">click to browse</span>
             </p>
-            <p className="text-[13px] mt-5 px-4 py-1.5 rounded-full bg-[#090909] border border-[#262626]" style={{ color: "#666666" }}>
+            <p className="text-[11px] mt-4 px-4 py-1.5 rounded-full bg-[#090909] border border-[#262626]" style={{ color: "#666666" }}>
               Supports DICOM, PNG, JPEG · Max 15 MB
             </p>
           </div>

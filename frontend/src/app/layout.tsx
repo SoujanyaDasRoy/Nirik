@@ -34,7 +34,7 @@ export default function RootLayout({
       suppressHydrationWarning
       className={`${sansFont.variable} ${monoFont.variable} h-full dark`}
     >
-      <body className="min-h-full antialiased flex flex-col">
+      <body className="min-h-full antialiased flex flex-col" suppressHydrationWarning>
         <TooltipProvider delay={300}>
           <FetchInterceptor />
           {children}

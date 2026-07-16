@@ -27,6 +27,10 @@ export default function AboutPage() {
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
+    // Read disclaimer state from localStorage
+    const saved = localStorage.getItem("nirikshon_disclaimer_accepted") === "true";
+    if (saved) setAccepted(true);
+
     const checkSession = async () => {
       try {
         const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://projectmantra-nirikshon-backend.hf.space";
@@ -44,7 +48,37 @@ export default function AboutPage() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  const handleAcceptChange = (val: boolean) => {
+    setAccepted(val);
+    if (val) {
+      localStorage.setItem("nirikshon_disclaimer_accepted", "true");
+    } else {
+      localStorage.removeItem("nirikshon_disclaimer_accepted");
+    }
+  };
+
   const canLaunch = isLoggedIn || accepted;
+
+  const triggerLaunchAttempt = () => {
+    if (canLaunch) {
+      router.push("/diagnose");
+    } else {
+      const disclaimerSec = document.getElementById("medical-disclaimer");
+      if (disclaimerSec) {
+        disclaimerSec.scrollIntoView({ behavior: "smooth", block: "center" });
+        setTimeout(() => {
+          const chk = document.getElementById("disclaimer-accept");
+          if (chk) {
+            chk.classList.add("ring-4", "ring-[#0099ff]/50", "animate-pulse");
+            chk.focus();
+            setTimeout(() => {
+              chk.classList.remove("ring-4", "ring-[#0099ff]/50", "animate-pulse");
+            }, 2000);
+          }
+        }, 400);
+      }
+    }
+  };
 
   return (
     <div className="min-h-screen flex flex-col font-sans selection:bg-[#0099ff]/30" style={{ backgroundColor: "#090909", color: "#ffffff" }}>
@@ -81,10 +115,7 @@ export default function AboutPage() {
               Model Results
             </button>
             <button
-              onClick={() => {
-                if (canLaunch) router.push("/diagnose");
-                else document.getElementById("medical-disclaimer")?.scrollIntoView({ behavior: "smooth", block: "center" });
-              }}
+              onClick={triggerLaunchAttempt}
               className="flex items-center gap-1.5 sm:gap-2 px-4 py-2 rounded-full font-semibold text-[13px] sm:text-[14px] transition-all hover:scale-[1.02] shadow-lg shadow-white/5 hover:bg-[#e0e0e0]"
               style={{
                 backgroundColor: "#ffffff",
@@ -133,10 +164,7 @@ export default function AboutPage() {
 
           <div className="flex flex-col sm:flex-row items-center gap-4">
             <button
-              onClick={() => {
-                if (canLaunch) router.push("/diagnose");
-                else document.getElementById("disclaimer-accept")?.focus();
-              }}
+              onClick={triggerLaunchAttempt}
               className="flex items-center gap-2.5 px-6 py-3 rounded-full font-semibold text-[14px] transition-all hover:scale-[1.02] shadow-xl shadow-white/5 hover:bg-[#e0e0e0] cursor-pointer"
               style={{
                 backgroundColor: "#ffffff",
@@ -197,8 +225,8 @@ export default function AboutPage() {
                 id="disclaimer-accept"
                 type="checkbox"
                 checked={accepted}
-                onChange={e => setAccepted(e.target.checked)}
-                className="w-5 h-5 cursor-pointer appearance-none rounded-[6px] border border-[#262626] bg-[#090909] checked:bg-[#0099ff] checked:border-[#0099ff] transition-colors relative shrink-0 mt-0.5"
+                onChange={e => handleAcceptChange(e.target.checked)}
+                className="w-5 h-5 cursor-pointer appearance-none rounded-[6px] border border-[#262626] bg-[#090909] checked:bg-[#0099ff] checked:border-[#0099ff] transition-all relative shrink-0 mt-0.5 outline-none focus:outline-none"
               />
               <label htmlFor="disclaimer-accept" className="text-[14px] sm:text-[15px] font-medium cursor-pointer text-[#ffffff] leading-snug">
                 I understand this is not a clinical tool and will consult a doctor for medical decisions.
@@ -443,10 +471,7 @@ export default function AboutPage() {
               </div>
               <div className="mt-8 pt-6 border-t border-[#262626]">
                 <button
-                  onClick={() => {
-                    if (canLaunch) router.push("/diagnose");
-                    else document.getElementById("medical-disclaimer")?.scrollIntoView({ behavior: "smooth", block: "center" });
-                  }}
+                  onClick={triggerLaunchAttempt}
                   className="w-full flex items-center justify-center gap-2 py-4 rounded-full font-semibold text-[15px] transition-all bg-[#ffffff] text-[#000000] hover:scale-[1.02]"
                 >
                   Launch Screening Workstation <ArrowRight className="w-5 h-5" />
