@@ -573,170 +573,104 @@ Stage 12: Deployment
 
 ### Stage Details:
 
+> **Superseded note (authoritative as of the DenseNet-121/ResNet-50 pivot):** the Stage 6/7/10 details below (EfficientNetV2-M teacher, NirikNet custom-CNN student, Consensus CAM) describe an earlier design and are kept only as historical context — see `docs/ARCHITECTURE.md` for the current, verified architecture, summarized here.
+
 **Stage 1: Dataset Collection**
-- Uses six datasets:
-  * Chest X-rays Tuberculosis from India (Jaypee University)
-  * Montgomery County TB Dataset
-  * Shenzhen TB Dataset
-  * TB Chest Radiography Database (Tawsifur Rahman)
-  * TBX11K Simplified Dataset
-  * Chest X-ray Masks and Labels Dataset
-- Merged into a single unified database
+- Six classification sources, pooled into one dataframe (real counts from the most recent verified pipeline run):
+  * TB Chest Radiography Database (Tawsifur Rahman) — 4,200 images, class-folder structured
+  * Chest X-rays Tuberculosis from India (Jaypee University) — 155 images, metadata CSV
+  * Montgomery County TB Dataset — 138 images, metadata CSV
+  * Shenzhen TB Dataset — 662 images, metadata CSV
+  * DA / DB (vbookshelf) — 156 / 122 images, curated TB-positive-only collections
+  * TBX11K Simplified Dataset — 12,279 raw images; folder-labeled (`health`→Normal, `tb`→TB, `sick` excluded); 1,500 Normal + 800 TB actually used after capping
+- A **separate** segmentation-only dataset (nikhilpandey360, 800 images / 704 masks) trains the Attention U-Net — no relationship to the classification pool.
 
 **Stage 2: Dataset Discovery**
-- Automatically discovers all images from every dataset
+- Automatically discovers all images from every source
 - Reads images, metadata CSV (if available), patient IDs (if available), labels from metadata
-- Uses filename-based labels as fallback
-- Matches lung masks when available
-- Creates master dataframe with: Image path, Label, Dataset name, Patient ID, Lung mask path, Train/Validation/Test split
+- Uses filename-based labels as fallback; folder-based labels for TBX11K specifically
+- Creates one pooled dataframe with: image path, label, source name, patient ID, split
 
 **Stage 3: Dataset Cleaning**
-- Removes duplicate images
-- Removes corrupted images
-- Verifies labels
-- Verifies image sizes
-- Verifies masks
-- Performs patient-wise splitting to prevent data leakage
-- Split: Training = 70%, Validation = 15%, Test = 15%
+- **Deduplicate**: exact MD5 byte-match pass, then perceptual-hash (`aHash`, Hamming distance ≤3) near-duplicate pass, with cross-label conflict detection and warning
+- **Image quality filter**: drops corrupted, blurry (Laplacian variance), near-blank images
+- **Mask-coverage filter**: drops images whose predicted lung mask covers an implausible fraction of the frame (outside [0.05, 0.85])
+- **Rebalance** to a 2:1 Normal:TB ratio, downsampling the majority class only, proportionally per source
+- **Patient-wise 70/15/15 split** via `GroupShuffleSplit` on a `patient_id` column, with a hard runtime check that no patient ID appears in more than one split
+- Exports `train.csv` / `val.csv` / `test.csv` (audit/reproducibility artifacts)
 
 **Stage 4: Lung Segmentation**
-- If lung mask exists: Uses provided mask directly
-- Otherwise: Trains Attention U-Net and generates lung segmentation masks automatically
-- Output: Binary lung mask for every chest X-ray
+- Attention U-Net trained on the separate nikhilpandey360 dataset — always trained, never "use provided mask directly" (the classification datasets don't ship masks)
+- Per image: predict binary mask (256×256) → keep largest 2 connected components → morphological open+close cleanup → **fill any enclosed hole via border-seeded flood fill** (any gap not touching the image border is treated as lung — added after a real severe-TB image showed a segmentation-confidence dip exactly over a cavitary lesion, which the old cleanup left as a hole)
+- Output: binary lung mask for every chest X-ray
 
 **Stage 5: Image Preprocessing**
-- For every chest X-ray:
-  * Read image
-  * Segment lungs
-  * Keep largest connected component
-  * Apply morphological cleanup
-  * Add ~5% border padding
-  * Crop lungs
-  * Apply CLAHE (Contrast Limited Adaptive Histogram Equalization)
-  * Resize to 384 × 384 pixels
+- For every chest X-ray (`preprocess_xray` in `training/nirikNetMain.py`):
+  * Read grayscale
+  * Segment lungs (Stage 4) → bounding box with 8.5% padding → crop
+  * Apply CLAHE (`clipLimit=2.0`, `tileGridSize=(8,8)`)
+  * Resize to **224 × 224** (not 384×384)
+  * **Fill non-lung pixels within the crop with the visible lung region's own mean intensity** (not zeroed, not left unmasked) — added after a Grad-CAM/lung-mask localization audit caught the model exploiting collarbones, the mediastinal gap, and per-source border stamps left visible by a bbox-only crop. A raw-zero fill was tried first and regressed training (out-of-distribution for the backbone's frozen BatchNorm statistics) — mean-fill is the corrected version.
   * Convert grayscale to 3-channel RGB
-  * Apply EfficientNetV2 preprocessing
-- Processed images saved to: `/kaggle/working/datasets/processed/canon/`
-- Unified metadata file generated: `master_metadata.csv`
+  * **No EfficientNetV2 preprocessing step** — each model (teacher and student) normalizes internally via its own `Lambda(preprocess_input)` layer, so the shared pipeline only ever produces a canonical 0–255 RGB tensor
+- Master metadata generated as a single pooled dataframe (no per-dataset `master_metadata.csv` file on disk in the current implementation)
 
 **Stage 6: Teacher Network**
-- Teacher Model: EfficientNetV2-M
+- Teacher Model: **ResNet-50** (not EfficientNetV2-M)
 - Configuration:
-  * ImageNet pretrained weights
-  * Input size: 384 × 384
-  * Fine-tune only upper layers
-  * Lower backbone layers frozen initially
-  * Mixed Precision enabled
-  * AdamW optimizer
-  * Warm-up learning rate
-  * Cosine Decay scheduler
-  * Early Stopping
-  * Model Checkpointing
-- Output: Soft probability distribution over Normal and Tuberculosis
-- Trained teacher saved as: `teacher_efficientnetv2m.keras`
+  * ImageNet pretrained weights, input size 224×224
+  * Two-stage training: frozen backbone (head-only), then partial unfreeze of `conv4_block*`/`conv5_block*` (BatchNorm within those blocks kept frozen)
+  * Mixed precision (`mixed_float16`), AdamW with weight decay `1e-4` and global-norm gradient clipping (`clipnorm=1.0`)
+  * Warm-up + cosine decay learning rate, Early Stopping, best-epoch checkpointing
+  * Loss: `CategoricalFocalCrossentropy` (γ=2.0, α=0.25)
+- Output: softmax probability distribution over Normal/Tuberculosis, and (for distillation) pre-softmax logits via a dedicated `teacher_logits` layer
+- **Training-only** — never deployed, never touches a real uploaded image. Checkpoints (`teacher_head_best.keras`, `teacher_finetune_best.keras`) are training artifacts, not shipped.
 
 **Stage 7: Student Network**
-- Student Model: NirikNet (custom CNN built from scratch)
-- Architecture:
-  * Stem Convolution Block
-  * Residual Blocks
-  * SE (Squeeze-and-Excitation) Blocks
-  * CBAM (Convolutional Block Attention Module)
-  * Additional Residual Blocks
-  * Dilated Residual Blocks
-  * Depthwise Separable Convolution Blocks
-  * Global Average Pooling
-  * Fully Connected Classifier
-- Classifier Head:
-  * Dense (1024) → GELU → Dropout
-  * Dense (512) → GELU → Dropout
-  * Dense (256) → GELU → Dropout
-  * Dense (2 logits)
-- Target parameter count: 20–35 million parameters
+- Student Model: **DenseNet-121** (`keras.applications.DenseNet121`, ImageNet-pretrained) — **not** a custom-built network. The from-scratch "NirikNet" CNN below is historical; it was replaced because of real overfitting risk (random initialization on a modest training pool) and an ~11× capacity gap from the teacher that DenseNet-121 narrows to ~3.35×.
+- Architecture: standard DenseNet-121 topology — 4 dense blocks (6, 12, 24, 16 layers) separated by 3 transition layers (1×1 conv + average pool)
+- Classifier Head: `GlobalAveragePooling2D → BatchNormalization → Dropout(0.3) → Dense(2, linear) → Activation("softmax", dtype="float32")`
+- Parameter count: **~7.04M** (exact: 7,043,650) — this is the target, not 20–35M
+- **The only model deployed for inference**, exported to ONNX (opset 13)
+
+*(Historical NirikNet description, retained for reference only — not the current student:)*
+- Stem Convolution Block, Residual Blocks, SE Blocks, CBAM, Dilated Residual Blocks, Depthwise Separable Convolution Blocks, GAP, Dense(1024)→GELU→Dropout→Dense(512)→GELU→Dropout→Dense(256)→GELU→Dropout→Dense(2), target 20–35M params.
 
 **Stage 8: Knowledge Distillation**
-- Teacher and student receive same preprocessed input image
-- Teacher: EfficientNetV2-M → Soft probabilities
-- Student: NirikNet → Predicted logits
-- Training loss:
-  * Cross-Entropy Loss using ground truth labels
-  * KL Divergence using teacher predictions
-- Hyperparameters:
-  * Temperature = 4
-  * Alpha = 0.5
-- Additional training features:
-  * Class weights
-  * Gradient clipping
-  * Mixed Precision
-  * AdamW
-  * Warm-up
-  * Cosine Learning Rate
+- Teacher and student receive the same preprocessed input image
+- Loss computed on **pre-softmax logits** (tapped via `_logits_submodel`, cast to `float32` before any softmax/KLD math — raw float16 logits here were a confirmed real source of NaN training loss):
+  * `distillation_loss = KLD(softmax(teacher_logits/T), softmax(student_logits/T)) × T²`
+  * `hard_loss = CategoricalFocalCrossentropy(y, softmax(student_logits))` [T=1]
+  * `total_loss = alpha × hard_loss + (1 − alpha) × distillation_loss`
+- Hyperparameters: **Temperature = 3.0, Alpha = 0.5** (not T=4/alpha=0.3 — those were tuned against an earlier, buggy softmax-of-softmax formulation and are not valid priors)
+- Additional training features: global-norm gradient clipping (`clipnorm=1.0`, confirmed necessary — absent, it produced real NaN training runs), mixed precision, AdamW, warm-up cosine LR. Class-weighting is **disabled** (`use_class_weights=False`) — it was found to double-correct a class imbalance the pool-level 2:1 rebalancing (Stage 3) already handles, and was traced to a measured sensitivity/specificity skew (0.85+ / 0.40) across every run before disabling it.
 
 **Stage 9: Evaluation**
-- Evaluate on held-out test dataset
-- Metrics:
-  * Accuracy
-  * Precision
-  * Recall (Sensitivity)
-  * Specificity
-  * F1-score
-  * ROC-AUC
-  * PR-AUC
-  * Confusion Matrix
-  * Classification Report
-- Optimal classification threshold selected using validation set before test evaluation
+- Evaluate on held-out validation and test splits
+- Metrics: Accuracy, Precision, Recall/Sensitivity, Specificity, F1, ROC-AUC, PR-AUC, Balanced Accuracy, MCC, Cohen's Kappa, Confusion Matrix, Classification Report — for both teacher and student
+- Optimal classification threshold (Youden's J statistic) selected on the validation set, then **frozen** and applied once to the test split — never refit on test
+- **Shortcut-detection audits** (added this project, not in the original spec): `audit_gradcam_lung_localization` measures what fraction of Grad-CAM heatmap energy for correctly-classified TB images actually falls inside the lung mask (a real, measured indicator of whether the model is using pulmonary evidence vs. a shortcut), and `audit_per_source_performance` breaks accuracy/recall out by dataset source to catch a model quietly exploiting one source's scanner/artifact signature — both must be checked before trusting a run's accuracy figures.
 
 **Stage 10: Explainable AI**
-- For each selected chest X-ray, generate:
-  * Original image
-  * Lung mask
-  * Segmented lung image
-  * Grad-CAM
-  * Grad-CAM++
-  * LayerCAM
-  * EigenCAM
-  * Consensus CAM (average of normalized individual CAM outputs)
-- Consensus CAM provides more stable and interpretable visualization
+- For each selected chest X-ray, generate: Original image, lung mask, segmented lung image, Grad-CAM, Grad-CAM++, LayerCAM, EigenCAM
+- **No "Consensus CAM"** — described in earlier project documentation as canonical, but **not implemented** in the actual code. Do not assume it exists; either implement it as a genuinely new feature or drop it from documentation, but don't describe it as already present.
+- Explainability requires live TensorFlow gradient access to the model — this is architecturally in tension with ONNX-only serving (Stage 12); see `docs/ARCHITECTURE.md` §7/§16.
 
 **Stage 11: Model Saving**
-- Save:
-  * `attention_unet.keras`
-  * `teacher_efficientnetv2m.keras`
-  * `niriknet_best.keras`
-  * `niriknet.keras`
-- Also save:
-  * Training history
-  * ROC curve
-  * Precision–Recall curve
-  * Confusion matrix
-  * Accuracy curve
-  * Loss curve
-  * Grad-CAM images
-  * Grad-CAM++ images
-  * LayerCAM images
-  * EigenCAM images
-  * Consensus CAM images
-  * Classification report
-  * Metrics JSON
+- Save: `attention_unet.keras`, `teacher_head_best.keras`/`teacher_finetune_best.keras` (training-only), `student_head_best.weights.h5`/`student_best.weights.h5` (training-only checkpoints), **`densenet121_student.onnx`** (the only model deployed for inference)
+- Also save: training history, ROC curve, PR curve, confusion matrix, accuracy/loss curves, Grad-CAM/Grad-CAM++/LayerCAM/EigenCAM images (no Consensus CAM images — not implemented), classification report, `metrics.json` (includes the frozen Youden threshold)
 
 **Stage 12: Deployment**
 - Deployment pipeline:
   * User uploads chest X-ray
-  * Lung segmentation performed
-  * CLAHE preprocessing applied
-  * Image resized to 384 × 384
-  * NirikNet predicts:
-    - TB probability
-    - Normal probability
-    - Consensus CAM generated
-  * Results sent to Hugging Face backend
-  * LLM (e.g., Gemini) generates natural-language explanation of model's prediction
-  * Explanation highlights it is AI-assisted interpretation, not medical diagnosis
-  * Vercel frontend displays:
-    - Prediction
-    - Confidence score
-    - Explainability heatmaps
-    - AI-generated explanation
+  * Lung segmentation performed (Attention U-Net)
+  * CLAHE preprocessing applied, resized to **224 × 224** (not 384×384)
+  * Non-lung pixels filled with the lung region's mean intensity (Stage 5)
+  * **DenseNet-121** (ONNX Runtime) predicts TB/Normal probability — the ResNet-50 teacher is **never** loaded in serving
+  * Frozen Youden threshold (from `metrics.json`) applied — never a default 0.5, never recomputed at request time
+  * Optional: Grad-CAM family generated via a separately-loaded native Keras copy of the student (dual-load — ONNX for the fast prediction path, native Keras specifically for gradient-based explainability, since ONNX Runtime cannot compute gradients)
+  * Optional: LLM (Gemini, via Google AI Studio API key) narrates the structured result — receives only `{prediction, confidence, threshold_used}`, never the raw image
+  * Backend: Hugging Face Spaces (Docker SDK). Frontend: Vercel — displays prediction (using mandated non-diagnostic language), confidence + threshold together, explainability heatmaps (all methods the backend returns, clearly labeled — not just one), and any LLM narration alongside a clinical disclaimer.
 
 ---
 
@@ -756,9 +690,7 @@ Train the Attention U-Net lung segmentation model.
 
 Datasets
 
-* Montgomery Chest X-ray Dataset
-* Shenzhen Chest X-ray Dataset
-* Chest X-ray Masks and Labels Dataset
+* Chest X-ray Masks and Labels Dataset (nikhilpandey360 on Kaggle) — 800 images / 704 masks. This is currently the **only** dataset the segmentation model actually trains on, verified directly against `training/nirikNetMain.py`. Montgomery and Shenzhen do **not** currently contribute segmentation training data — they are TB Classification sources only (see below). If this project's earlier design intended Montgomery/Shenzhen for segmentation too, that has not been implemented; don't assume it exists.
 
 Outputs
 
@@ -774,12 +706,15 @@ This dataset must never be used as the primary TB classification dataset.
 
 Purpose
 
-Train the EfficientNetV2-M (teacher) and NirikNet (student) pulmonary TB classifier.
+Train the ResNet-50 (teacher) and DenseNet-121 (student) pulmonary TB classifier via knowledge distillation.
 
 Datasets
 
+* TB Chest Radiography Database (Tawsifur Rahman) — largest source (4,200 images)
 * Jaypee University Pulmonary TB Dataset
+* Montgomery Chest X-ray Dataset
 * Shenzhen Chest X-ray Dataset
+* DA / DB (vbookshelf) — curated TB-positive-only collections
 * TBX11K Simplified Dataset
 
 The classifier should learn pulmonary tuberculosis rather than generic chest abnormalities.
@@ -812,6 +747,8 @@ Preferred Evaluation Strategy
 * Montgomery Dataset
 * Cross-dataset evaluation where appropriate
 
+**Not currently implemented this way.** The actual split is a single flat, pooled, patient-wise 70/15/15 across all six sources — a deliberate trade-off (accepted explicitly during this project's architecture discussions) favoring multi-hospital training diversity over a genuinely held-out source. This means the current test split does **not** represent a truly unseen hospital/scanner, and external-generalization claims from it are correspondingly weaker. Reintroducing source-stratified k-fold validation is a documented future option, not the current state — don't describe test-set results as "external evaluation" without this caveat.
+
 Training images must never appear in the evaluation dataset.
 
 ---
@@ -822,14 +759,13 @@ Montgomery
 
 Primary purpose:
 
-* Lung Segmentation
-* External Evaluation
+* TB Classification
+* External Evaluation (aspirational — current split is a flat pooled 70/15/15, not a genuine held-out-hospital evaluation; see `docs/ARCHITECTURE.md` Known Limitations)
 
 Shenzhen
 
 Primary purpose:
 
-* Lung Segmentation
 * TB Classification
 
 Jaypee University
@@ -849,20 +785,27 @@ TB Chest Radiography Dataset (Tawsifur Rahman)
 
 Primary purpose:
 
-* TB Classification
-* External Evaluation
+* TB Classification (the largest single source, 4,200 images)
 
-Chest X-ray Masks and Labels Dataset
+DA / DB (vbookshelf)
 
 Primary purpose:
 
-* Lung Segmentation
+* TB Classification — curated, **TB-positive-only** collections with no Normal counterpart from the same scanner. This makes them the highest-risk source for a per-source shortcut (the model could learn "looks like a DA/DB scan" instead of "looks like TB"); `audit_per_source_performance` exists specifically to catch this.
+
+Chest X-ray Masks and Labels Dataset (nikhilpandey360)
+
+Primary purpose:
+
+* Lung Segmentation — the only dataset the segmentation model currently trains on.
 
 Every dataset must retain its identity throughout the pipeline.
 
 ---
 
 # Notebook Responsibilities
+
+**Current reality vs. this section:** as of this update, the actual training pipeline is **one consolidated file**, `training/nirikNetMain.py` (a single notebook-structured, `# %%`-cell-delimited script covering dataset collection through ONNX export), not four separate notebooks. The four-notebook contract below is a **target decomposition**, not the current state — if asked to work on "Notebook 2" or similar, map that to the corresponding cells inside `training/nirikNetMain.py` unless the user has actually begun splitting the file. Don't assume separate notebook files exist without checking.
 
 Notebook 1
 
@@ -964,6 +907,8 @@ Prediction
 ```
 
 Claude must not recommend, regenerate, or extend this architecture unless the user is explicitly discussing historical implementations.
+
+**Important disambiguation:** the "DenseNet" in the deprecated workflow above refers to an old, unrelated NIRT-finetuned classifier from a previous project phase. It has nothing to do with the **current, canonical DenseNet-121 student** (Stage 7 above, trained via ResNet-50→DenseNet-121 knowledge distillation on the six-source pool, not NIRT). Do not let the shared model-family name cause confusion — DenseNet-121 is canonical and current; this deprecated NIRT/DenseNet workflow is not.
 
 ---
 
@@ -1090,32 +1035,34 @@ The system should:
 
 ## Canonical Classification Model
 
+**Superseded — updated to match `docs/ARCHITECTURE.md`, the verified current source of truth.** `niriknet_best.keras` and the custom "NirikNet" architecture described below are no longer canonical; they were replaced by a ResNet-50 teacher / DenseNet-121 student trained via knowledge distillation (see Stage 6/7 above).
+
 The ONLY production classification model is:
 
-`CNN Model Training/niriknet_best.keras`
+`densenet121_student.onnx` (exported from `training/nirikNetMain.py`; the training-time native-Keras equivalent is `student_best.weights.h5` + `build_densenet_student`, kept **only** for the explainability path — see below)
 
 This model is the single source of truth for the Nirikhshon project.
 
 ### Requirements
 
-- Backend inference MUST load only `niriknet_best.keras`.
-- Grad-CAM and its variants MUST be generated from `niriknet_best.keras`.
-- Backend preprocessing MUST exactly match the preprocessing used to train `niriknet_best.keras`.
-- Evaluation MUST use `niriknet_best.keras`.
-- Frontend predictions MUST originate from `niriknet_best.keras`.
-- Hugging Face deployment MUST use `niriknet_best.keras`.
+- Backend inference MUST load only `densenet121_student.onnx` (via ONNX Runtime) for the `/predict` path.
+- The ResNet-50 teacher MUST NEVER be loaded in a serving process, for any purpose.
+- Grad-CAM and its variants require live TensorFlow gradient access, which ONNX Runtime does not provide. Generating them MUST use a separately-loaded native-Keras copy of the **same trained student weights** (`build_densenet_student` + `student_best.weights.h5`) — never a different model, never the teacher. This dual-load (ONNX for `/predict`, native Keras for `/explain`) is the resolved architecture decision for the explainability-vs-ONNX gap.
+- Backend preprocessing MUST exactly match `preprocess_xray()` in `training/nirikNetMain.py` — as of this update, that includes CLAHE (2.0/8×8), 8.5%-padded lung crop with hole-filled mask, resize to 224×224, and non-lung-pixel mean-fill masking. **A real, unfixed discrepancy was found**: `hf_space/inference/preprocessing.py` does not currently implement the mean-fill masking step and adds an extra `pad_to_square` step that doesn't exist in training — this is a genuine train/serve preprocessing mismatch, not a documented variant, and should be treated as an open bug until reconciled.
+- Evaluation MUST use `densenet121_student.onnx` (or the equivalent native-Keras weights for methods ONNX can't run, e.g. the Grad-CAM audits).
+- Frontend predictions MUST originate from `densenet121_student.onnx`, via the backend.
+- Hugging Face Spaces deployment MUST use `densenet121_student.onnx` for `/predict` and the native-Keras student copy for `/explain`.
 
 ### Deprecated Models
 
 Any previous classification models are deprecated, including but not limited to:
 
-- DenseNet121
-- ResNet
-- EfficientNet
+- **NirikNet** (the custom from-scratch CNN this project used before the DenseNet-121 pivot — now itself deprecated, the inverse of what earlier project documentation stated)
+- EfficientNetV2-M (the previous teacher; ResNet-50 is now the teacher)
 - Experimental CNNs
-- Previous `.keras` or `.h5` classification models
+- Previous `.keras` or `.h5` classification models not matching the current `build_teacher`/`build_densenet_student` definitions in `training/nirikNetMain.py`
 
-These models must never be used for inference, evaluation, Grad-CAM generation, deployment, or demonstrations unless explicitly requested for historical comparison.
+These models must never be used for inference, evaluation, Grad-CAM generation, deployment, or demonstrations unless explicitly requested for historical comparison. **DenseNet-121 and ResNet-50 are the current, canonical architectures** — do not treat their presence in older "deprecated workflow" documentation elsewhere in this file as still applicable; see the clarifying note under Deprecated Architecture below.
 
 ### Canonical Output Rule
 
@@ -1129,8 +1076,7 @@ This includes:
 - Grad-CAM++ visualizations
 - LayerCAM visualizations
 - EigenCAM visualizations
-- Consensus CAM visualizations
-- Heatmaps
+- Heatmaps (there is no "Consensus CAM" — see Explainability Standards below; don't regenerate something that was never implemented)
 - Segmentation overlays
 - Predictions
 - Evaluation metrics
@@ -1147,29 +1093,29 @@ Responsible for:
 
 * dataset discovery
 * validation
-* cleaning
+* cleaning (deduplication, image quality filter, mask-coverage filter)
 * duplicate detection
 * metadata generation
-* train/validation/test preparation
-* lung mask generation (if needed)
+* patient-wise train/validation/test preparation (2:1 Normal:TB rebalancing before the split)
+* lung mask generation (always trained — the Attention U-Net, not "if needed")
 * CLAHE preprocessing
-* resizing to 384 × 384
+* resizing to **224 × 224** (not 384×384)
 * grayscale to RGB conversion
-* EfficientNetV2 preprocessing
+* non-lung pixel mean-fill masking (no separate "EfficientNetV2 preprocessing" step — each model normalizes internally)
 
 ---
 
 ### 2. AI Pipeline
 
-The AI pipeline follows the 12-stage process:
+The AI pipeline follows the 12-stage process (see Stage Details above for the current, verified specifics):
 
 Stage 1: Dataset Collection
 Stage 2: Dataset Discovery
 Stage 3: Dataset Cleaning
 Stage 4: Lung Segmentation
 Stage 5: Image Preprocessing
-Stage 6: Teacher Network (EfficientNetV2-M)
-Stage 7: Student Network (NirikNet)
+Stage 6: Teacher Network (ResNet-50)
+Stage 7: Student Network (DenseNet-121)
 Stage 8: Knowledge Distillation
 Stage 9: Evaluation
 Stage 10: Explainable AI
@@ -1256,15 +1202,15 @@ Development
 
 ## High-Level AI Architecture
 
-The intended AI pipeline follows the 12-stage process:
+The AI pipeline follows the 12-stage process (see Stage Details near the top of this file, and `docs/ARCHITECTURE.md`, for the current specifics):
 
 Stage 1: Dataset Collection
 Stage 2: Dataset Discovery
 Stage 3: Dataset Cleaning
 Stage 4: Lung Segmentation
 Stage 5: Image Preprocessing
-Stage 6: Teacher Network (EfficientNetV2-M)
-Stage 7: Student Network (NirikNet)
+Stage 6: Teacher Network (ResNet-50)
+Stage 7: Student Network (DenseNet-121)
 Stage 8: Knowledge Distillation
 Stage 9: Evaluation
 Stage 10: Explainable AI
@@ -1278,6 +1224,8 @@ The clinician always has the final authority over every prediction.
 Claude must preserve the overall repository architecture.
 
 Unless explicitly instructed otherwise, use the following directory responsibilities.
+
+**Real current structure differs from the illustrative tree below** — as of this update the repo actually has `training/nirikNetMain.py` (one consolidated file, not the `notebooks/` layout shown), `docs/` (architecture and API specifications), and `hf_space/` (the actual current backend implementation, alongside an older `backend/`). See `docs/ARCHITECTURE.md` §11 for the authoritative current folder-responsibility mapping; don't assume the tree below already exists verbatim.
 
 ```text
 project-root/
@@ -1378,6 +1326,8 @@ Claude must never jump directly into model training without ensuring that the da
 # Notebook Contracts
 
 Each notebook has exactly one responsibility.
+
+**Same caveat as Notebook Responsibilities above: this is a target decomposition, not current reality.** `training/nirikNetMain.py` is currently one file; the exports/paths below (e.g. `master_metadata.csv`, `teacher_efficientnetv2m.keras`, `niriknet_best.keras`) also describe the earlier EfficientNetV2-M/NirikNet design — see the corrected Stage 6/7/11 details near the top of this file and `docs/ARCHITECTURE.md` for what the pipeline actually exports today (`densenet121_student.onnx`, `attention_unet.keras`, `metrics.json`, `train.csv`/`val.csv`/`test.csv`, etc.).
 
 ---
 
@@ -1659,14 +1609,14 @@ Hyperparameters must be stored centrally.
 
 Examples
 
-* image size (384 × 384)
-* batch size
-* epochs
-* optimizer (AdamW)
+* image size (224 × 224 classification, 256 × 256 segmentation)
+* batch size (32)
+* epochs (per-stage — see Stage 6-8 above)
+* optimizer (AdamW, weight decay 1e-4, gradient clipnorm 1.0)
 * learning rate (with warm-up cosine decay)
-* temperature (4)
-* alpha (0.5)
-* threshold
+* distillation temperature (3.0)
+* distillation alpha (0.5)
+* threshold (Youden's J, frozen from validation)
 * augmentation parameters
 * CLAHE parameters (clipLimit=2.0, tileGridSize=(8,8))
 
@@ -1846,18 +1796,17 @@ Export masks whenever practical.
 
 Preferred architecture
 
-EfficientNetV2-M (teacher) and NirikNet (student)
+**ResNet-50 (teacher) and DenseNet-121 (student)** — superseded from an earlier EfficientNetV2-M/NirikNet design; see Stage 6/7 above and `docs/ARCHITECTURE.md` §15 for the full reasoning.
 
 Reason
 
-EfficientNetV2-M demonstrates excellent performance on chest radiographs while remaining computationally efficient.
-NirikNet is a custom CNN designed for optimal performance in the 20-35M parameter range with attention mechanisms.
+ResNet-50 is a well-established, ImageNet-pretrained backbone that trains a strong teacher without architecture novelty risk. DenseNet-121 was chosen as the student specifically to replace a from-scratch custom CNN ("NirikNet") that carried real overfitting risk on this project's modest training pool (~2,500 train images) and an ~11× capacity gap from the teacher; DenseNet-121 starts from ImageNet weights and narrows that gap to ~3.35×, with direct precedent in chest-radiograph classification research (CheXNet).
 
 Alternative architectures
 
 * EfficientNet (other variants)
-* ResNet
 * ConvNeXt
+* The original custom "NirikNet" CNN (deprecated — see Canonical Assets & Production Model above)
 
 Vision Transformers should only be recommended when sufficient data and computational resources are available.
 
@@ -1873,11 +1822,13 @@ Preferred explainability hierarchy
 
 1. Grad-CAM
 2. Grad-CAM++
-3. Attention Maps (via CBAM/SE in NirikNet)
-4. ROI Localization
-5. Consensus CAM (combined view)
+3. LayerCAM
+4. EigenCAM
+5. ROI Localization
 
-Predictions without explanations are considered incomplete.
+All four CAM methods are actually implemented (`training/nirikNetMain.py`, `explain_predictions`) and generated against the DenseNet-121 student's backbone. **"Attention Maps" and "Consensus CAM" are not implemented and should not be presented as available** — the student has no attention mechanism (CBAM/SE were part of the deprecated NirikNet design, not DenseNet-121; the only attention in this project lives inside the Attention U-Net's segmentation decoder, unrelated to classification explainability), and Consensus CAM (an average of the four methods) exists only as a documentation aspiration, never implemented in code. If either is genuinely wanted, it needs to be built as new work, not assumed to already exist.
+
+Predictions without explanations are considered incomplete. A prediction's explanation is also considered incomplete without evidence it reflects real pulmonary signal, not a shortcut — see the Grad-CAM/lung-mask localization audit below.
 
 ---
 
@@ -1891,10 +1842,11 @@ Possible validation methods
 
 * IoU
 * Dice Similarity
-* * qualitative comparison
+* qualitative comparison
 * clinician review
+* **`audit_gradcam_lung_localization`** (implemented, `training/nirikNetMain.py`) — this project's actual, working validation: measures the fraction of Grad-CAM heatmap energy falling inside the segmented lung mask (not lesion annotations specifically, but a real, automated, currently-used check), plus a border/edge-concentration flag. Run this — and check `audit_per_source_performance` alongside it — before trusting any training run's Grad-CAM output as clinically meaningful.
 
-Never assume Grad-CAM is clinically meaningful without validation.
+Never assume Grad-CAM is clinically meaningful without validation. A completed training run without a checked localization audit does not satisfy this rule.
 
 ---
 
@@ -1965,8 +1917,6 @@ Grad-CAM++
 LayerCAM
 
 EigenCAM
-
-Consensus CAM
 
 AI Confidence
 
@@ -2046,11 +1996,9 @@ LayerCAM overlap
 
 EigenCAM overlap
 
-Consensus CAM correlation with individual methods
-
 Whenever annotation data does not exist
 
-Perform qualitative visual inspection.
+Perform qualitative visual inspection, and run `audit_gradcam_lung_localization` (lung-mask overlap, no lesion annotations required) plus `audit_per_source_performance` — both implemented and this project's actual current evaluation method for explainability quality.
 
 ---
 
@@ -2082,7 +2030,7 @@ Claude should avoid reproducing common GitHub projects.
 
 Preferred research contributions
 
-Explainable AI (with multiple CAM variants and Consensus approach)
+Explainable AI (with multiple CAM variants — Grad-CAM, Grad-CAM++, LayerCAM, EigenCAM — plus quantitative lung-localization auditing; no Consensus CAM implemented, see Explainability Standards)
 
 Clinical Workflow Integration (12-stage pipeline)
 
@@ -2318,10 +2266,10 @@ Responsibilities
 * augmentation
 * image enhancement
 * largest connected component extraction
-* morphological cleanup
-* 5% border padding application
+* morphological cleanup + border-seeded flood-fill hole closing
+* 8.5% border padding application
 * grayscale to RGB conversion
-* EfficientNetV2 preprocessing
+* non-lung pixel mean-fill masking (post-CLAHE) — not raw zero-fill, and not a separate "EfficientNetV2 preprocessing" step (each model normalizes internally via its own `Lambda` layer)
 
 Responsible only for image processing.
 
@@ -2349,16 +2297,16 @@ Responsible only for segmentation.
 
 Responsibilities
 
-* EfficientNetV2-M (teacher model)
-* NirikNet (custom CNN student model)
+* ResNet-50 (teacher model)
+* DenseNet-121 (student model — not the deprecated custom "NirikNet" CNN)
 * transfer learning
 * fine tuning
-* knowledge distillation
-* threshold optimisation
-* layer-wise unfreezing strategies
-* attention mechanisms (SE, CBAM)
+* knowledge distillation (temperature-scaled KLD on pre-softmax logits, cast to float32 before any loss math)
+* threshold optimisation (Youden's J on validation data, frozen before test)
+* layer-wise unfreezing strategies (staged freeze: head-only, then partial backbone unfreeze)
+* gradient clipping and mixed-precision numerical stability (a real, confirmed source of NaN training failures on this project — never skip clipnorm or the float32 logits cast when touching `DistillationModel`)
 
-Responsible only for classification.
+Responsible only for classification. Note: SE/CBAM attention mechanisms belonged to the deprecated NirikNet architecture — DenseNet-121 has no attention mechanism.
 
 ---
 
@@ -2370,15 +2318,12 @@ Responsibilities
 * Grad-CAM++
 * LayerCAM
 * EigenCAM
-* Consensus CAM (combination/averaging approach)
-* attention maps
-* saliency maps
+* quantitative lung-localization auditing (`audit_gradcam_lung_localization`, `audit_per_source_performance`) — this project's actual current heatmap-quality validation
 * ROI extraction
-* heatmap validation
-* LLM-based explanation generation (e.g., Gemini)
+* LLM-based explanation generation (Gemini, via Google AI Studio API key)
 * explanation validation (ensuring AI-assisted, not diagnostic)
 
-Responsible only for explainability.
+Responsible only for explainability. Note: no "Consensus CAM" or classification-level "attention maps" exist in the current implementation — see Explainability Standards. The dual-load requirement (ONNX for `/predict`, native Keras for `/explain`) is this role's responsibility to maintain in the backend.
 
 ---
 
@@ -2624,15 +2569,15 @@ exports masks.
 
 Builds
 
-EfficientNetV2-M (teacher)
+ResNet-50 (teacher)
 
-NirikNet (student)
+DenseNet-121 (student — not the deprecated custom "NirikNet")
 
 performs transfer learning
 
 performs knowledge distillation
 
-exports trained models.
+exports trained models (`densenet121_student.onnx` for deployment; teacher checkpoints are training-only, never shipped).
 
 ---
 
@@ -2648,13 +2593,11 @@ LayerCAM
 
 EigenCAM
 
-Consensus CAM
-
-validates heatmaps
+validates heatmaps via `audit_gradcam_lung_localization` (quantitative lung-mask overlap) and `audit_per_source_performance` (per-source shortcut detection) — the actual implemented validation, not just qualitative review
 
 creates ROI statistics.
 
-Generates LLM-based explanations.
+Generates LLM-based explanations. Note: no "Consensus CAM" exists — see Explainability Standards.
 
 ---
 
