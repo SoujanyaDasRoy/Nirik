@@ -49,6 +49,13 @@ def test_sliding_window_stream():
     import google.generativeai as genai
     original_model = genai.GenerativeModel
     
+    # We will add near-miss words to verify true-negatives
+    chunks = [
+        MockChunk("This scan con"),
+        MockChunk("firms the diagnosis of disease. It sho"),
+        MockChunk("ws some features. Here is confirmation, conference, diagnosability, and a shower.")
+    ]
+    
     class MockGenerativeModel:
         def __init__(self, name):
             self.name = name
@@ -80,8 +87,14 @@ def test_sliding_window_stream():
         assert "confirms" not in full_text, "Assertive term 'confirms' was not replaced!"
         assert "shows" not in full_text, "Assertive term 'shows' was not replaced!"
         assert "suggests" in full_text or "appears consistent with" in full_text or "suspected" in full_text, "Replacement terms missing!"
-        assert "the end." in full_text, "Final flush failed: trailing text lost!"
-        print("\nSuccess: Sliding window stream checks passed!")
+        
+        # True-negative assertions (near-misses should remain untouched)
+        assert "confirmation" in full_text, "True-negative 'confirmation' was incorrectly replaced!"
+        assert "conference" in full_text, "True-negative 'conference' was incorrectly replaced!"
+        assert "diagnosability" in full_text, "True-negative 'diagnosability' was incorrectly replaced!"
+        assert "shower" in full_text, "True-negative 'shower' was incorrectly replaced!"
+        
+        print("\nSuccess: Sliding window stream and true-negative checks passed!")
         
     finally:
         # Clean up mock and env

@@ -2,6 +2,7 @@ import os
 import requests
 import json
 import traceback
+import re
 from llm.guardrails import build_system_prompt, enforce_guardrails
 
 try:
@@ -10,6 +11,47 @@ try:
 except ImportError:
     HAS_GENAI = False
     print("[LLM] WARNING: google-generativeai not installed. Gemini will not be available.")
+
+# Dynamic guardrails configuration
+REPLACEMENTS = {
+    "shows": "appears consistent with",
+    "show": "may suggest",
+    "confirms": "suggests",
+    "confirmed": "suspected",
+    "diagnosed": "screened positive",
+    "diagnosed with": "screened positive for",
+    "diagnose": "screen",
+    "diagnosis": "screening result",
+    "diagnoses": "screening results",
+    "is present": "appears consistent with",
+    "there is": "there may be",
+    "there are": "there may be",
+    "definitely": "potentially",
+    "certainly": "potentially",
+    "absolute certainty": "high suspicion",
+    "proves": "suggests",
+    "clear evidence of": "findings consistent with"
+}
+
+# Pre-compile patterns with word boundaries for streaming efficiency
+COMPILED_REPLACEMENTS = [
+    (re.compile(r"\b" + re.escape(bad_term) + r"\b", re.IGNORECASE), good_term)
+    for bad_term, good_term in REPLACEMENTS.items()
+]
+
+# Programmatically compute the minimum safe hold-back window size
+LONGEST_PATTERN_LEN = max(len(k) for k in REPLACEMENTS.keys())
+SAFETY_WINDOW_SIZE = LONGEST_PATTERN_LEN + 15
+
+# Assert that the safety window size can never be smaller than the longest pattern
+assert SAFETY_WINDOW_SIZE > LONGEST_PATTERN_LEN, "Hold-back window must be larger than the longest replacement pattern."
+
+
+def filter_text(text: str) -> str:
+    """Applies word-boundary regex replacements to soften assertive medical language."""
+    for pattern, good_term in COMPILED_REPLACEMENTS:
+        text = pattern.sub(good_term, text)
+    return text
 
 
 def generate_template_fallback(llm_context: dict, user_message: str) -> str:
@@ -255,34 +297,6 @@ Saliency & Heatmap Information
         f"=== USER QUESTION ===\n{user_message}"
     )
 
-    # Sliding-window guardrail filter for streaming text
-    import re
-    replacements = {
-        r"\bshows\b": "appears consistent with",
-        r"\bshow\b": "may suggest",
-        r"\bconfirms\b": "suggests",
-        r"\bconfirmed\b": "suspected",
-        r"\bdiagnosed\b": "screened positive",
-        r"\bdiagnosed with\b": "screened positive for",
-        r"\bdiagnose\b": "screen",
-        r"\bdiagnosis\b": "screening result",
-        r"\bdiagnoses\b": "screening results",
-        r"\bis present\b": "appears consistent with",
-        r"\bthere is\b": "there may be",
-        r"\bthere are\b": "there may be",
-        r"\bdefinitely\b": "potentially",
-        r"\bcertainly\b": "potentially",
-        r"\babsolute certainty\b": "high suspicion",
-        r"\bproves\b": "suggests",
-        r"\bclear evidence of\b": "findings consistent with"
-    }
-
-    def filter_text(text: str) -> str:
-        for bad_pattern, good_term in replacements.items():
-            pattern = re.compile(bad_pattern, re.IGNORECASE)
-            text = pattern.sub(good_term, text)
-        return text
-
     disclaimer_footer = (
         "\n\n---\n"
         "AI-assisted decision support only. All visual observations require independent verification against the source image."
@@ -305,9 +319,9 @@ Saliency & Heatmap Information
                         chunk_text = json.loads(line.decode('utf-8')).get("response", "")
                         buffer += chunk_text
                         buffer = filter_text(buffer)
-                        if len(buffer) > 40:
-                            yield buffer[:-40]
-                            buffer = buffer[-40:]
+                        if len(buffer) > SAFETY_WINDOW_SIZE:
+                            yield buffer[:-SAFETY_WINDOW_SIZE]
+                            buffer = buffer[-SAFETY_WINDOW_SIZE:]
                 buffer = filter_text(buffer)
                 yield buffer
                 yield disclaimer_footer
@@ -340,9 +354,9 @@ Saliency & Heatmap Information
                     if chunk.text:
                         buffer += chunk.text
                         buffer = filter_text(buffer)
-                        if len(buffer) > 40:
-                            yield buffer[:-40]
-                            buffer = buffer[-40:]
+                        if len(buffer) > SAFETY_WINDOW_SIZE:
+                            yield buffer[:-SAFETY_WINDOW_SIZE]
+                            buffer = buffer[-SAFETY_WINDOW_SIZE:]
                 buffer = filter_text(buffer)
                 yield buffer
                 yield disclaimer_footer
