@@ -142,6 +142,24 @@ export function usePrediction(
 
         const data = payload || {};
 
+        // Get image dimensions asynchronously from local preview URL
+        let resolution = "Unknown";
+        try {
+          const img = new window.Image();
+          img.src = localPreviewUrl;
+          await new Promise<void>((resolve) => {
+            img.onload = () => {
+              resolution = `${img.width} x ${img.height} pixels`;
+              resolve();
+            };
+            img.onerror = () => {
+              resolve();
+            };
+          });
+        } catch (err) {
+          console.error("Failed to read image dimensions:", err);
+        }
+
         setResults(prev => {
           const next = [...prev];
           // Do not revoke the object URL here, as we need it for original_image if backend doesn't provide one.
@@ -175,7 +193,7 @@ export function usePrediction(
             image_quality: data.image_quality || {
                exposure: "Not assessed",
                coverage: "Not assessed",
-               resolution: "Unknown",
+               resolution: resolution,
                rotation: "Not assessed",
                quality_score: null,
                suitable_for_ai: null,
