@@ -723,7 +723,7 @@ export function ScreeningTab({
                 ? "bg-primary"
                 : activeDiagnosis?.riskLevel === "High"
                 ? "bg-red-500"
-                : "bg-blue-500"
+                : "bg-emerald-500"
             }`} />
             <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-3 relative z-10 flex items-center gap-2">
               <Activity className="w-3.5 h-3.5" />
@@ -757,7 +757,7 @@ export function ScreeningTab({
             ) : (
               <div className="relative z-10">
                 <h3 className={`text-3xl font-extrabold tracking-tight mb-4 drop-shadow-md ${
-                  activeDiagnosis?.riskLevel === "High" ? "text-red-500" : "text-blue-500"
+                  activeDiagnosis?.riskLevel === "High" ? "text-red-500" : "text-emerald-500"
                 }`}>
                   {activeDiagnosis?.condition ?? "Normal"}
                 </h3>
@@ -773,7 +773,7 @@ export function ScreeningTab({
                     className={`h-2 bg-white/10 ${
                       activeDiagnosis?.riskLevel === "High"
                         ? "[&>div]:bg-red-500"
-                        : "[&>div]:bg-blue-500"
+                        : "[&>div]:bg-emerald-500"
                     }`}
                   />
                 </div>
@@ -787,7 +787,7 @@ export function ScreeningTab({
                     className={`uppercase font-bold text-[9px] py-1 px-3 rounded-full border border-white/5 ${
                       activeDiagnosis?.riskLevel === "High"
                         ? "bg-red-500/20 text-red-500"
-                        : "bg-blue-500/20 text-blue-500"
+                        : "bg-emerald-500/20 text-emerald-400 border-emerald-500/30"
                     }`}
                   >
                     {activeDiagnosis?.riskLevel} Risk

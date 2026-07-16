@@ -372,7 +372,7 @@ export function PatientsTab({ onSelectStudy }: PatientsTabProps) {
                           <div className="space-y-1">
                             <div className="flex items-center gap-2 flex-wrap">
                               <span className="font-mono font-bold text-foreground text-xs">{study.study_id}</span>
-                              <Badge variant="outline" className={`${isTB ? "badge-tb border-amber-500/20 text-amber-600 bg-amber-500/5 font-bold" : "badge-normal"} rounded-full text-[9px] uppercase`}>
+                              <Badge variant="outline" className={`${isTB ? "badge-tb border-red-500/20 text-red-500 bg-red-500/5 font-bold" : "badge-normal border-emerald-500/20 text-emerald-500 bg-emerald-500/5"} rounded-full text-[9px] uppercase`}>
                                 {study.prediction} ({(study.confidence * 100).toFixed(0)}%)
                               </Badge>
                             </div>
