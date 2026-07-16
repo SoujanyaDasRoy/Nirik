@@ -24,19 +24,15 @@ def generate_template_fallback(llm_context: dict, user_message: str) -> str:
     rois = xai.get('rois', []) if xai else []
     roi_str = ", ".join([f"{r.get('location')} (Contribution: {r.get('contribution', 0):.1f}%)" for r in rois]) if rois else "No focal ROI detected"
     
-    observations = llm_context.get('observations', [])
-    obs_list = [obs.get('narrative') for obs in observations if obs.get('narrative')]
-    obs_str = "; ".join(obs_list) if obs_list else "No specific radiographic abnormalities reported."
-    
     if is_tb:
-        impression = f"AI findings are suspicious for pulmonary tuberculosis based on the detected focal abnormalities (Confidence: {conf_score})."
+        impression = f"AI screening is suspicious for pulmonary tuberculosis based on the detected focal saliency anomalies (Confidence: {conf_score})."
         recommendations = (
             "1. Obtain sputum smear for Acid-Fast Bacilli (AFB) x 3.\n"
             "2. Correlate with molecular tests (GeneXpert MTB/RIF or Truenat).\n"
             "3. Clinical evaluation for constitutional symptoms (cough, fever, weight loss).\n"
             "4. Consult a qualified pulmonologist or radiologist for clinical confirmation."
         )
-        patient_summary = "The AI model detected changes in the lungs that are suspicious for tuberculosis. Further laboratory tests and evaluation by a healthcare provider are required to establish a diagnosis."
+        patient_summary = "The AI model detected changes in the lungs that are suspicious for tuberculosis. Further laboratory tests and evaluation by a healthcare provider are required to establish a screening result."
     else:
         impression = f"No radiographic evidence of active pulmonary tuberculosis detected by the model (Confidence: {conf_score})."
         recommendations = (
@@ -54,8 +50,7 @@ def generate_template_fallback(llm_context: dict, user_message: str) -> str:
 
 ## Findings
 The chest radiograph was analyzed using the Nirikhshon screening model.
-* Lung Segmentation: {roi_str}
-* Radiographic Findings: {obs_str}
+* Lung Saliency Zones: {roi_str}
 
 ## Impression
 {impression}
@@ -108,34 +103,6 @@ def generate_chat_response(llm_context: dict, user_message: str) -> str:
     
     heatmap_loc = xai.get('ranking', [{}])[0].get('location', 'Unavailable') if xai and xai.get('ranking') else "Unavailable"
     heatmap_intensity = f"Peak activation centroid: {rois[0].get('activation', 0):.2f}" if rois else "Unavailable"
-    
-    observations = llm_context.get('observations', [])
-    findings_list = {
-        "Opacity": "Not reported",
-        "Consolidation": "Not reported",
-        "Cavitation": "Not reported",
-        "Fibrosis": "Not reported",
-        "Pleural Effusion": "Not reported",
-        "Calcification": "Not reported",
-        "Other Findings": "None"
-    }
-    
-    for obs in observations:
-        lbl = obs.get('label', '').lower()
-        narrative = obs.get('narrative', '').lower()
-        full_text = f"{lbl} {narrative}"
-        if 'opacity' in full_text:
-            findings_list["Opacity"] = f"Detected: {obs.get('narrative')}"
-        if 'consolidation' in full_text:
-            findings_list["Consolidation"] = f"Detected: {obs.get('narrative')}"
-        if 'cavitation' in full_text or 'cavity' in full_text:
-            findings_list["Cavitation"] = f"Detected: {obs.get('narrative')}"
-        if 'fibrosis' in full_text or 'fibrotic' in full_text:
-            findings_list["Fibrosis"] = f"Detected: {obs.get('narrative')}"
-        if 'effusion' in full_text or 'pleural' in full_text:
-            findings_list["Pleural Effusion"] = f"Detected: {obs.get('narrative')}"
-        if 'calcification' in full_text or 'calcified' in full_text:
-            findings_list["Calcification"] = f"Detected: {obs.get('narrative')}"
             
     context_str = f"""Patient Information
 * Age: {age}
@@ -148,28 +115,15 @@ Image Information
 AI Classification
 * Predicted Class: {pred_class}
 * Confidence Score: {conf_score}
-
-Lung Segmentation
-* Left Lung: {left_lung}
-* Right Lung: {right_lung}
-* Region of Interest: {roi_str}
-
-Grad-CAM Information
-* Heatmap Location: {heatmap_loc}
-* Heatmap Intensity: {heatmap_intensity}
-
-Detected Radiographic Findings
-* Opacity: {findings_list['Opacity']}
-* Consolidation: {findings_list['Consolidation']}
-* Cavitation: {findings_list['Cavitation']}
-* Fibrosis: {findings_list['Fibrosis']}
-* Pleural Effusion: {findings_list['Pleural Effusion']}
-* Calcification: {findings_list['Calcification']}
-* Other Findings: {findings_list['Other Findings']}
-
-Additional Notes
 * Threshold Used: {llm_context.get('threshold', 0.5)}
-* XAI Summary: {xai.get('summary', 'Unavailable')}
+
+Saliency & Heatmap Information
+* Left Lung Attention: {left_lung}
+* Right Lung Attention: {right_lung}
+* Heatmap Peak Location: {heatmap_loc}
+* Heatmap Peak Intensity: {heatmap_intensity}
+* Region of Interest Details: {roi_str}
+* XAI Consensus Summary: {xai.get('summary', 'Unavailable')}
 """
     full_prompt = (
         f"{system_prompt}\n\n"
