@@ -2,7 +2,40 @@
 
 import { useState, useRef, useEffect } from "react";
 import { Send, Bot, User, Loader2, Sparkles, Image as ImageIcon } from "lucide-react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { AnalysisResult } from "../hooks/useFileUpload";
+
+// Renders assistant markdown (bold, headings, lists, tables) as real elements
+// rather than literal "**text**"/"##" characters. react-markdown renders to
+// React elements (not raw HTML), so this is safe against injecting markup
+// even if the LLM ever echoes untrusted text back.
+const MARKDOWN_COMPONENTS = {
+  p: ({ children }: any) => <p className="mb-2 last:mb-0">{children}</p>,
+  strong: ({ children }: any) => <strong className="font-bold text-foreground">{children}</strong>,
+  em: ({ children }: any) => <em className="italic">{children}</em>,
+  h1: ({ children }: any) => <h1 className="text-sm font-bold mt-3 mb-1.5 first:mt-0">{children}</h1>,
+  h2: ({ children }: any) => <h2 className="text-xs font-bold uppercase tracking-wide text-primary mt-3 mb-1.5 first:mt-0">{children}</h2>,
+  h3: ({ children }: any) => <h3 className="text-xs font-bold mt-2 mb-1 first:mt-0">{children}</h3>,
+  ul: ({ children }: any) => <ul className="list-disc list-outside pl-4 mb-2 space-y-0.5">{children}</ul>,
+  ol: ({ children }: any) => <ol className="list-decimal list-outside pl-4 mb-2 space-y-0.5">{children}</ol>,
+  li: ({ children }: any) => <li className="pl-0.5">{children}</li>,
+  code: ({ children }: any) => <code className="px-1 py-0.5 rounded bg-white/10 text-[11px] font-mono">{children}</code>,
+  hr: () => <hr className="my-2 border-white/10" />,
+  a: ({ href, children }: any) => (
+    <a href={href} target="_blank" rel="noopener noreferrer" className="text-primary underline underline-offset-2">
+      {children}
+    </a>
+  ),
+  table: ({ children }: any) => (
+    <div className="overflow-x-auto my-2 rounded-lg border border-white/10">
+      <table className="w-full text-[11px] border-collapse">{children}</table>
+    </div>
+  ),
+  thead: ({ children }: any) => <thead className="bg-white/5">{children}</thead>,
+  th: ({ children }: any) => <th className="px-2 py-1 text-left font-semibold border-b border-white/10">{children}</th>,
+  td: ({ children }: any) => <td className="px-2 py-1 border-b border-white/5 align-top">{children}</td>,
+};
 
 interface ChatRequestPayload {
   message: string;
@@ -129,6 +162,14 @@ export default function LlmAssistant({ activeResult }: { activeResult: AnalysisR
               qualityScore: activeResult.image_quality.quality_score,
             } : null,
             isTb: activeResult?.is_tb || false,
+            // Real server-side reliability-gating output (see
+            // prediction_service.py) — lets the assistant actually discuss
+            // why a case is indeterminate, image-quality concerns, or
+            // Grad-CAM/lung-localization overlap, instead of having nothing
+            // to go on but the bare prediction/confidence.
+            resultStatus: activeResult?.result_status,
+            warnings: activeResult?.warnings || [],
+            reliability: activeResult?.reliability || null,
             xaiResults: (activeResult?.xai_results && Array.isArray((activeResult.xai_results as any).rois)) ? {
               summary: activeResult.xai_results.summary,
               ranking: activeResult.xai_results.ranking,
@@ -204,10 +245,15 @@ export default function LlmAssistant({ activeResult }: { activeResult: AnalysisR
     }
   };
 
+  // Each maps to a genuinely different response shape (short answer, table,
+  // structured report, action list) rather than three variations on the same
+  // "explain the prediction" question — this is what actually exercises the
+  // system prompt's instruction to vary format by task.
   const suggestions = [
-    "Explain the prediction",
-    "What is the confidence level?",
-    "Check image quality",
+    "Generate a structured report for this case",
+    "Break down the attention regions in a table",
+    "What would increase confidence in this result?",
+    "Summarize this in one sentence for a referral note",
   ];
 
   return (
@@ -233,12 +279,18 @@ export default function LlmAssistant({ activeResult }: { activeResult: AnalysisR
               }`}>
                 {msg.role === "user" ? <User className="w-3 h-3 text-muted-foreground" /> : <Bot className="w-3 h-3 text-primary" />}
               </div>
-              <div className={`p-3 rounded-[15px] text-xs leading-relaxed whitespace-pre-wrap ${
-                msg.role === "user" 
-                  ? "bg-muted/40 text-foreground rounded-tr-sm" 
+              <div className={`p-3 rounded-[15px] text-xs leading-relaxed ${
+                msg.role === "user"
+                  ? "bg-muted/40 text-foreground rounded-tr-sm whitespace-pre-wrap"
                   : "bg-black/40 border border-white/5 text-foreground rounded-tl-sm shadow-sm"
               }`}>
-                {msg.content}
+                {msg.role === "assistant" ? (
+                  <ReactMarkdown remarkPlugins={[remarkGfm]} components={MARKDOWN_COMPONENTS}>
+                    {msg.content}
+                  </ReactMarkdown>
+                ) : (
+                  msg.content
+                )}
                 {msg.role === "assistant" && idx === messages.length - 1 && isTyping && (
                   <span className="inline-block w-1 h-3.5 ml-1 bg-primary animate-pulse vertical-middle">▍</span>
                 )}

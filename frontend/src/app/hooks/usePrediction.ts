@@ -186,6 +186,13 @@ export function usePrediction(
             original_image: data.original_image || prevUrl || null,
             heatmap_image: data.explainability?.gradcam_plus_plus || data.explainability?.gradcam || null,
             study_id: data.request_id || "unknown",
+            // Server-side reliability gating (see prediction_service.py): the
+            // real result_status/warnings/reliability payload was previously
+            // computed by the backend but silently dropped here, so neither
+            // the UI nor the LLM chat could ever see or discuss it.
+            result_status: data.result_status,
+            warnings: data.warnings || [],
+            reliability: data.reliability || null,
             // The backend does not compute image-quality metrics. When absent,
             // fall back to an honest "not assessed" block instead of fabricating
             // precise-looking values (e.g. quality_score: 95, "2048 x 2048

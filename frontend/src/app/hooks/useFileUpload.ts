@@ -8,6 +8,34 @@ export interface AnalysisResult {
   is_tb?: boolean;
   threshold_used?: number;
   segmentation_active?: boolean;
+  /**
+   * Server-side reliability gating (see hf_space/services/prediction_service.py).
+   * A "tuberculosis" call can be downgraded to "indeterminate" when the image
+   * quality, lung-segmentation coverage, or Grad-CAM/lung-localization overlap
+   * suggest the raw model call isn't trustworthy — a false-positive mitigation
+   * that doesn't touch the model itself.
+   */
+  result_status?: "normal" | "tuberculosis" | "indeterminate";
+  warnings?: string[];
+  reliability?: {
+    image_quality?: {
+      blur_variance: number;
+      is_blurry: boolean;
+      pixel_std: number;
+      is_near_blank: boolean;
+      resolution: [number, number];
+      suitable_for_ai: boolean;
+      warnings: string[];
+    };
+    lung_coverage?: {
+      coverage_fraction: number;
+      is_plausible: boolean;
+      warning: string | null;
+    };
+    localization_overlap?: number | null;
+    downgraded_from_tb?: boolean;
+    segmentation_active?: boolean;
+  } | null;
   metadata?: {
     patient_id?: string;
     patient_name?: string;
