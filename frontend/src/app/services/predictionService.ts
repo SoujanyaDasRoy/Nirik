@@ -11,28 +11,12 @@ export const predictionService = {
     const isTb = prediction === "Tuberculosis" || prediction.toLowerCase().includes("tuberculosis");
     const riskLevel: "Low" | "Medium" | "High" = isTb ? "High" : "Low";
 
-    // Mathematically calibrate confidence relative to decision threshold
-    let calibrated = 0.50;
-    if (isTb) {
-      if (thresholdUsed < 1.0) {
-        calibrated = 0.50 + 0.50 * (confidence - thresholdUsed) / (1.0 - thresholdUsed);
-      } else {
-        calibrated = 1.0;
-      }
-    } else {
-      if (thresholdUsed > 0.0) {
-        calibrated = 0.50 + 0.50 * (thresholdUsed - confidence) / thresholdUsed;
-      } else {
-        calibrated = 1.0;
-      }
-    }
-    
-    // Clamp to [0.50, 1.00]
-    calibrated = Math.max(0.50, Math.min(1.00, calibrated));
+    // Use the raw class-relative probability (directly matches what the LLM receives/calculates)
+    const displayConfidence = isTb ? confidence : (1.0 - confidence);
 
     return {
       condition: isTb ? "Tuberculosis" : "Normal",
-      confidence: calibrated,
+      confidence: displayConfidence,
       riskLevel,
       isBorderline: false,
       rawConfidence: confidence
