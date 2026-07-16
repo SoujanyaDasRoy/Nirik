@@ -36,7 +36,7 @@ chat_payload = {
 }
 resp = client.post("/chat", json=chat_payload)
 print(f"Status: {resp.status_code}")
-print(f"Body: {resp.get_json()}")
+print(f"Body Data:\n{resp.data.decode('utf-8')}")
 
 # 3. Test POST /chat with mocked GEMINI_API_KEY environment variable to test loading / model trying flow
 print("\nTesting POST /chat with simulated GEMINI_API_KEY...")
@@ -44,7 +44,7 @@ os.environ["GEMINI_API_KEY"] = "AIzaSyFakeKeyForTesting"
 try:
     resp = client.post("/chat", json=chat_payload)
     print(f"Status: {resp.status_code}")
-    print(f"Body: {resp.get_json()}")
+    print(f"Body Data:\n{resp.data.decode('utf-8')}")
 finally:
     # Clean up environment
     if "GEMINI_API_KEY" in os.environ:

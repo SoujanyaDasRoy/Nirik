@@ -4,6 +4,70 @@ import { useState, useRef, useEffect } from "react";
 import { Send, Bot, User, Loader2, Sparkles, Image as ImageIcon } from "lucide-react";
 import { AnalysisResult } from "../hooks/useFileUpload";
 
+interface ChatRequestPayload {
+  message: string;
+  llm_context: any;
+}
+
+async function streamChatResponse(
+  payload: ChatRequestPayload,
+  onChunk: (text: string) => void,
+  onDone: () => void,
+  onError: (msg: string) => void,
+) {
+  const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://projectmantra-nirikshon-backend.hf.space";
+  
+  const response = await fetch(`${API_BASE}/chat`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+    credentials: "include"
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  if (!response.body) {
+    onError('No response stream received.');
+    return;
+  }
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split('\n\n');
+    buffer = lines.pop() ?? '';
+
+    for (const line of lines) {
+      if (!line.trim() || !line.startsWith('data: ')) continue;
+      try {
+        const parsed = JSON.parse(line.slice(6));
+        if (parsed.error) {
+          onError(parsed.error);
+          return;
+        }
+        if (parsed.done) {
+          onDone();
+          return;
+        }
+        if (typeof parsed.text === 'string') {
+          onChunk(parsed.text);
+        }
+      } catch (err) {
+        console.error("Failed to parse SSE line:", line, err);
+      }
+    }
+  }
+  onDone();
+}
+
 export default function LlmAssistant({ activeResult }: { activeResult: AnalysisResult | null }) {
   const [messages, setMessages] = useState<{ role: "assistant" | "user"; content: string }[]>([
     {
@@ -44,19 +108,17 @@ export default function LlmAssistant({ activeResult }: { activeResult: AnalysisR
     setMessages(prev => [...prev, { role: "user", content: userMessage }]);
     setIsTyping(true);
 
+    // Add empty placeholder for streaming assistant response
+    setMessages(prev => [...prev, { role: "assistant", content: "" }]);
+
     try {
-      const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://projectmantra-nirikshon-backend.hf.space";
-      const response = await fetch(`${API_BASE}/chat`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({
+      await streamChatResponse(
+        {
           message: userMessage,
           llm_context: {
             prediction: activeResult?.prediction || "Unknown",
             confidence: activeResult?.confidence || 0,
             threshold: activeResult?.threshold_used || 0.5,
-            patientId: activeResult?.metadata?.patient_id || "Unknown Patient",
             patientAge: activeResult?.metadata?.patient_age || "Unknown",
             patientSex: activeResult?.metadata?.patient_sex || "Unknown",
             view: "PA",
@@ -85,20 +147,53 @@ export default function LlmAssistant({ activeResult }: { activeResult: AnalysisR
               narrative: o.narrative,
             })) : []
           }
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to get response");
-      }
-
-      const data = await response.json();
-      setMessages(prev => [...prev, { role: "assistant", content: data.response || "No response generated." }]);
+        },
+        (chunk) => {
+          // Append chunk to the last message
+          setMessages(prev => {
+            const next = [...prev];
+            if (next.length > 0) {
+              const lastIndex = next.length - 1;
+              next[lastIndex] = {
+                ...next[lastIndex],
+                content: next[lastIndex].content + chunk
+              };
+            }
+            return next;
+          });
+        },
+        () => {
+          setIsTyping(false);
+        },
+        (errorMsg) => {
+          setMessages(prev => {
+            const next = [...prev];
+            if (next.length > 0) {
+              const lastIndex = next.length - 1;
+              next[lastIndex] = {
+                ...next[lastIndex],
+                content: `⚠️ Error: ${errorMsg}`
+              };
+            }
+            return next;
+          });
+          setIsTyping(false);
+        }
+      );
     } catch (error) {
       console.error("LLM Error:", error);
       const errMsg = error instanceof Error ? error.message : "Unknown error";
-      setMessages(prev => [...prev, { role: "assistant", content: `⚠️ Could not reach the AI assistant (${errMsg}). Make sure the backend is running and GEMINI_API_KEY is set.` }]);
-    } finally {
+      setMessages(prev => {
+        const next = [...prev];
+        if (next.length > 0) {
+          const lastIndex = next.length - 1;
+          next[lastIndex] = {
+            ...next[lastIndex],
+            content: `⚠️ Could not reach the AI assistant (${errMsg}). Make sure the backend is running and GEMINI_API_KEY is set.`
+          };
+        }
+        return next;
+      });
       setIsTyping(false);
     }
   };
@@ -138,18 +233,21 @@ export default function LlmAssistant({ activeResult }: { activeResult: AnalysisR
               }`}>
                 {msg.role === "user" ? <User className="w-3 h-3 text-muted-foreground" /> : <Bot className="w-3 h-3 text-primary" />}
               </div>
-              <div className={`p-3 rounded-[15px] text-xs leading-relaxed ${
+              <div className={`p-3 rounded-[15px] text-xs leading-relaxed whitespace-pre-wrap ${
                 msg.role === "user" 
                   ? "bg-muted/40 text-foreground rounded-tr-sm" 
                   : "bg-black/40 border border-white/5 text-foreground rounded-tl-sm shadow-sm"
               }`}>
                 {msg.content}
+                {msg.role === "assistant" && idx === messages.length - 1 && isTyping && (
+                  <span className="inline-block w-1 h-3.5 ml-1 bg-primary animate-pulse vertical-middle">▍</span>
+                )}
               </div>
             </div>
           </div>
         ))}
 
-        {isTyping && (
+        {isTyping && messages[messages.length - 1]?.content === "" && (
           <div className="flex justify-start animate-fadein">
             <div className="flex gap-3 max-w-[85%] flex-row">
               <div className="w-6 h-6 rounded-full bg-primary/20 flex-shrink-0 flex items-center justify-center mt-1">

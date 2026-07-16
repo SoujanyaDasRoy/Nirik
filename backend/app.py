@@ -6,7 +6,7 @@ import os
 import re
 import secrets
 from datetime import datetime, timezone
-from flask import Flask, request, jsonify, session
+from flask import Flask, request, jsonify, session, Response, stream_with_context
 from flask_cors import CORS
 from flask_socketio import SocketIO
 
@@ -1028,6 +1028,7 @@ def get_audit_logs():
 # === LLM Co-Pilot Endpoints ===
 @app.route('/chat', methods=['POST'])
 def chat_endpoint():
+    import json
     # Session check (consistent with rest of app.py)
     if "username" not in session:
         return jsonify({"error": "Authentication required"}), 401
@@ -1046,7 +1047,7 @@ def chat_endpoint():
     api_key = os.environ.get("GEMINI_API_KEY", "").strip()
     use_local = os.environ.get("USE_LOCAL_LLM", "false").lower() == "true"
     if not api_key and not use_local:
-        # Return a useful degraded response instead of an error
+        # Return a useful degraded response in streaming format
         prediction = llm_context.get('prediction', 'Unknown')
         confidence = llm_context.get('confidence', 0) * 100
         is_tb = llm_context.get('isTb', False)
@@ -1057,17 +1058,34 @@ def chat_endpoint():
                if is_tb else 
                "The scan does not show typical Tuberculosis features. Normal findings noted. Clinical correlation advised.")
         )
-        return jsonify({"response": degraded_msg})
+        from llm.guardrails import enforce_guardrails
+        degraded_msg_softened = enforce_guardrails(degraded_msg)
+        
+        def generate_degraded():
+            yield f"data: {json.dumps({'text': degraded_msg_softened})}\n\n"
+            yield f"data: {json.dumps({'done': True})}\n\n"
+            
+        return Response(
+            stream_with_context(generate_degraded()),
+            mimetype='text/event-stream',
+            headers={'Cache-Control': 'no-cache', 'X-Accel-Buffering': 'no', 'Connection': 'keep-alive'},
+        )
 
-    try:
-        from llm.client import generate_chat_response
-        response_text = generate_chat_response(llm_context, user_message)
-        return jsonify({
-            "response": response_text
-        })
-    except Exception as e:
-        app.logger.error(f"Error generating LLM response: {e}")
-        return jsonify({"error": f"LLM error: {str(e)}"}), 500
+    def generate_stream():
+        try:
+            from llm.client import generate_chat_response_stream
+            for chunk in generate_chat_response_stream(llm_context, user_message):
+                yield f"data: {json.dumps({'text': chunk})}\n\n"
+        except Exception as e:
+            app.logger.error(f"Error in LLM stream: {e}", exc_info=True)
+            yield f"data: {json.dumps({'error': str(e)})}\n\n"
+        yield f"data: {json.dumps({'done': True})}\n\n"
+
+    return Response(
+        stream_with_context(generate_stream()),
+        mimetype='text/event-stream',
+        headers={'Cache-Control': 'no-cache', 'X-Accel-Buffering': 'no', 'Connection': 'keep-alive'},
+    )
 
 
 @app.route('/chat/status', methods=['GET'])

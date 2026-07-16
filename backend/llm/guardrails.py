@@ -36,10 +36,8 @@ def enforce_guardrails(llm_response: str) -> str:
         "AI-assisted decision support only. All visual observations require independent verification against the source image."
     )
     
-    # Strip any existing duplicate footer/disclaimer to prevent accumulation
+    # Strip any existing duplicate footer to prevent accumulation
     clean_response = llm_response.split("AI-assisted decision support only")[0].strip()
-    clean_response = clean_response.split("**CLINICAL SUPPORT DISCLAIMER:**")[0].strip()
-    clean_response = clean_response.split("DISCLAIMER:")[0].strip()
     
     # Clean up trailing markdown horizontal lines
     if clean_response.endswith("---"):
