@@ -699,6 +699,23 @@ export function ScreeningTab({
               </div>
             )}
 
+          {/* Real, measured lung-localization overlap for the selected method */}
+          {workstationMode === "clinical" && activeResult?.status === "success" && (() => {
+            const overlap = activeResult?.xai_results?.localization_overlaps?.[
+              xaiMethod as keyof NonNullable<typeof activeResult.xai_results.localization_overlaps>
+            ];
+            if (typeof overlap !== "number") return null;
+            return (
+              <div className={`absolute top-16 left-1/2 -translate-x-1/2 z-50 px-2.5 py-1 rounded-full border backdrop-blur-md text-[10px] font-mono font-bold shadow-lg ${
+                overlap < 0.5
+                  ? "bg-amber-500/10 border-amber-500/30 text-amber-400"
+                  : "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
+              }`}>
+                Lung overlap: {(overlap * 100).toFixed(0)}%{overlap < 0.5 ? " — mostly outside segmented lungs" : ""}
+              </div>
+            );
+          })()}
+
           <div className="flex-1 w-full h-full p-2 relative z-10">
             {workstationMode === "xai" ? (
               <XaiVisualization

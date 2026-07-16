@@ -107,6 +107,18 @@ export interface AnalysisResult {
       reliability: string;
       uncertainty: string;
     };
+    /**
+     * Fraction (0-1) of each CAM method's heatmap energy that falls inside
+     * the segmented lung mask, for the actual predicted class. null per
+     * method when it couldn't be computed (e.g. no U-Net mask available).
+     * See hf_space/explainability/gradcam.py: compute_localization_overlaps.
+     */
+    localization_overlaps?: {
+      gradcam?: number | null;
+      gradcam_plus_plus?: number | null;
+      layercam?: number | null;
+      eigencam?: number | null;
+    } | null;
   };
   quadrant_analysis?: {
     quadrant_scores: {

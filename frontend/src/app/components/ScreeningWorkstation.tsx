@@ -680,6 +680,22 @@ export function ScreeningWorkstation({
                   })}
                 </div>
               </div>
+              {/* Real, measured lung-localization overlap for the selected method */}
+              {(() => {
+                const overlap = activeResult?.xai_results?.localization_overlaps?.[
+                  xaiMethod as keyof NonNullable<typeof activeResult.xai_results.localization_overlaps>
+                ];
+                if (typeof overlap !== "number") return null;
+                return (
+                  <span className={`self-start px-2 py-1 rounded-full border text-[10px] font-mono font-bold ${
+                    overlap < 0.5
+                      ? "bg-amber-500/10 border-amber-500/30 text-amber-400"
+                      : "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
+                  }`}>
+                    Lung overlap: {(overlap * 100).toFixed(0)}%{overlap < 0.5 ? " — mostly outside segmented lungs" : ""}
+                  </span>
+                );
+              })()}
               <div className="w-full h-[340px] rounded-[20px] overflow-hidden bg-[#141414] border border-[#262626] shadow-xl relative">
                 <DicomViewer
                   imageBase64={activeResult?.original_image ?? ""}

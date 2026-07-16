@@ -104,6 +104,13 @@ export default function XaiVisualization({
     return toImageSrc(result.heatmaps[heatmapMode] || result.heatmap_image);
   };
 
+  // Fraction (0-1) of the CURRENTLY SELECTED method's heatmap energy that
+  // falls inside the segmented lungs — real, measured signal (see
+  // hf_space/explainability/gradcam.py: compute_localization_overlaps), not
+  // an estimate. null when unavailable (e.g. no U-Net mask for this request).
+  const currentOverlap = xai?.localization_overlaps?.[heatmapMode as keyof typeof xai.localization_overlaps];
+  const hasOverlap = typeof currentOverlap === "number";
+
   // Modern circular progress bar component
   const CircularProgress = ({ value, label, colorClass, strokeColor }: { value: number, label: string, colorClass: string, strokeColor: string }) => {
     const radius = 30;
@@ -170,6 +177,27 @@ export default function XaiVisualization({
                     </button>
                   ))}
                 </div>
+              </div>
+
+              {/* Real, measured lung-localization overlap for the selected method —
+                  not a decoration; a low value means this specific heatmap's
+                  attention mostly falls outside the segmented lungs. */}
+              <div className="flex items-center gap-2 flex-wrap text-[10px] text-[#999999]">
+                {hasOverlap ? (
+                  <span className={`px-2 py-1 rounded-full border font-mono font-bold ${
+                    (currentOverlap as number) < 0.5
+                      ? "bg-amber-500/10 border-amber-500/30 text-amber-400"
+                      : "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
+                  }`}>
+                    Lung overlap: {((currentOverlap as number) * 100).toFixed(0)}%
+                    {(currentOverlap as number) < 0.5 ? " — mostly outside segmented lungs" : ""}
+                  </span>
+                ) : (
+                  <span className="px-2 py-1 rounded-full border border-[#262626] bg-[#141414]">
+                    Lung overlap: not available for this result
+                  </span>
+                )}
+                <span>White outline on the heatmap = segmented lung boundary.</span>
               </div>
 
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 pt-3 border-t border-[#262626]/60">
