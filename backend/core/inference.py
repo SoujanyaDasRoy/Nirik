@@ -1363,9 +1363,9 @@ def predict_image(img: Image.Image, prior_image_b64: str = None):
         logit = model(tensor, training=False)
         # Apply softmax to get probabilities for both classes
         probs = tf.nn.softmax(logit, axis=1)
-        # According to debugging, class 0 is TB, class 1 is Normal
-        prob_tb = float(probs[0][0])
-        prob_normal = float(probs[0][1])
+        # Class 0 is Normal, Class 1 is Tuberculosis
+        prob_normal = float(probs[0][0])
+        prob_tb = float(probs[0][1])
     else:
         # PyTorch model (e.g., TorchScript)
         import torch
@@ -1375,10 +1375,10 @@ def predict_image(img: Image.Image, prior_image_b64: str = None):
             logit = model(tensor_torch)
             # Apply softmax to get probabilities for both classes
             probs = torch.softmax(logit, dim=1)
-            # According to debugging, class 0 is TB, class 1 is Normal
-            prob_tb = float(probs[0][0])
-            prob_normal = float(probs[0][1])
-    # Probability of TB (class 0)
+            # Class 0 is Normal, Class 1 is Tuberculosis
+            prob_normal = float(probs[0][0])
+            prob_tb = float(probs[0][1])
+    # Probability of TB (class 1)
     prob = prob_tb
 
     is_tb = prob >= OPTIMAL_THRESHOLD
